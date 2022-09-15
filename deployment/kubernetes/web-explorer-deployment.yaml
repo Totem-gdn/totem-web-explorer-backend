@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: web-explorer-backend
+  name: web-explorer-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web-explorer-backend
+  template:
+    metadata:
+      labels:
+        app: web-explorer-backend
+    spec:
+      containers:
+        - name: web-explorer-backend
+          ports:
+            - containerPort: 3000
+              name: http
+              protocol: TCP
+          env:
+            - name: PORT
+              value: "3000"
+            - name: REDIS_STORAGE_URI
+              value: redis://redis:6379/0
+            - name: MONGODB_DATABASE
+              value: web-explorer
+            - name: AWS_REGION
+              value: us-east-1
+            - name: AWS_S3_ENDPOINT
+              value: https://static.totem-explorer.com
+            - name: AWS_S3_BUCKET
+              value: totem-web-explorer
+          envFrom:
+            - secretRef:
+                name: web-explorer-backend
+          image: 667950714614.dkr.ecr.us-east-1.amazonaws.com/web-explorer-service:latest
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: 3000
+            timeoutSeconds: 1
