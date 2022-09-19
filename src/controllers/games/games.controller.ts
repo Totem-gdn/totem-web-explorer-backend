@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, UsePipes, ValidationPipe } from '@nestjs/common';
 import { GamesService } from './games.service';
 import { CreateGameRequestDto } from './dto/game.dto';
 import { ICreateGameResponse, IGameRecord } from './interfaces/games.interfaces';
@@ -11,7 +11,7 @@ export class GamesController {
   }
 
   @Get()
-  async find(): Promise<IGameRecord[]> {
+  async find(@Query() query: any): Promise<IGameRecord[]> {
     return await this.gamesService.find();
   }
 

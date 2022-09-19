@@ -88,6 +88,7 @@ export interface ICreateGameResponse {
   };
 }
 
-export interface IListGamesQueryParams {
+export interface IFindGamesQuery {
+
   from_timestamp: string;
 }
