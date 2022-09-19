@@ -21,11 +21,11 @@ ENV NODE_ENV=${NODE_ENV}
 
 WORKDIR /usr/src/web-explorer-backend
 
+ADD https://s3.amazonaws.com/rds-downloads/rds-combined-ca-bundle.pem ./rds-combined-ca-bundle.pem
+
 COPY package.json package-lock.json ./
 
 RUN npm ci --omit=dev
-
-COPY --from=builder /usr/src/web-explorer-backend/contract ./contract
 
 COPY --from=builder /usr/src/web-explorer-backend/dist ./dist
 
