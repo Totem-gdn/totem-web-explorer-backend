@@ -25,8 +25,6 @@ COPY package.json package-lock.json ./
 
 RUN npm ci --omit=dev
 
-COPY --from=builder /usr/src/web-explorer-backend/contract ./contract
-
 COPY --from=builder /usr/src/web-explorer-backend/dist ./dist
 
 CMD ["node", "dist/main"]
