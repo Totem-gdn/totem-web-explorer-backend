@@ -13,6 +13,14 @@ export default () => ({
     s3: {
       endpoint: process.env.AWS_S3_ENDPOINT,
       bucket: process.env.AWS_S3_BUCKET,
-    }
-  }
+    },
+  },
+  provider: {
+    rpc: process.env.PROVIDER_RPC,
+    assets: {
+      avatar: process.env.ASSETS_AVATAR_CONTRACT,
+      item: process.env.ASSETS_ITEM_CONTRACT,
+      gem: process.env.ASSETS_GEM_CONTRACT,
+    },
+  },
 });

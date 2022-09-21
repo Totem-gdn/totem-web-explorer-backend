@@ -9,13 +9,13 @@ class GeneralInformation {
   @Prop({ type: SchemaTypes.String, required: true, index: true })
   author: string;
 
-  @Prop({ type: SchemaTypes.String })
+  @Prop({ type: SchemaTypes.String, default: () => '' })
   description: string;
 
-  @Prop({ type: SchemaTypes.String })
+  @Prop({ type: SchemaTypes.String, default: () => '' })
   fullDescription: string;
 
-  @Prop({ type: [SchemaTypes.String] })
+  @Prop({ type: [SchemaTypes.String], default: () => [] })
   genre: string[];
 }
 
@@ -23,22 +23,22 @@ const GeneralInformationSchema = SchemaFactory.createForClass(GeneralInformation
 
 @Schema({ _id: false })
 class GameDetails {
-  @Prop({ type: SchemaTypes.String })
+  @Prop({ type: SchemaTypes.String, required: true })
   status: string;
 
-  @Prop({ type: SchemaTypes.String })
-  platforms: string;
+  @Prop({ type: [SchemaTypes.String], required: true })
+  platforms: string[];
 
-  @Prop({ type: SchemaTypes.String })
+  @Prop({ type: SchemaTypes.String, default: () => '' })
   madeWith: string;
 
-  @Prop({ type: SchemaTypes.String })
-  averageSession: string;
+  @Prop({ type: SchemaTypes.String, default: () => '' })
+  session: string;
 
-  @Prop({ type: SchemaTypes.String })
+  @Prop({ type: SchemaTypes.String, default: () => '' })
   languages: string;
 
-  @Prop({ type: SchemaTypes.String })
+  @Prop({ type: SchemaTypes.String, default: () => '' })
   inputs: string;
 }
 
@@ -46,13 +46,13 @@ const GameDetailsSchema = SchemaFactory.createForClass(GameDetails);
 
 @Schema({ _id: false })
 class GameImage {
-  @Prop({ type: SchemaTypes.String })
+  @Prop({ type: SchemaTypes.String, required: true })
   filename: string;
 
-  @Prop({ type: SchemaTypes.String })
+  @Prop({ type: SchemaTypes.String, required: true })
   mimeType: string;
 
-  @Prop({ type: SchemaTypes.Number })
+  @Prop({ type: SchemaTypes.Number, required: true })
   contentLength: number;
 }
 
@@ -70,45 +70,49 @@ class GameImages {
   smallThumbnail: GameImage;
 
   @Prop({ type: [GameImageSchema] })
-  imagesGallery: GameImage[];
+  gallery: GameImage[];
 }
 
 const GameImagesSchema = SchemaFactory.createForClass(GameImages);
 
 @Schema({ _id: false })
-class Integration {
-  @Prop({ type: SchemaTypes.String })
+class SocialLink {
+  @Prop({ type: SchemaTypes.String, required: true })
   type: string;
 
-  @Prop({ type: SchemaTypes.String })
+  @Prop({ type: SchemaTypes.String, required: true })
   url: string;
 }
 
-const IntegrationSchema = SchemaFactory.createForClass(Integration);
+const SocialLinkSchema = SchemaFactory.createForClass(SocialLink);
 
 @Schema({ _id: false })
-class GameSocialMedia {
-  @Prop({ type: SchemaTypes.String })
+class GameConnections {
+  @Prop({ type: SchemaTypes.String, required: true })
+  webpage: string;
+
+  @Prop({ type: SchemaTypes.String, default: () => '' })
+  assetRenderer: string;
+
+  @Prop({ type: SchemaTypes.String, default: () => '' })
   promoVideo: string;
 
-  @Prop({ type: [IntegrationSchema] })
-  integrations: Integration[];
+  @Prop({ type: [SocialLinkSchema], default: () => [] })
+  socialLinks: SocialLink[];
 }
 
-const GameSocialMediaSchema = SchemaFactory.createForClass(GameSocialMedia);
+const GameConnectionsSchema = SchemaFactory.createForClass(GameConnections);
 
 @Schema({ _id: false })
 class GameContacts {
-  @Prop({ type: SchemaTypes.String })
+  @Prop({ type: SchemaTypes.String, required: true })
   email: string;
 
-  @Prop({ type: SchemaTypes.String })
+  @Prop({ type: SchemaTypes.String, default: () => '' })
   discord: string;
 }
 
 const GameContactsSchema = SchemaFactory.createForClass(GameContacts);
-
-export type GameDocument = Game & Document & { createdAt: string; updatedAt: string };
 
 @Schema({
   autoCreate: true,
@@ -118,10 +122,13 @@ export type GameDocument = Game & Document & { createdAt: string; updatedAt: str
 })
 export class Game {
   @Prop({ type: SchemaTypes.String, required: true, index: true })
-  ownerAddress: string;
+  owner: string;
 
   @Prop({ type: SchemaTypes.Boolean, required: true, default: () => false })
-  visible: boolean;
+  approved: boolean;
+
+  @Prop({ type: SchemaTypes.Number, required: true, default: () => 0 })
+  views: number;
 
   @Prop({ type: GeneralInformationSchema })
   general: GeneralInformation;
@@ -132,11 +139,20 @@ export class Game {
   @Prop({ type: GameImagesSchema })
   images: GameImages;
 
-  @Prop({ type: GameSocialMediaSchema })
-  socialMedia: GameSocialMedia;
+  @Prop({ type: GameConnectionsSchema })
+  connections: GameConnections;
 
   @Prop({ type: GameContactsSchema })
   contacts: GameContacts;
 }
 
-export const GameSchema = SchemaFactory.createForClass(Game);
+export type GameDocument = Game & Document & { createdAt: string; updatedAt: string };
+
+export type GameAggregationDocument = GameDocument & {
+  isLiked: boolean;
+  players: number;
+  likes: number;
+  assets: { avatars: number; items: number };
+};
+
+export const GamesSchema = SchemaFactory.createForClass(Game);

@@ -2,7 +2,6 @@ import {
   ArrayNotEmpty,
   IsArray,
   IsEmail,
-  IsMimeType,
   IsNotEmpty,
   IsNumber,
   IsPositive,
@@ -10,11 +9,11 @@ import {
   IsUrl,
   Matches,
   MaxLength,
-  ValidateNested
+  ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
-export class GameInformation {
+export class GameGeneralInformation {
   @IsString()
   @IsNotEmpty()
   name: string;
@@ -29,7 +28,6 @@ export class GameInformation {
   description: string;
 
   @IsString()
-  @IsNotEmpty()
   @MaxLength(3000)
   fullDescription: string;
 
@@ -43,24 +41,20 @@ export class GameDetails {
   @IsNotEmpty()
   status: string;
 
-  @IsString()
-  @IsNotEmpty()
-  platforms: string;
+  @IsArray()
+  @ArrayNotEmpty()
+  platforms: string[];
 
   @IsString()
-  @IsNotEmpty()
   madeWith: string;
 
   @IsString()
-  @IsNotEmpty()
-  averageSession: string;
+  session: string;
 
   @IsString()
-  @IsNotEmpty()
   languages: string;
 
   @IsString()
-  @IsNotEmpty()
   inputs: string;
 }
 
@@ -69,7 +63,6 @@ export class GameImage {
   @IsNotEmpty()
   filename: string;
 
-  @IsMimeType()
   @Matches(/(^image)(\/)([a-zA-Z0-9_.\-+]+)/)
   mimeType: string;
 
@@ -93,77 +86,51 @@ export class GameImages {
 
   @IsArray()
   @ArrayNotEmpty()
-  @ValidateNested()
+  @ValidateNested({ each: true })
   @Type(() => GameImage)
-  imagesGallery: GameImage[];
+  gallery: GameImage[];
 }
 
-export class Integration {
+export class SocialLink {
   @IsString()
   @IsNotEmpty()
   type: string;
 
-  @IsNotEmpty()
   @IsUrl()
   url: string;
 }
 
-export class GameSocialMedia {
-  @IsNotEmpty()
+export class GameConnections {
+  @IsUrl()
+  webpage: string;
+
+  @IsUrl()
+  assetRenderer: string;
+
   @IsUrl()
   promoVideo: string;
 
   @IsArray()
   @ArrayNotEmpty()
   @ValidateNested({ each: true })
-  @Type(() => Integration)
-  integrations: Integration[];
+  @Type(() => SocialLink)
+  socialLinks: SocialLink[];
 }
 
 export class GameContacts {
-  @IsNotEmpty()
   @IsEmail()
   email: string;
 
   @IsString()
-  @IsNotEmpty()
   discord: string;
 }
 
-export class GameDto {
-  @IsString()
-  @IsNotEmpty()
-  ownerAddress: string;
-
-  @ValidateNested()
-  @Type(() => GameInformation)
-  general: GameInformation;
-
-  @ValidateNested()
-  @Type(() => GameDetails)
-  details: GameDetails;
-
-  @ValidateNested()
-  @Type(() => GameImages)
-  images: GameImages;
-
-  @ValidateNested()
-  @Type(() => GameSocialMedia)
-  socialMedia: GameSocialMedia;
-
-  @ValidateNested()
-  @Type(() => GameContacts)
-  contacts: GameContacts;
-}
-
 export class CreateGameRequestDto {
-  @IsString()
-  @IsNotEmpty()
-  ownerAddress: string;
+  owner: string;
 
   @ValidateNested()
-  @Type(() => GameInformation)
-  general: GameInformation;
+  @Type(() => GameGeneralInformation)
+  general: GameGeneralInformation;
 
   @ValidateNested()
   @Type(() => GameDetails)
@@ -174,20 +141,10 @@ export class CreateGameRequestDto {
   images: GameImages;
 
   @ValidateNested()
-  @Type(() => GameSocialMedia)
-  socialMedia: GameSocialMedia;
+  @Type(() => GameConnections)
+  connections: GameConnections;
 
   @ValidateNested()
   @Type(() => GameContacts)
   contacts: GameContacts;
-}
-
-export class CreateGameResponseDto {
-  id: string;
-  uploadImageURLs: {
-    coverImage: string;
-    cardThumbnail: string;
-    smallThumbnail: string;
-    imagesGallery: string[];
-  };
 }
