@@ -1,9 +1,9 @@
-export interface IIntegration {
+export interface ISocialLink {
   type: string;
   url: string;
 }
 
-export interface IImageData {
+export interface IGameImage {
   filename: string;
   mimeType: string;
   contentLength: number;
@@ -11,7 +11,12 @@ export interface IImageData {
 
 export interface IGameRecord {
   id: string;
-  ownerAddress: string;
+  owner: string;
+  views: number;
+  isLiked: boolean;
+  players: number;
+  likes: number;
+  assets: { avatars: number; items: number };
   createdAt: string;
   updatedAt: string;
   general: {
@@ -23,9 +28,9 @@ export interface IGameRecord {
   };
   details: {
     status: string;
-    platforms: string;
+    platforms: string[];
     madeWith: string;
-    averageSession: string;
+    session: string;
     languages: string;
     inputs: string;
   };
@@ -33,11 +38,13 @@ export interface IGameRecord {
     coverImage: string;
     cardThumbnail: string;
     smallThumbnail: string;
-    imagesGallery: Array<string>
+    gallery: string[];
   };
-  socialMedia: {
+  connections: {
+    webpage: string;
+    assetRenderer: string;
     promoVideo: string;
-    integrations: Array<IIntegration>
+    socialLinks: ISocialLink[];
   };
   contacts: {
     email: string;
@@ -46,7 +53,7 @@ export interface IGameRecord {
 }
 
 export interface ICreateGameRequest {
-  ownerAddress: string;
+  owner: string;
   general: {
     name: string;
     author: string;
@@ -56,21 +63,23 @@ export interface ICreateGameRequest {
   };
   details: {
     status: string;
-    platforms: string;
+    platforms: string[];
     madeWith: string;
-    averageSession: string;
+    session: string;
     languages: string;
     inputs: string;
   };
   images: {
-    coverImage: IImageData;
-    cardThumbnail: IImageData;
-    smallThumbnail: IImageData;
-    imagesGallery: Array<IImageData>
+    coverImage: IGameImage;
+    cardThumbnail: IGameImage;
+    smallThumbnail: IGameImage;
+    gallery: IGameImage[];
   };
-  socialMedia: {
+  connections: {
+    webpage: string;
+    assetRenderer: string;
     promoVideo: string;
-    integrations: Array<IIntegration>
+    socialLinks: ISocialLink[];
   };
   contacts: {
     email: string;
@@ -84,10 +93,12 @@ export interface ICreateGameResponse {
     coverImage: string;
     cardThumbnail: string;
     smallThumbnail: string;
-    imagesGallery: Array<string>;
+    imagesGallery: string[];
   };
 }
 
-export interface IListGamesQueryParams {
-  from_timestamp: string;
+export interface IListGamesFilters {
+  list: 'latest' | 'popular' | 'random';
+  page?: number;
+  user?: string;
 }

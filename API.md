@@ -1,173 +1,245 @@
-#### Find Top 12
+## List Games
 
-GET /games
+`GET /games`
+
+Headers:
+
+(optional, needed for `isLiked` field)
+
+```text
+Authorization: Bearer Web3Auth.JWT Web3Auth.PublicKey 
+```
+
+Params:
+
+```yaml
+list:
+  in: query
+  type: string
+  required: false
+  description: type of returning games list.
+  default: latest
+  enum:
+    latest
+    popular
+    random
+
+page:
+  in: query
+  type: number
+  required: false
+  description: pagination page number
+  default: 1
+```
 
 Response:
 
 ```json
 [
   {
-    "id": "string",
-    "ownerAddress": "string",
-    "createdAt": "string",
-    "updatedAt": "string",
+    "id": "",
+    "owner": "",
+    "views": 0,
+    "isLiked": false,
+    "players": 0,
+    "likes": 0,
+    "assets": {
+      "avatars": 0,
+      "items": 0
+    },
+    "createdAt": "",
+    "updatedAt": "",
     "general": {
-      "name": "string",
-      "author": "string",
-      "description": "string",
-      "fullDescription": "string",
+      "name": "",
+      "author": "",
+      "description": "",
+      "fullDescription": "",
       "genre": [
-        "string"
+        ""
       ]
     },
     "details": {
-      "status": "string",
-      "platforms": "string",
-      "madeWith": "string",
-      "averageSession": "string",
-      "languages": "string",
-      "inputs": "string"
+      "status": "",
+      "platforms": [
+        ""
+      ],
+      "madeWith": "",
+      "session": "",
+      "languages": "",
+      "inputs": ""
     },
     "images": {
-      "coverImage": "string",
-      "cardThumbnail": "string",
-      "smallThumbnail": "string",
-      "imagesGallery": [
-        "string"
+      "coverImage": "",
+      "cardThumbnail": "",
+      "smallThumbnail": "",
+      "gallery": [
+        ""
       ]
     },
-    "socialMedia": {
-      "promoVideo": "string",
-      "integrations": [
+    "connections": {
+      "webpage": "",
+      "assetRenderer": "",
+      "promoVideo": "",
+      "socialLinks": [
         {
-          "type": "string",
-          "url": "string"
+          "type": "",
+          "url": ""
         }
       ]
     },
     "contacts": {
-      "email": "string",
-      "discord": "string"
+      "email": "",
+      "discord": ""
     }
   }
 ]
 ```
 
-#### Find By Id
+## Find Game By Id
 
-GET /games/:id
+`GET /games/:id`
+
+Headers:
+
+(optional, needed for `isLiked` field)
+
+```text
+Authorization: Bearer Web3Auth.JWT Web3Auth.PublicKey 
+```
 
 Response
 
 ```json
 {
-  "id": "string",
-  "ownerAddress": "string",
-  "createdAt": "string",
-  "updatedAt": "string",
+  "id": "",
+  "owner": "",
+  "views": 0,
+  "isLiked": false,
+  "players": 0,
+  "likes": 0,
+  "assets": {
+    "avatars": 0,
+    "items": 0
+  },
+  "createdAt": "",
+  "updatedAt": "",
   "general": {
-    "name": "string",
-    "author": "string",
-    "description": "string",
-    "fullDescription": "string",
+    "name": "",
+    "author": "",
+    "description": "",
+    "fullDescription": "",
     "genre": [
-      "string"
+      ""
     ]
   },
   "details": {
-    "status": "string",
-    "platforms": "string",
-    "madeWith": "string",
-    "averageSession": "string",
-    "languages": "string",
-    "inputs": "string"
+    "status": "",
+    "platforms": [
+      ""
+    ],
+    "madeWith": "",
+    "session": "",
+    "languages": "",
+    "inputs": ""
   },
   "images": {
-    "coverImage": "string",
-    "cardThumbnail": "string",
-    "smallThumbnail": "string",
-    "imagesGallery": [
-      "string"
+    "coverImage": "",
+    "cardThumbnail": "",
+    "smallThumbnail": "",
+    "gallery": [
+      ""
     ]
   },
-  "socialMedia": {
-    "promoVideo": "string",
-    "integrations": [
+  "connections": {
+    "webpage": "",
+    "assetRenderer": "",
+    "promoVideo": "",
+    "socialLinks": [
       {
-        "type": "string",
-        "url": "string"
+        "type": "",
+        "url": ""
       }
     ]
   },
   "contacts": {
-    "email": "string",
-    "discord": "string"
+    "email": "",
+    "discord": ""
   }
 }
 ```
 
-#### Create game
+## Create Game
 
-POST /games
+`POST /games`
+
+Headers:
+
+```text
+Authorization: Bearer Web3Auth.JWT Web3Auth.PublicKey 
+```
 
 Request:
 
 ```json
 {
-  "ownerAddress": "string, is_not_empty",
+  "owner": "string, is_not_empty",
   "general": {
     "name": "string, is_not_empty",
     "author": "string, is_not_empty",
     "description": "string, is_not_empty, max_length=300",
-    "fullDescription": "string, is_not_empty, max_length=3000",
-    "genre": [
+    "fullDescription": "string, max_length=3000",
+    "genre": [ // is_array, array_not_empty
       "string, is_not_empty"
     ]
   },
   "details": {
     "status": "string, is_not_empty",
-    "platforms": "string, is_not_empty",
-    "madeWith": "string, is_not_empty",
-    "averageSession": "string, is_not_empty",
-    "languages": "string, is_not_empty",
-    "inputs": "string, is_not_empty"
+    "platforms": [ // "is_array, array_not_empty"
+      ""
+    ],
+    "madeWith": "string",
+    "session": "string",
+    "languages": "string",
+    "inputs": "string"
   },
   "images": {
     "coverImage": {
       "filename": "string, is_not_empty",
       "mimeType": "is_mime_type, /(^image)(\/)([a-zA-Z0-9_.\\-+]+)/",
-      "contentLength": 0
+      "contentLength": 0 // number, is_positive
     },
     "cardThumbnail": {
       "filename": "string, is_not_empty",
       "mimeType": "is_mime_type, /(^image)(\/)([a-zA-Z0-9_.\\-+]+)/",
-      "contentLength": 0
+      "contentLength": 0 // number, is_positive
     },
     "smallThumbnail": {
       "filename": "string, is_not_empty",
       "mimeType": "is_mime_type, /(^image)(\/)([a-zA-Z0-9_.\\-+]+)/",
-      "contentLength": 0
+      "contentLength": 0 // number, is_positive
     },
-    "imagesGallery": [
+    "imagesGallery": [ // is_array, array_not_empty
       {
         "filename": "string, is_not_empty",
         "mimeType": "is_mime_type, /(^image)(\/)([a-zA-Z0-9_.\\-+]+)/",
-        "contentLength": 0
+        "contentLength": 0 // number, is_positive
       }
     ]
   },
-  "socialMedia": {
-    "promoVideo": "is_not_empty, is_url",
-    "integrations": [
+  "connections": {
+    "webpage": "is_url",
+    "assetRenderer": "is_url",
+    "promoVideo": "is_url",
+    "socialLinks": [ // is_array, array_not_empty
       {
         "type": "string, is_not_empty",
-        "url": "is_not_empty, is_url"
+        "url": "is_url"
       }
     ]
   },
   "contacts": {
-    "email": "is_not_empty, is_email",
-    "discord": "string, is_not_empty"
+    "email": "is_email",
+    "discord": "string"
   }
 }
 ```
@@ -176,14 +248,166 @@ Response
 
 ```json
 {
-  "id": "string",
+  "id": "",
   "uploadImageURLs": {
-    "coverImage": "url",
-    "cardThumbnail": "url",
-    "smallThumbnail": "url",
+    "coverImage": "",
+    "cardThumbnail": "",
+    "smallThumbnail": "",
     "imagesGallery": [
-      "url"
+      ""
     ]
   }
 }
+```
+
+## Game Operations (Like, Dislike, Played, Approve, Reject)
+
+`PATCH /games/:id/:operation`
+
+Headers:
+
+```text
+Authorization: Bearer Web3Auth.JWT Web3Auth.PublicKey 
+```
+Request:
+
+```yaml
+
+```
+
+## List Assets
+
+`GET /assets/{avatars,items,gems}`
+
+Headers:
+
+(optional, needed for `isLiked` field)
+
+```text
+Authorization: Bearer Web3Auth.JWT Web3Auth.PublicKey 
+```
+
+Params:
+
+```yaml
+list:
+  in: query
+  type: string
+  required: false
+  description: type of returning games list.
+  default: latest
+  enum:
+    latest
+    popular
+    my
+
+page:
+  in: query
+  type: number
+  required: false
+  description: pagination page number
+  default: 1
+
+gameId:
+  in: query
+  type: string
+  required: false
+  description: global game id filter
+```
+
+Response
+
+```json
+[
+  {
+    "id": "",
+    "owner": "",
+    "owners": [
+      ""
+    ],
+    "tokenId": "",
+    "views": 0,
+    "createdAt": "",
+    "updatedAt": "",
+    "isLiked": false,
+    "likes": 0,
+    "games": 0,
+    "lastUsed": ""
+  }
+]
+```
+
+## Find Asset By Id
+
+`GET /assets/{avatars,items,gems}/:id`
+
+Headers:
+
+(optional, needed for `isLiked` field)
+
+```text
+Authorization: Bearer Web3Auth.JWT Web3Auth.PublicKey 
+```
+
+Response
+
+```json
+{
+  "id": "",
+  "owner": "",
+  "owners": [
+    ""
+  ],
+  "tokenId": "",
+  "views": 0,
+  "createdAt": "",
+  "updatedAt": "",
+  "isLiked": false,
+  "likes": 0,
+  "games": 0,
+  "lastUsed": ""
+}
+```
+
+## Asset Operations (Like, Dislike, )
+
+`PATCH /assets/{avatars,items,gems}/:id/:operation/:gameId?`
+
+Headers:
+
+```text
+Authorization: Bearer Web3Auth.JWT Web3Auth.PublicKey 
+```
+
+Request:
+
+```yaml
+id:
+  in: path
+  type: string
+  required: true
+  description: asset id
+
+operation:
+  in: path
+  type: string
+  required: true
+  description: asset operation
+  enum:
+    like
+    dislike
+    use # requires gameId for legacy record
+    add # requires gameId for legacy record
+
+gameId:
+  in: path
+  type: string
+  required: false
+  description: game id for legacy record
+
+data:
+  in: body
+  type: string
+  required: false
+  description: data for legacy record
 ```
