@@ -30,6 +30,12 @@ page:
   required: false
   description: pagination page number
   default: 1
+
+search:
+  in: query
+  type: string
+  required: false
+  description: search by partial game name.
 ```
 
 Response:

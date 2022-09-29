@@ -40,6 +40,7 @@ export class GamesController {
   async find(
     @Req() request: Request,
     @Query('list', new DefaultValuePipe('latest')) list: 'latest' | 'popular' | 'random',
+    @Query('search', new DefaultValuePipe('')) search: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
   ): Promise<IGameRecord[]> {
     if (page < 1) {
@@ -48,7 +49,7 @@ export class GamesController {
     if (list === 'random') {
       return await this.gamesService.random(request['user']);
     } else {
-      const filters: IListGamesFilters = { list, page };
+      const filters: IListGamesFilters = { list, page, search };
       if (request['user']) {
         filters.user = request['user'];
       }

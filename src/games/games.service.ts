@@ -113,13 +113,17 @@ export class GamesService {
   }
 
   async find(filters: IListGamesFilters): Promise<IGameRecord[]> {
+    const matchParams: Record<string, any> = {};
+    if (filters.search) {
+      matchParams['general.name'] = { $regex: filters.search, $options: 'i' };
+    }
     const sortParams: Record<string, any> = {};
     if (filters.list === 'popular') {
       sortParams.views = -1;
     } else {
       sortParams.createdAt = -1;
     }
-    return await this.aggregateGames({}, sortParams, filters.page, filters.user);
+    return await this.aggregateGames(matchParams, sortParams, filters.page, filters.user);
   }
 
   private async aggregateGames(

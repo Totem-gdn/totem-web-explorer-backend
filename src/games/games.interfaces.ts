@@ -99,6 +99,7 @@ export interface ICreateGameResponse {
 
 export interface IListGamesFilters {
   list: 'latest' | 'popular' | 'random';
+  search?: string;
   page?: number;
   user?: string;
 }
