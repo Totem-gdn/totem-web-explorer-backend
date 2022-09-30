@@ -3,7 +3,9 @@ import {
   IsArray,
   IsEmail,
   IsNotEmpty,
+  IsNotEmptyObject,
   IsNumber,
+  IsOptional,
   IsPositive,
   IsString,
   IsUrl,
@@ -27,9 +29,10 @@ export class GameGeneralInformation {
   @MaxLength(300)
   description: string;
 
+  @IsOptional()
   @IsString()
   @MaxLength(3000)
-  fullDescription: string;
+  fullDescription = '';
 
   @IsArray()
   @ArrayNotEmpty()
@@ -45,15 +48,19 @@ export class GameDetails {
   @ArrayNotEmpty()
   platforms: string[];
 
+  @IsOptional()
   @IsString()
   madeWith: string;
 
+  @IsOptional()
   @IsString()
   session: string;
 
+  @IsOptional()
   @IsString()
   languages: string;
 
+  @IsOptional()
   @IsString()
   inputs: string;
 }
@@ -104,14 +111,15 @@ export class GameConnections {
   @IsUrl()
   webpage: string;
 
+  @IsOptional()
   @IsUrl()
   assetRenderer: string;
 
+  @IsOptional()
   @IsUrl()
   promoVideo: string;
 
   @IsArray()
-  @ArrayNotEmpty()
   @ValidateNested({ each: true })
   @Type(() => SocialLink)
   socialLinks: SocialLink[];
@@ -121,6 +129,7 @@ export class GameContacts {
   @IsEmail()
   email: string;
 
+  @IsOptional()
   @IsString()
   discord: string;
 }
@@ -128,22 +137,27 @@ export class GameContacts {
 export class CreateGameRequestDto {
   owner: string;
 
+  @IsNotEmptyObject()
   @ValidateNested()
   @Type(() => GameGeneralInformation)
   general: GameGeneralInformation;
 
+  @IsNotEmptyObject()
   @ValidateNested()
   @Type(() => GameDetails)
   details: GameDetails;
 
+  @IsNotEmptyObject()
   @ValidateNested()
   @Type(() => GameImages)
   images: GameImages;
 
+  @IsNotEmptyObject()
   @ValidateNested()
   @Type(() => GameConnections)
   connections: GameConnections;
 
+  @IsNotEmptyObject()
   @ValidateNested()
   @Type(() => GameContacts)
   contacts: GameContacts;
