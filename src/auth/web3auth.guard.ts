@@ -21,10 +21,18 @@ export class Web3authGuard implements CanActivate {
     if (!authorizationHeader) {
       return this.allowUnauthorized;
     }
-    const [_, idToken, appPubKey] = authorizationHeader.split(' ');
+    const auth = authorizationHeader.split(' ');
+    if (auth.length < 2) {
+      return false;
+    }
+    const idToken = auth[1];
     const jwtDecode = await jose.jwtVerify(idToken, jose.createRemoteJWKSet(this.remoteJWKSetUrl), {
       algorithms: ['ES256'],
     });
+    const appPubKey = auth[2] || (request.headers['x-app-pubkey'] as string);
+    if (!appPubKey) {
+      return false;
+    }
     if ((jwtDecode.payload as any).wallets[0].public_key === appPubKey) {
       request['user'] = appPubKey;
       return true;
