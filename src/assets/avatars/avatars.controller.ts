@@ -19,6 +19,7 @@ import { LegacyService } from '../../legacy/legacy.service';
 import { Web3authGuard } from '../../auth/web3auth.guard';
 import { IAvatarRecord, IListAvatarsFilters } from './avatars.interface';
 import { LegacyTypes } from '../../legacy/legacy.constants';
+import { isMongoId } from 'class-validator';
 
 @Controller()
 export class AvatarsController {
@@ -51,6 +52,9 @@ export class AvatarsController {
   @Get(':id')
   @UseGuards(new Web3authGuard(true))
   async findOne(@Req() request: Request, @Param('id') id: string): Promise<IAvatarRecord> {
+    if (!isMongoId(id)) {
+      throw new BadRequestException('invalid id');
+    }
     const item = await this.avatarsService.findOne(id, request['user']);
     if (!item) {
       throw new NotFoundException();
@@ -67,7 +71,7 @@ export class AvatarsController {
     @Param('gameId', new DefaultValuePipe('')) gameId: string,
     @Body('data', new DefaultValuePipe('')) data: string,
   ): Promise<void> {
-    if (!id) {
+    if (!isMongoId(id)) {
       throw new BadRequestException('invalid id');
     }
     switch (operation) {
@@ -77,7 +81,7 @@ export class AvatarsController {
         return await this.legacyService.dislikeAsset(request['user'], id, LegacyTypes.AvatarLiked);
     }
     // game specific operations
-    if (!gameId) {
+    if (!isMongoId(gameId)) {
       throw new BadRequestException('invalid game id');
     }
     switch (operation) {

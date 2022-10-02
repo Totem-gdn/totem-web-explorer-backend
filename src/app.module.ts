@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { RouterModule } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule, MongooseModuleOptions } from '@nestjs/mongoose';
 import appConfig from './app.config';
@@ -9,12 +8,11 @@ import { LegacyModule } from './legacy/legacy.module';
 import { AvatarsModule } from './assets/avatars/avatars.module';
 import { ItemsModule } from './assets/items/items.module';
 import { GemsModule } from './assets/gems/gems.module';
+import { AppRouterModule } from './router.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      load: [appConfig],
-    }),
+    ConfigModule.forRoot({ load: [appConfig] }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -29,29 +27,7 @@ import { GemsModule } from './assets/gems/gems.module';
     AvatarsModule,
     ItemsModule,
     GemsModule,
-    RouterModule.register([
-      {
-        path: 'games',
-        module: GamesModule,
-      },
-      {
-        path: 'assets',
-        children: [
-          {
-            path: 'avatars',
-            module: AvatarsModule,
-          },
-          {
-            path: 'items',
-            module: ItemsModule,
-          },
-          {
-            path: 'gems',
-            module: GemsModule,
-          },
-        ],
-      },
-    ]),
+    AppRouterModule,
   ],
 })
 export class AppModule {}

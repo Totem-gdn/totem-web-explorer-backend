@@ -17,6 +17,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { Request } from 'express';
+import { isMongoId } from 'class-validator';
 import { GamesService } from './games.service';
 import { CreateGameRequestDto } from './games.dto';
 import { ICreateGameResponse, IGameRecord, IListGamesFilters } from './games.interfaces';
@@ -60,6 +61,9 @@ export class GamesController {
   @Get(':id')
   @UseGuards(new Web3authGuard(true))
   async findOne(@Req() request: Request, @Param('id') id: string): Promise<IGameRecord> {
+    if (!isMongoId(id)) {
+      throw new BadRequestException('invalid id');
+    }
     const game = await this.gamesService.findOne(id, request['user']);
     if (!game) {
       throw new NotFoundException();
@@ -70,7 +74,7 @@ export class GamesController {
   @Patch(':id/:operation')
   @UseGuards(new Web3authGuard(true))
   async update(@Req() request: Request, @Param('id') id: string, @Param('operation') operation: string): Promise<void> {
-    if (!id) {
+    if (!isMongoId(id)) {
       throw new BadRequestException('invalid id');
     }
     // no-authorization operations

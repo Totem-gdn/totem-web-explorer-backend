@@ -1,9 +1,10 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable, Logger } from '@nestjs/common';
 import { Request } from 'express';
 import * as jose from 'jose';
 
 @Injectable()
 export class Web3authGuard implements CanActivate {
+  private readonly logger = new Logger(Web3authGuard.name);
   private readonly allowUnauthorized: boolean = false;
   private readonly remoteJWKSetUrl = new URL('https://api.openlogin.com/jwks');
 
@@ -21,22 +22,27 @@ export class Web3authGuard implements CanActivate {
     if (!authorizationHeader) {
       return this.allowUnauthorized;
     }
-    const auth = authorizationHeader.split(' ');
-    if (auth.length < 2) {
+    try {
+      const authHeader = authorizationHeader.split(' ');
+      if (authHeader.length < 2) {
+        return false;
+      }
+      const idToken = authHeader[1];
+      const jwtDecode = await jose.jwtVerify(idToken, jose.createRemoteJWKSet(this.remoteJWKSetUrl), {
+        algorithms: ['ES256'],
+      });
+      const appPubKey = authHeader[2] || (request.headers['x-app-pubkey'] as string);
+      if (!appPubKey) {
+        return false;
+      }
+      if ((jwtDecode.payload as any).wallets[0].public_key === appPubKey) {
+        request['user'] = appPubKey;
+        return true;
+      }
+      return false;
+    } catch (err) {
+      this.logger.log(err);
       return false;
     }
-    const idToken = auth[1];
-    const jwtDecode = await jose.jwtVerify(idToken, jose.createRemoteJWKSet(this.remoteJWKSetUrl), {
-      algorithms: ['ES256'],
-    });
-    const appPubKey = auth[2] || (request.headers['x-app-pubkey'] as string);
-    if (!appPubKey) {
-      return false;
-    }
-    if ((jwtDecode.payload as any).wallets[0].public_key === appPubKey) {
-      request['user'] = appPubKey;
-      return true;
-    }
-    return false;
   }
 }
