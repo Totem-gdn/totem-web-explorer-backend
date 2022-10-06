@@ -31,6 +31,7 @@ export class GamesService {
   }
 
   async create(game: CreateGameRequest): Promise<CreateGameResponse> {
+    game.connections.dnaFilter.filename = `${uuidv4()}-${game.connections.dnaFilter.filename}`;
     game.images.coverImage.filename = `${uuidv4()}-${game.images.coverImage.filename}`;
     game.images.cardThumbnail.filename = `${uuidv4()}-${game.images.cardThumbnail.filename}`;
     game.images.smallThumbnail.filename = `${uuidv4()}-${game.images.smallThumbnail.filename}`;
@@ -40,6 +41,9 @@ export class GamesService {
     const newGame = await this.gameModel.create(game);
     return {
       id: newGame.id,
+      connections: {
+        dnaFilter: await this.getPutSignedUrl(newGame.id, game.connections.dnaFilter),
+      },
       uploadImageURLs: {
         coverImage: await this.getPutSignedUrl(newGame.id, game.images.coverImage),
         cardThumbnail: await this.getPutSignedUrl(newGame.id, game.images.cardThumbnail),
@@ -207,6 +211,7 @@ export class GamesService {
       connections: {
         webpage: game.connections.webpage,
         assetRenderer: game.connections.assetRenderer,
+        dnaFilter: await this.getStaticUrl(gameId, game.connections.dnaFilter),
         promoVideo: game.connections.promoVideo,
         socialLinks: game.connections.socialLinks,
       },

@@ -2,6 +2,7 @@ import {
   ArrayNotEmpty,
   IsArray,
   IsEmail,
+  IsMimeType,
   IsNotEmpty,
   IsNotEmptyObject,
   IsNumber,
@@ -78,6 +79,19 @@ export class GameImage {
   contentLength: number;
 }
 
+export class DNAFilter {
+  @IsString()
+  @IsNotEmpty()
+  filename: string;
+
+  @IsMimeType()
+  mimeType: string;
+
+  @IsNumber()
+  @IsPositive()
+  contentLength: number;
+}
+
 export class GameImages {
   @ValidateNested()
   @Type(() => GameImage)
@@ -114,6 +128,10 @@ export class GameConnections {
   @IsOptional()
   @IsUrl()
   assetRenderer: string;
+
+  @ValidateNested()
+  @Type(() => DNAFilter)
+  dnaFilter: DNAFilter;
 
   @IsOptional()
   @IsUrl()

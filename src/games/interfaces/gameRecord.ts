@@ -34,6 +34,7 @@ export interface GameRecord {
   connections: {
     webpage: string;
     assetRenderer: string;
+    dnaFilter: string;
     promoVideo: string;
     socialLinks: SocialLink[];
   };
