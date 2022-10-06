@@ -224,7 +224,7 @@ Request:
       "mimeType": "is_mime_type, /(^image)(\/)([a-zA-Z0-9_.\\-+]+)/",
       "contentLength": 0 // number, is_positive
     },
-    "imagesGallery": [ // is_array, array_not_empty
+    "gallery": [ // is_array, array_not_empty
       {
         "filename": "string, is_not_empty",
         "mimeType": "is_mime_type, /(^image)(\/)([a-zA-Z0-9_.\\-+]+)/",
@@ -259,7 +259,7 @@ Response
     "coverImage": "",
     "cardThumbnail": "",
     "smallThumbnail": "",
-    "imagesGallery": [
+    "gallery": [
       ""
     ]
   }

@@ -3,7 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { GamesController } from './games.controller';
 import { GamesService } from './games.service';
-import { Game, GamesSchema } from './games.schema';
+import { Game, GamesSchema } from './schemas/games';
 import { LegacyModule } from '../legacy/legacy.module';
 import { LegacyService } from '../legacy/legacy.service';
 import { LegacyRecord, LegacyRecordSchema } from '../legacy/legacy.schema';

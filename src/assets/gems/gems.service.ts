@@ -1,34 +1,32 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Gem, GemAggregationDocument, GemDocument } from './gems.schema';
-import { ConfigService } from '@nestjs/config';
+import { InjectQueue, Process, Processor } from '@nestjs/bull';
+import { Job, Queue } from 'bull';
+import { AssetEvent, AssetPayload, AssetQueue } from '../../config/queues/assets';
+import { BaseAssetRecord } from '../common/interfaces/baseAssetRecord';
+import { ListGemsFilters } from './interfaces/filters';
+import { Gem, GemAggregationDocument, GemDocument } from './schemas/gems';
 import { LegacyService } from '../../legacy/legacy.service';
-import { IGemRecord, IListGemsFilters } from './gems.interface';
-import { BigNumber, constants, Contract, Event, providers } from 'ethers';
-import * as abi from '../assets.contract.json';
 import { LegacyTypes } from '../../legacy/legacy.constants';
+import { GemLike, GemLikeDocument } from './schemas/gemLikes';
 
 @Injectable()
+@Processor(AssetQueue.Gems)
 export class GemsService {
   private readonly logger = new Logger(GemsService.name);
-  private readonly provider: providers.JsonRpcProvider;
-  private readonly contract: Contract;
   private readonly perPage: number = 10;
 
   constructor(
     private readonly config: ConfigService,
     private readonly legacyService: LegacyService,
+    @InjectQueue(AssetQueue.Gems) private readonly queue: Queue<AssetPayload>,
     @InjectModel(Gem.name) private readonly gemModel: Model<GemDocument>,
-  ) {
-    this.provider = new providers.JsonRpcProvider(config.get<string>('provider.rpc'));
-    this.contract = new Contract(config.get<string>('provider.assets.gem'), abi, this.provider);
-    this.contract.on(this.contract.filters.Transfer(), (from: string, to: string, tokenId: BigNumber, event: Event) => {
-      void this.contractEvent(from, to, tokenId, event);
-    });
-  }
+    @InjectModel(GemLike.name) private readonly gemLikeModel: Model<GemLikeDocument>,
+  ) {}
 
-  async findOne(id: string, user = ''): Promise<IGemRecord> {
+  async findOne(id: string, user = ''): Promise<BaseAssetRecord> {
     await this.gemModel.findByIdAndUpdate(id, { $inc: { views: 1 } }).exec();
     const [gem] = await this.gemModel.aggregate<GemAggregationDocument>([
       { $match: { _id: new Types.ObjectId(id) } },
@@ -55,7 +53,7 @@ export class GemsService {
     return this.toGemRecord(gem);
   }
 
-  async find(filters: IListGemsFilters): Promise<IGemRecord[]> {
+  async find(filters: ListGemsFilters): Promise<BaseAssetRecord[]> {
     const matchParams: Record<string, any> = {};
     if (filters.gameId) {
       matchParams.gameId = filters.gameId;
@@ -77,8 +75,8 @@ export class GemsService {
     sortParams: Record<string, any>,
     page: number,
     user = '',
-  ): Promise<IGemRecord[]> {
-    const gems: IGemRecord[] = [];
+  ): Promise<BaseAssetRecord[]> {
+    const gems: BaseAssetRecord[] = [];
     const aggregation = this.gemModel.aggregate<GemAggregationDocument>([
       { $match: { ...matchParams } },
       { $sort: { ...sortParams } },
@@ -119,7 +117,7 @@ export class GemsService {
     };
   }
 
-  private toGemRecord(gem: GemAggregationDocument): IGemRecord {
+  private toGemRecord(gem: GemAggregationDocument): BaseAssetRecord {
     return {
       id: gem._id.toString(),
       owner: gem.owner,
@@ -135,42 +133,24 @@ export class GemsService {
     };
   }
 
-  private async contractEvent(from: string, to: string, tokenId: BigNumber, event: Event): Promise<void> {
-    try {
-      if (from === constants.AddressZero) {
-        this.logger.log(`mint gem (${to}, ${tokenId.toString()})`);
-        await this.create(to, tokenId.toString(), event);
-        // const tokenDNA = await this.contract.tokenURI(tokenId);
-      } else {
-        this.logger.log(`transfer gem (${from}, ${to}, ${tokenId.toString()})`);
-        await this.transfer(from, to, tokenId.toString(), event);
-      }
-    } catch (err) {
-      this.logger.log(err);
-    }
-  }
-
-  private async create(owner: string, tokenId: string, event: Event): Promise<void> {
-    const gem = await this.gemModel.create({ owner, owners: [owner], tokenId });
-    await this.legacyService.assetMinted(owner, gem.id, LegacyTypes.GemMinted, {
-      txHash: event.transactionHash,
-      to: owner,
+  @Process(AssetEvent.Create)
+  private async createGem(job: Job<AssetPayload>) {
+    await this.gemModel.create({
+      tokenId: job.data.tokenId,
+      owner: job.data.to,
+      owners: [job.data.to],
+      views: 0,
     });
   }
 
-  private async transfer(from: string, to: string, tokenId: string, event: Event): Promise<void> {
-    const asset = await this.gemModel.findOneAndUpdate(
-      { tokenId },
+  @Process(AssetEvent.Transfer)
+  private async transferGem(job: Job<AssetPayload>) {
+    await this.gemModel.findOneAndUpdate(
+      { tokenId: job.data.tokenId },
       {
-        $set: { owner: to },
-        $push: { owners: from },
+        $set: { owner: job.data.to },
+        $push: { owners: job.data.from },
       },
-      { new: true },
     );
-    await this.legacyService.assetTransferred(to, asset.id, LegacyTypes.GemTransferred, {
-      from,
-      to,
-      txHash: event.transactionHash,
-    });
   }
 }

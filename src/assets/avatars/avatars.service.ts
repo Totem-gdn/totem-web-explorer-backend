@@ -1,34 +1,32 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { ConfigService } from '@nestjs/config';
+import { InjectQueue, Process, Processor } from '@nestjs/bull';
+import { Job, Queue } from 'bull';
+import { AssetEvent, AssetPayload, AssetQueue } from '../../config/queues/assets';
+import { BaseAssetRecord } from '../common/interfaces/baseAssetRecord';
+import { ListAvatarsFilters } from './interfaces/filters';
+import { Avatar, AvatarAggregationDocument, AvatarDocument } from './schemas/avatars';
 import { LegacyService } from '../../legacy/legacy.service';
-import { IAvatarRecord, IListAvatarsFilters } from './avatars.interface';
-import { BigNumber, constants, Contract, Event, providers } from 'ethers';
-import * as abi from '../assets.contract.json';
 import { LegacyTypes } from '../../legacy/legacy.constants';
-import { Avatar, AvatarAggregationDocument, AvatarDocument } from './avatars.schema';
+import { AvatarLike, AvatarLikeDocument } from './schemas/avatarLikes';
 
 @Injectable()
+@Processor(AssetQueue.Avatars)
 export class AvatarsService {
   private readonly logger = new Logger(AvatarsService.name);
-  private readonly provider: providers.JsonRpcProvider;
-  private readonly contract: Contract;
   private readonly perPage: number = 10;
 
   constructor(
     private readonly config: ConfigService,
     private readonly legacyService: LegacyService,
+    @InjectQueue(AssetQueue.Avatars) private readonly queue: Queue<AssetPayload>,
     @InjectModel(Avatar.name) private readonly avatarModel: Model<AvatarDocument>,
-  ) {
-    this.provider = new providers.JsonRpcProvider(config.get<string>('provider.rpc'));
-    this.contract = new Contract(config.get<string>('provider.assets.avatar'), abi, this.provider);
-    this.contract.on(this.contract.filters.Transfer(), (from: string, to: string, tokenId: BigNumber, event: Event) => {
-      void this.contractEvent(from, to, tokenId, event);
-    });
-  }
+    @InjectModel(AvatarLike.name) private readonly avatarLikeModel: Model<AvatarLikeDocument>,
+  ) {}
 
-  async findOne(id: string, user = ''): Promise<IAvatarRecord> {
+  async findOne(id: string, user = ''): Promise<BaseAssetRecord> {
     await this.avatarModel.findByIdAndUpdate(id, { $inc: { views: 1 } }).exec();
     const [avatar] = await this.avatarModel.aggregate<AvatarAggregationDocument>([
       { $match: { _id: new Types.ObjectId(id) } },
@@ -55,7 +53,7 @@ export class AvatarsService {
     return this.toAvatarRecord(avatar);
   }
 
-  async find(filters: IListAvatarsFilters): Promise<IAvatarRecord[]> {
+  async find(filters: ListAvatarsFilters): Promise<BaseAssetRecord[]> {
     const matchParams: Record<string, any> = {};
     if (filters.gameId) {
       matchParams.gameId = filters.gameId;
@@ -77,8 +75,8 @@ export class AvatarsService {
     sortParams: Record<string, any>,
     page: number,
     user = '',
-  ): Promise<IAvatarRecord[]> {
-    const avatars: IAvatarRecord[] = [];
+  ): Promise<BaseAssetRecord[]> {
+    const avatars: BaseAssetRecord[] = [];
     const aggregation = this.avatarModel.aggregate<AvatarAggregationDocument>([
       { $match: { ...matchParams } },
       { $sort: { ...sortParams } },
@@ -119,7 +117,7 @@ export class AvatarsService {
     };
   }
 
-  private toAvatarRecord(avatar: AvatarAggregationDocument): IAvatarRecord {
+  private toAvatarRecord(avatar: AvatarAggregationDocument): BaseAssetRecord {
     return {
       id: avatar._id.toString(),
       owner: avatar.owner,
@@ -135,42 +133,24 @@ export class AvatarsService {
     };
   }
 
-  private async contractEvent(from: string, to: string, tokenId: BigNumber, event: Event): Promise<void> {
-    try {
-      if (from === constants.AddressZero) {
-        this.logger.log(`mint avatar (${to}, ${tokenId.toString()})`);
-        await this.create(to, tokenId.toString(), event);
-        // const tokenDNA = await this.contract.tokenURI(tokenId);
-      } else {
-        this.logger.log(`transfer avatar (${from}, ${to}, ${tokenId.toString()})`);
-        await this.transfer(from, to, tokenId.toString(), event);
-      }
-    } catch (err) {
-      this.logger.log(err);
-    }
-  }
-
-  private async create(owner: string, tokenId: string, event: Event): Promise<void> {
-    const avatar = await this.avatarModel.create({ owner, owners: [owner], tokenId });
-    await this.legacyService.assetMinted(owner, avatar.id, LegacyTypes.AvatarMinted, {
-      txHash: event.transactionHash,
-      to: owner,
+  @Process(AssetEvent.Create)
+  private async createAvatar(job: Job<AssetPayload>) {
+    await this.avatarModel.create({
+      tokenId: job.data.tokenId,
+      owner: job.data.to,
+      owners: [job.data.to],
+      views: 0,
     });
   }
 
-  private async transfer(from: string, to: string, tokenId: string, event: Event): Promise<void> {
-    const asset = await this.avatarModel.findOneAndUpdate(
-      { tokenId },
+  @Process(AssetEvent.Transfer)
+  private async transferAvatar(job: Job<AssetPayload>) {
+    await this.avatarModel.findOneAndUpdate(
+      { tokenId: job.data.tokenId },
       {
-        $set: { owner: to },
-        $push: { owners: from },
+        $set: { owner: job.data.to },
+        $push: { owners: job.data.from },
       },
-      { new: true },
     );
-    await this.legacyService.assetTransferred(to, asset.id, LegacyTypes.AvatarTransferred, {
-      from,
-      to,
-      txHash: event.transactionHash,
-    });
   }
 }

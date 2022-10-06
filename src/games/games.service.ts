@@ -5,16 +5,14 @@ import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { v4 as uuidv4 } from 'uuid';
 import { Model, Types } from 'mongoose';
-import { Game, GameAggregationDocument, GameDocument } from './games.schema';
+import { Game, GameAggregationDocument, GameDocument } from './schemas/games';
 import { ConfigService } from '@nestjs/config';
-import {
-  ICreateGameRequest,
-  ICreateGameResponse,
-  IGameImage,
-  IGameRecord,
-  IListGamesFilters,
-} from './games.interfaces';
+import { ListGamesFilters } from './interfaces/listGamesFilters';
 import { LegacyTypes } from '../legacy/legacy.constants';
+import { GameImage } from './interfaces/gameImage';
+import { GameRecord } from './interfaces/gameRecord';
+import { CreateGameRequest } from './interfaces/createGameRequest';
+import { CreateGameResponse } from './interfaces/createGameResponse';
 
 @Injectable()
 export class GamesService {
@@ -32,7 +30,7 @@ export class GamesService {
     this.staticEndpoint = new URL(this.configService.get<string>('aws.s3.endpoint'));
   }
 
-  async create(game: ICreateGameRequest): Promise<ICreateGameResponse> {
+  async create(game: CreateGameRequest): Promise<CreateGameResponse> {
     game.images.coverImage.filename = `${uuidv4()}-${game.images.coverImage.filename}`;
     game.images.cardThumbnail.filename = `${uuidv4()}-${game.images.cardThumbnail.filename}`;
     game.images.smallThumbnail.filename = `${uuidv4()}-${game.images.smallThumbnail.filename}`;
@@ -55,7 +53,7 @@ export class GamesService {
     await this.gameModel.findByIdAndUpdate(id, { $set: { approved } }).exec();
   }
 
-  async findOne(id: string, user = ''): Promise<IGameRecord> {
+  async findOne(id: string, user = ''): Promise<GameRecord> {
     await this.gameModel.findByIdAndUpdate(id, { $inc: { views: 1 } }).exec();
     const games = await this.gameModel
       .aggregate<GameAggregationDocument>([
@@ -84,8 +82,8 @@ export class GamesService {
     return await this.toGameRecord(games[0]);
   }
 
-  async random(user: string): Promise<IGameRecord[]> {
-    const games: IGameRecord[] = [];
+  async random(user: string): Promise<GameRecord[]> {
+    const games: GameRecord[] = [];
     const query = this.gameModel.aggregate<GameAggregationDocument>([
       { $match: { approved: true } },
       { $sample: { size: 5 } },
@@ -112,7 +110,7 @@ export class GamesService {
     return games;
   }
 
-  async find(filters: IListGamesFilters): Promise<IGameRecord[]> {
+  async find(filters: ListGamesFilters): Promise<GameRecord[]> {
     const matchParams: Record<string, any> = {};
     if (filters.search) {
       matchParams['general.name'] = { $regex: filters.search, $options: 'i' };
@@ -131,8 +129,8 @@ export class GamesService {
     sortParams: Record<string, any>,
     page: number,
     user = '',
-  ): Promise<IGameRecord[]> {
-    const games: IGameRecord[] = [];
+  ): Promise<GameRecord[]> {
+    const games: GameRecord[] = [];
     const aggregation = this.gameModel.aggregate<GameAggregationDocument>([
       { $match: { approved: true, ...matchParams } },
       { $sort: { ...sortParams } },
@@ -173,7 +171,7 @@ export class GamesService {
     };
   }
 
-  private async toGameRecord(game: GameAggregationDocument): Promise<IGameRecord> {
+  private async toGameRecord(game: GameAggregationDocument): Promise<GameRecord> {
     const gameId = game._id.toString();
     return {
       id: gameId,
@@ -219,7 +217,7 @@ export class GamesService {
     };
   }
 
-  private async getPutSignedUrl(gameId: string, { filename, mimeType, contentLength }: IGameImage): Promise<string> {
+  private async getPutSignedUrl(gameId: string, { filename, mimeType, contentLength }: GameImage): Promise<string> {
     return getSignedUrl(
       this.s3Client,
       new PutObjectCommand({
@@ -232,7 +230,7 @@ export class GamesService {
     );
   }
 
-  private async getPutSignedUrls(gameId: string, gameImages: IGameImage[]): Promise<string[]> {
+  private async getPutSignedUrls(gameId: string, gameImages: GameImage[]): Promise<string[]> {
     const images = [];
     for await (const image of gameImages) {
       images.push(await this.getPutSignedUrl(gameId, image));
@@ -240,13 +238,13 @@ export class GamesService {
     return images;
   }
 
-  private async getStaticUrl(gameId: string, { filename }: IGameImage): Promise<string> {
+  private async getStaticUrl(gameId: string, { filename }: GameImage): Promise<string> {
     const url = new URL(this.staticEndpoint);
     url.pathname = join(gameId, filename);
     return url.toString();
   }
 
-  private async getStaticUrls(gameId: string, gameImages: IGameImage[]): Promise<string[]> {
+  private async getStaticUrls(gameId: string, gameImages: GameImage[]): Promise<string[]> {
     const images = [];
     for await (const image of gameImages) {
       images.push(await this.getStaticUrl(gameId, image));

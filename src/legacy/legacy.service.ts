@@ -27,27 +27,6 @@ export class LegacyService {
     await this.legacyRecordModel.deleteMany({ user, gameId, type: LegacyTypes.GameLiked }).exec();
   }
 
-  async assetMinted(
-    user: string,
-    itemId: string,
-    type: LegacyTypes.AvatarMinted | LegacyTypes.ItemMinted | LegacyTypes.GemMinted,
-    data: any,
-  ) {
-    const record = await this.legacyRecordModel.findOne({ user, assetId: itemId, type }).exec();
-    if (!record) {
-      await this.legacyRecordModel.create({ user, assetId: itemId, gameId: null, type, data });
-    }
-  }
-
-  async assetTransferred(
-    user: string,
-    assetId: string,
-    type: LegacyTypes.AvatarTransferred | LegacyTypes.ItemTransferred | LegacyTypes.GemTransferred,
-    data: any,
-  ) {
-    await this.legacyRecordModel.create({ user, assetId, gameId: null, type, data });
-  }
-
   async addAssetToGame(
     user: string,
     assetId: string,

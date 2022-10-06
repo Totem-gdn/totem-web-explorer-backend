@@ -3,8 +3,13 @@ import { Request } from 'express';
 import * as jose from 'jose';
 
 @Injectable()
-export class Web3authGuard implements CanActivate {
-  private readonly logger = new Logger(Web3authGuard.name);
+export class Web3AuthGuard implements CanActivate {
+  static UserKey = 'user';
+  static XHeaders = {
+    PubKey: 'x-app-pubkey',
+  };
+
+  private readonly logger = new Logger(Web3AuthGuard.name);
   private readonly allowUnauthorized: boolean = false;
   private readonly remoteJWKSetUrl = new URL('https://api.openlogin.com/jwks');
 
@@ -31,17 +36,20 @@ export class Web3authGuard implements CanActivate {
       const jwtDecode = await jose.jwtVerify(idToken, jose.createRemoteJWKSet(this.remoteJWKSetUrl), {
         algorithms: ['ES256'],
       });
-      const appPubKey = authHeader[2] || (request.headers['x-app-pubkey'] as string);
+      const appPubKey = authHeader[2] || (request.headers[Web3AuthGuard.XHeaders.PubKey] as string);
       if (!appPubKey) {
         return false;
       }
       if ((jwtDecode.payload as any).wallets[0].public_key === appPubKey) {
-        request['user'] = appPubKey;
+        request[Web3AuthGuard.UserKey] = appPubKey;
         return true;
       }
       return false;
     } catch (err) {
-      this.logger.log(err);
+      if (err instanceof jose.errors.JWTExpired) {
+        return this.allowUnauthorized;
+      }
+      this.logger.error(err);
       return false;
     }
   }

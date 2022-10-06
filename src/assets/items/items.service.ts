@@ -1,36 +1,34 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Item, ItemAggregationDocument, ItemDocument } from './items.schema';
-import { ConfigService } from '@nestjs/config';
+import { InjectQueue, Process, Processor } from '@nestjs/bull';
+import { Job, Queue } from 'bull';
+import { AssetEvent, AssetPayload, AssetQueue } from '../../config/queues/assets';
+import { BaseAssetRecord } from '../common/interfaces/baseAssetRecord';
+import { ListItemsFilter } from './interfaces/filters';
+import { Item, ItemAggregationDocument, ItemDocument } from './schemas/items';
+import { ItemLike, ItemLikeDocument } from './schemas/itemLikes';
 import { LegacyService } from '../../legacy/legacy.service';
-import { IItemRecord, IListItemsFilters } from './items.interface';
-import { BigNumber, constants, Contract, Event, providers } from 'ethers';
-import * as abi from '../assets.contract.json';
 import { LegacyTypes } from '../../legacy/legacy.constants';
 
 @Injectable()
+@Processor(AssetQueue.Items)
 export class ItemsService {
   private readonly logger = new Logger(ItemsService.name);
-  private readonly provider: providers.JsonRpcProvider;
-  private readonly contract: Contract;
   private readonly perPage: number = 10;
 
   constructor(
     private readonly config: ConfigService,
     private readonly legacyService: LegacyService,
+    @InjectQueue(AssetQueue.Items) private readonly queue: Queue<AssetPayload>,
     @InjectModel(Item.name) private readonly itemModel: Model<ItemDocument>,
-  ) {
-    // items contract provider
-    this.provider = new providers.JsonRpcProvider(config.get<string>('provider.rpc'));
-    this.contract = new Contract(config.get<string>('provider.assets.item'), abi, this.provider);
-    this.contract.on(this.contract.filters.Transfer(), (from: string, to: string, tokenId: BigNumber, event: Event) => {
-      void this.contractEvent(from, to, tokenId, event);
-    });
-  }
+    @InjectModel(ItemLike.name) private readonly itemLikeModel: Model<ItemLikeDocument>,
+  ) {}
 
-  async findOne(id: string, user = ''): Promise<IItemRecord> {
+  async findOne(id: string, user = ''): Promise<BaseAssetRecord> {
     await this.itemModel.findByIdAndUpdate(id, { $inc: { views: 1 } }).exec();
+
     const [item] = await this.itemModel.aggregate<ItemAggregationDocument>([
       { $match: { _id: new Types.ObjectId(id) } },
       this.legacyLookupPipeline('isLiked', [{ $match: { type: LegacyTypes.ItemLiked, user } }]),
@@ -56,7 +54,7 @@ export class ItemsService {
     return this.toItemRecord(item);
   }
 
-  async find(filters: IListItemsFilters): Promise<IItemRecord[]> {
+  async find(filters: ListItemsFilter): Promise<BaseAssetRecord[]> {
     const matchParams: Record<string, any> = {};
     if (filters.gameId) {
       matchParams.gameId = filters.gameId;
@@ -78,8 +76,8 @@ export class ItemsService {
     sortParams: Record<string, any>,
     page: number,
     user = '',
-  ): Promise<IItemRecord[]> {
-    const items: IItemRecord[] = [];
+  ): Promise<BaseAssetRecord[]> {
+    const items: BaseAssetRecord[] = [];
     const aggregation = this.itemModel.aggregate<ItemAggregationDocument>([
       { $match: { ...matchParams } },
       { $sort: { ...sortParams } },
@@ -120,7 +118,7 @@ export class ItemsService {
     };
   }
 
-  private toItemRecord(item: ItemAggregationDocument): IItemRecord {
+  private toItemRecord(item: ItemAggregationDocument): BaseAssetRecord {
     return {
       id: item._id.toString(),
       owner: item.owner,
@@ -136,42 +134,24 @@ export class ItemsService {
     };
   }
 
-  private async contractEvent(from: string, to: string, tokenId: BigNumber, event: Event): Promise<void> {
-    try {
-      if (from === constants.AddressZero) {
-        this.logger.log(`mint item (${to}, ${tokenId.toString()})`);
-        await this.create(to, tokenId.toString(), event);
-        // const tokenDNA = await this.contract.tokenURI(tokenId);
-      } else {
-        this.logger.log(`transfer item (${from}, ${to}, ${tokenId.toString()})`);
-        await this.transfer(from, to, tokenId.toString(), event);
-      }
-    } catch (err) {
-      this.logger.log(err);
-    }
-  }
-
-  private async create(owner: string, tokenId: string, event: Event): Promise<void> {
-    const item = await this.itemModel.create({ owner, owners: [owner], tokenId });
-    await this.legacyService.assetMinted(owner, item.id, LegacyTypes.ItemMinted, {
-      txHash: event.transactionHash,
-      to: owner,
+  @Process(AssetEvent.Create)
+  private async createItem(job: Job<AssetPayload>) {
+    await this.itemModel.create({
+      tokenId: job.data.tokenId,
+      owner: job.data.to,
+      owners: [job.data.to],
+      views: 0,
     });
   }
 
-  private async transfer(from: string, to: string, tokenId: string, event: Event): Promise<void> {
-    const asset = await this.itemModel.findOneAndUpdate(
-      { tokenId },
+  @Process(AssetEvent.Transfer)
+  private async transferItem(job: Job<AssetPayload>) {
+    await this.itemModel.findOneAndUpdate(
+      { tokenId: job.data.tokenId },
       {
-        $set: { owner: to },
-        $push: { owners: from },
+        $set: { owner: job.data.to },
+        $push: { owners: job.data.from },
       },
-      { new: true },
     );
-    await this.legacyService.assetTransferred(to, asset.id, LegacyTypes.ItemTransferred, {
-      from,
-      to,
-      txHash: event.transactionHash,
-    });
   }
 }

@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, SchemaTypes } from 'mongoose';
+import { DocumentTimestamps } from '../../assets/common/types/document';
 
 @Schema({ _id: false })
 class GeneralInformation {
@@ -146,7 +147,7 @@ export class Game {
   contacts: GameContacts;
 }
 
-export type GameDocument = Game & Document & { createdAt: string; updatedAt: string };
+export type GameDocument = Game & Document & DocumentTimestamps;
 
 export type GameAggregationDocument = GameDocument & {
   isLiked: boolean;

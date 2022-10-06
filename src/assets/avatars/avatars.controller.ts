@@ -9,39 +9,39 @@ import {
   ParseIntPipe,
   Patch,
   Query,
-  Req,
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
-import { Request } from 'express';
+import { Web3AuthGuard } from '../../auth/guards/web3auth.guard';
+import { CurrentUser } from '../../auth/decorators/currentUser';
+import { isMongoId } from 'class-validator';
+import { ListAvatarsFilters } from './interfaces/filters';
+import { BaseAssetRecord } from '../common/interfaces/baseAssetRecord';
 import { AvatarsService } from './avatars.service';
 import { LegacyService } from '../../legacy/legacy.service';
-import { Web3authGuard } from '../../auth/web3auth.guard';
-import { IAvatarRecord, IListAvatarsFilters } from './avatars.interface';
 import { LegacyTypes } from '../../legacy/legacy.constants';
-import { isMongoId } from 'class-validator';
 
 @Controller()
 export class AvatarsController {
   constructor(private readonly avatarsService: AvatarsService, private readonly legacyService: LegacyService) {}
 
   @Get()
-  @UseGuards(new Web3authGuard(true))
+  @UseGuards(new Web3AuthGuard(true))
   async find(
-    @Req() request: Request,
+    @CurrentUser() user: string,
     @Query('list', new DefaultValuePipe('latest')) list: 'latest' | 'popular' | 'my',
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('gameId', new DefaultValuePipe('')) gameId: string,
-  ): Promise<IAvatarRecord[]> {
+  ): Promise<BaseAssetRecord[]> {
     if (page < 1) {
       throw new BadRequestException('invalid page number');
     }
-    const filters: IListAvatarsFilters = { list, page };
-    if (list === 'my' && !request['user']) {
+    const filters: ListAvatarsFilters = { list, page };
+    if (list === 'my' && !user) {
       throw new UnauthorizedException();
     }
-    if (request['user']) {
-      filters.user = request['user'];
+    if (user) {
+      filters.user = user;
     }
     if (gameId) {
       filters.gameId = gameId;
@@ -50,12 +50,12 @@ export class AvatarsController {
   }
 
   @Get(':id')
-  @UseGuards(new Web3authGuard(true))
-  async findOne(@Req() request: Request, @Param('id') id: string): Promise<IAvatarRecord> {
+  @UseGuards(new Web3AuthGuard(true))
+  async findOne(@CurrentUser() user: string, @Param('id') id: string): Promise<BaseAssetRecord> {
     if (!isMongoId(id)) {
       throw new BadRequestException('invalid id');
     }
-    const item = await this.avatarsService.findOne(id, request['user']);
+    const item = await this.avatarsService.findOne(id, user);
     if (!item) {
       throw new NotFoundException();
     }
@@ -63,9 +63,9 @@ export class AvatarsController {
   }
 
   @Patch(':id/:operation/:gameId?')
-  @UseGuards(new Web3authGuard(false))
+  @UseGuards(new Web3AuthGuard(false))
   async update(
-    @Req() request: Request,
+    @CurrentUser() user: string,
     @Param('id') id: string,
     @Param('operation') operation: string,
     @Param('gameId', new DefaultValuePipe('')) gameId: string,
@@ -76,9 +76,9 @@ export class AvatarsController {
     }
     switch (operation) {
       case 'like':
-        return await this.legacyService.likeAsset(request['user'], id, LegacyTypes.AvatarLiked);
+        return await this.legacyService.likeAsset(user, id, LegacyTypes.AvatarLiked);
       case 'dislike':
-        return await this.legacyService.dislikeAsset(request['user'], id, LegacyTypes.AvatarLiked);
+        return await this.legacyService.dislikeAsset(user, id, LegacyTypes.AvatarLiked);
     }
     // game specific operations
     if (!isMongoId(gameId)) {
@@ -86,9 +86,9 @@ export class AvatarsController {
     }
     switch (operation) {
       case 'use':
-        return await this.legacyService.useAssetInGame(request['user'], id, gameId, LegacyTypes.AvatarUsed, data);
+        return await this.legacyService.useAssetInGame(user, id, gameId, LegacyTypes.AvatarUsed, data);
       case 'add':
-        return await this.legacyService.addAssetToGame(request['user'], id, gameId, LegacyTypes.AvatarAdded);
+        return await this.legacyService.addAssetToGame(user, id, gameId, LegacyTypes.AvatarAdded);
     }
     throw new BadRequestException('invalid operation');
   }

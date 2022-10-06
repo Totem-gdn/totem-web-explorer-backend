@@ -1,4 +1,4 @@
-export interface IAvatarRecord {
+export interface BaseAssetRecord {
   id: string;
   owner: string;
   owners: string[];
@@ -10,11 +10,4 @@ export interface IAvatarRecord {
   likes: number;
   games: number;
   lastUsed: string;
-}
-
-export interface IListAvatarsFilters {
-  list: 'popular' | 'latest' | 'my';
-  page?: number;
-  gameId?: string;
-  user?: string;
 }

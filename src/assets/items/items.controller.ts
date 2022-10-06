@@ -9,39 +9,39 @@ import {
   ParseIntPipe,
   Patch,
   Query,
-  Req,
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
-import { Request } from 'express';
+import { Web3AuthGuard } from '../../auth/guards/web3auth.guard';
+import { CurrentUser } from '../../auth/decorators/currentUser';
+import { isMongoId } from 'class-validator';
+import { ListItemsFilter } from './interfaces/filters';
+import { BaseAssetRecord } from '../common/interfaces/baseAssetRecord';
 import { ItemsService } from './items.service';
 import { LegacyService } from '../../legacy/legacy.service';
-import { Web3authGuard } from '../../auth/web3auth.guard';
-import { IItemRecord, IListItemsFilters } from './items.interface';
 import { LegacyTypes } from '../../legacy/legacy.constants';
-import { isMongoId } from 'class-validator';
 
 @Controller()
 export class ItemsController {
   constructor(private readonly itemsService: ItemsService, private readonly legacyService: LegacyService) {}
 
   @Get()
-  @UseGuards(new Web3authGuard(true))
+  @UseGuards(new Web3AuthGuard(true))
   async find(
-    @Req() request: Request,
+    @CurrentUser() user: string,
     @Query('list', new DefaultValuePipe('latest')) list: 'latest' | 'popular' | 'my',
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('gameId', new DefaultValuePipe('')) gameId: string,
-  ): Promise<IItemRecord[]> {
+  ): Promise<BaseAssetRecord[]> {
     if (page < 1) {
       throw new BadRequestException('invalid page number');
     }
-    const filters: IListItemsFilters = { list, page };
-    if (list === 'my' && !request['user']) {
+    const filters: ListItemsFilter = { list, page };
+    if (list === 'my' && !user) {
       throw new UnauthorizedException();
     }
-    if (request['user']) {
-      filters.user = request['user'];
+    if (user) {
+      filters.user = user;
     }
     if (gameId) {
       filters.gameId = gameId;
@@ -50,12 +50,12 @@ export class ItemsController {
   }
 
   @Get(':id')
-  @UseGuards(new Web3authGuard(true))
-  async findOne(@Req() request: Request, @Param('id') id: string): Promise<IItemRecord> {
+  @UseGuards(new Web3AuthGuard(true))
+  async findOne(@CurrentUser() user: string, @Param('id') id: string): Promise<BaseAssetRecord> {
     if (!isMongoId(id)) {
       throw new BadRequestException('invalid id');
     }
-    const item = await this.itemsService.findOne(id, request['user']);
+    const item = await this.itemsService.findOne(id, user);
     if (!item) {
       throw new NotFoundException();
     }
@@ -63,9 +63,9 @@ export class ItemsController {
   }
 
   @Patch(':id/:operation/:gameId?')
-  @UseGuards(new Web3authGuard(false))
+  @UseGuards(new Web3AuthGuard(false))
   async update(
-    @Req() request: Request,
+    @CurrentUser() user: string,
     @Param('id') id: string,
     @Param('operation') operation: string,
     @Param('gameId', new DefaultValuePipe('')) gameId: string,
@@ -76,9 +76,9 @@ export class ItemsController {
     }
     switch (operation) {
       case 'like':
-        return await this.legacyService.likeAsset(request['user'], id, LegacyTypes.ItemLiked);
+        return await this.legacyService.likeAsset(user, id, LegacyTypes.ItemLiked);
       case 'dislike':
-        return await this.legacyService.dislikeAsset(request['user'], id, LegacyTypes.ItemLiked);
+        return await this.legacyService.dislikeAsset(user, id, LegacyTypes.ItemLiked);
     }
     // game specific operations
     if (!isMongoId(gameId)) {
@@ -86,9 +86,9 @@ export class ItemsController {
     }
     switch (operation) {
       case 'use':
-        return await this.legacyService.useAssetInGame(request['user'], id, gameId, LegacyTypes.ItemUsed, data);
+        return await this.legacyService.useAssetInGame(user, id, gameId, LegacyTypes.ItemUsed, data);
       case 'add':
-        return await this.legacyService.addAssetToGame(request['user'], id, gameId, LegacyTypes.ItemAdded);
+        return await this.legacyService.addAssetToGame(user, id, gameId, LegacyTypes.ItemAdded);
     }
     throw new BadRequestException('invalid operation');
   }

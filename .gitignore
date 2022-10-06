@@ -36,8 +36,3 @@ lerna-debug.log*
 
 .env*
 !.env.sample
-
-# Contract files
-contract/*
-!contract/erc20.abi.json
-!contract/erc721.abi.json
