@@ -211,7 +211,7 @@ export class GamesService {
       connections: {
         webpage: game.connections.webpage,
         assetRenderer: game.connections.assetRenderer,
-        dnaFilter: await this.getStaticUrl(gameId, game.connections.dnaFilter),
+        dnaFilter: game.connections.dnaFilter ? await this.getStaticUrl(gameId, game.connections.dnaFilter) : '',
         promoVideo: game.connections.promoVideo,
         socialLinks: game.connections.socialLinks,
       },
