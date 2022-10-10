@@ -43,7 +43,7 @@ export class ItemsService {
         $addFields: {
           isLiked: { $gt: [{ $size: '$isLiked' }, 0] },
           likes: { $size: '$likes' },
-          games: { $size: '$gamesUsed' },
+          games: { $size: '$games' },
           lastUsed: '$lastUsed.createdAt',
         },
       },
