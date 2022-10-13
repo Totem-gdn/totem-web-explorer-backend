@@ -3,4 +3,5 @@ export interface ListGemsFilters {
   page?: number;
   gameId?: string;
   user?: string;
+  search?: string;
 }

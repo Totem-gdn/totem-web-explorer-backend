@@ -344,6 +344,12 @@ gameId:
   type: string
   required: false
   description: global game id filter
+
+search:
+  in: query
+  type: string
+  required: false
+  description: tokenId search param
 ```
 
 Response

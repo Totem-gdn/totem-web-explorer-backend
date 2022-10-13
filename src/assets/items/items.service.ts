@@ -61,6 +61,9 @@ export class ItemsService {
 
   async find(filters: ListItemsFilter): Promise<BaseAssetRecord[]> {
     const matchParams: Record<string, any> = {};
+    if (filters.search) {
+      matchParams.tokenId = { $in: [new RegExp(filters.search, 'gi')] };
+    }
     if (filters.gameId) {
       matchParams.gameId = filters.gameId;
     }

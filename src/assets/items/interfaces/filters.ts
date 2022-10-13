@@ -3,4 +3,5 @@ export interface ListItemsFilter {
   page?: number;
   gameId?: string;
   user?: string;
+  search?: string;
 }

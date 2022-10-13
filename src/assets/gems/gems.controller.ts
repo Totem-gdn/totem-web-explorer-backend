@@ -32,6 +32,7 @@ export class GemsController {
     @Query('list', new DefaultValuePipe('latest')) list: 'latest' | 'popular' | 'my',
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('gameId', new DefaultValuePipe('')) gameId: string,
+    @Query('search', new DefaultValuePipe('')) search: string,
   ): Promise<BaseAssetRecord[]> {
     if (page < 1) {
       throw new BadRequestException('invalid page number');
@@ -45,6 +46,9 @@ export class GemsController {
     }
     if (gameId) {
       filters.gameId = gameId;
+    }
+    if (search) {
+      filters.search = search;
     }
     return await this.gemsService.find(filters);
   }
