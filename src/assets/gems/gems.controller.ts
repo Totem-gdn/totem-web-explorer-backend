@@ -14,7 +14,7 @@ import {
 } from '@nestjs/common';
 import { Web3AuthGuard } from '../../auth/guards/web3auth.guard';
 import { CurrentUser } from '../../auth/decorators/currentUser';
-import { isMongoId } from 'class-validator';
+import { isMongoId, isNumberString } from 'class-validator';
 import { ListGemsFilters } from './interfaces/filters';
 import { BaseAssetRecord } from '../common/interfaces/baseAssetRecord';
 import { GemsService } from './gems.service';
@@ -52,7 +52,7 @@ export class GemsController {
   @Get(':id')
   @UseGuards(new Web3AuthGuard(true))
   async findOne(@CurrentUser() user: string, @Param('id') id: string): Promise<BaseAssetRecord> {
-    if (!isMongoId(id)) {
+    if (!isMongoId(id) && !isNumberString(id)) {
       throw new BadRequestException('invalid id');
     }
     const gem = await this.gemsService.findOne(id, user);

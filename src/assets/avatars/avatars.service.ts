@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -11,11 +11,11 @@ import { Avatar, AvatarAggregationDocument, AvatarDocument } from './schemas/ava
 import { LegacyService } from '../../legacy/legacy.service';
 import { LegacyTypes } from '../../legacy/legacy.constants';
 import { AvatarLike, AvatarLikeDocument } from './schemas/avatarLikes';
+import { isMongoId } from 'class-validator';
 
 @Injectable()
 @Processor(AssetQueue.Avatars)
 export class AvatarsService {
-  private readonly logger = new Logger(AvatarsService.name);
   private readonly perPage: number = 10;
 
   constructor(
@@ -27,9 +27,15 @@ export class AvatarsService {
   ) {}
 
   async findOne(id: string, user = ''): Promise<BaseAssetRecord> {
-    await this.avatarModel.findByIdAndUpdate(id, { $inc: { views: 1 } }).exec();
+    const matchParams: Record<string, any> = {};
+    if (isMongoId(id)) {
+      matchParams._id = new Types.ObjectId(id);
+    } else {
+      matchParams.tokenId = id;
+    }
+    await this.avatarModel.findOneAndUpdate({ ...matchParams }, { $inc: { views: 1 } }).exec();
     const [avatar] = await this.avatarModel.aggregate<AvatarAggregationDocument>([
-      { $match: { _id: new Types.ObjectId(id) } },
+      { $match: { ...matchParams } },
       this.legacyLookupPipeline('isLiked', [{ $match: { type: LegacyTypes.AvatarLiked, user } }]),
       this.legacyLookupPipeline('likes', [{ $match: { type: LegacyTypes.AvatarLiked } }]),
       this.legacyLookupPipeline('games', [{ $match: { type: LegacyTypes.AvatarUsed } }]),

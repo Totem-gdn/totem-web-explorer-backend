@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -11,11 +11,11 @@ import { Item, ItemAggregationDocument, ItemDocument } from './schemas/items';
 import { ItemLike, ItemLikeDocument } from './schemas/itemLikes';
 import { LegacyService } from '../../legacy/legacy.service';
 import { LegacyTypes } from '../../legacy/legacy.constants';
+import { isMongoId } from 'class-validator';
 
 @Injectable()
 @Processor(AssetQueue.Items)
 export class ItemsService {
-  private readonly logger = new Logger(ItemsService.name);
   private readonly perPage: number = 10;
 
   constructor(
@@ -27,10 +27,15 @@ export class ItemsService {
   ) {}
 
   async findOne(id: string, user = ''): Promise<BaseAssetRecord> {
-    await this.itemModel.findByIdAndUpdate(id, { $inc: { views: 1 } }).exec();
-
+    const matchParams: Record<string, any> = {};
+    if (isMongoId(id)) {
+      matchParams._id = new Types.ObjectId(id);
+    } else {
+      matchParams.tokenId = id;
+    }
+    await this.itemModel.findOneAndUpdate({ ...matchParams }, { $inc: { views: 1 } }).exec();
     const [item] = await this.itemModel.aggregate<ItemAggregationDocument>([
-      { $match: { _id: new Types.ObjectId(id) } },
+      { $match: { ...matchParams } },
       this.legacyLookupPipeline('isLiked', [{ $match: { type: LegacyTypes.ItemLiked, user } }]),
       this.legacyLookupPipeline('likes', [{ $match: { type: LegacyTypes.ItemLiked } }]),
       this.legacyLookupPipeline('games', [{ $match: { type: LegacyTypes.ItemUsed } }]),
