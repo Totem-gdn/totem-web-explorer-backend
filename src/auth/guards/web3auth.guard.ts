@@ -1,6 +1,7 @@
 import { CanActivate, ExecutionContext, Injectable, Logger } from '@nestjs/common';
 import { Request } from 'express';
 import * as jose from 'jose';
+import { ethers } from 'ethers';
 
 @Injectable()
 export class Web3AuthGuard implements CanActivate {
@@ -41,7 +42,7 @@ export class Web3AuthGuard implements CanActivate {
         return false;
       }
       if ((jwtDecode.payload as any).wallets[0].public_key === appPubKey) {
-        request[Web3AuthGuard.UserKey] = appPubKey;
+        request[Web3AuthGuard.UserKey] = ethers.utils.computeAddress(`0x${appPubKey}`);
         return true;
       }
       return false;
