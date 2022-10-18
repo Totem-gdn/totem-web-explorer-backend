@@ -12,7 +12,8 @@ export class Web3AuthGuard implements CanActivate {
 
   private readonly logger = new Logger(Web3AuthGuard.name);
   private readonly allowUnauthorized: boolean = false;
-  private readonly remoteJWKSetUrl = new URL('https://api.openlogin.com/jwks');
+  private readonly OpenLoginJWKSetUrl = new URL('https://api.openlogin.com/jwks');
+  private readonly Web3AuthJWKSetUrl = new URL('https://authjs.web3auth.io/jwks');
 
   constructor(allowUnauthorized?: boolean) {
     this.allowUnauthorized = allowUnauthorized;
@@ -34,16 +35,18 @@ export class Web3AuthGuard implements CanActivate {
         return false;
       }
       const idToken = authHeader[1];
-      const jwtDecode = await jose.jwtVerify(idToken, jose.createRemoteJWKSet(this.remoteJWKSetUrl), {
-        algorithms: ['ES256'],
-      });
+      const jwtPayload = jose.decodeJwt(idToken);
+      const JWKS = jose.createRemoteJWKSet(jwtPayload.issuer ? this.Web3AuthJWKSetUrl : this.OpenLoginJWKSetUrl);
+      const jwtDecode = await jose.jwtVerify(idToken, JWKS, { algorithms: ['ES256'] });
       const appPubKey = authHeader[2] || (request.headers[Web3AuthGuard.XHeaders.PubKey] as string);
       if (!appPubKey) {
         return false;
       }
-      if ((jwtDecode.payload as any).wallets[0].public_key === appPubKey) {
-        request[Web3AuthGuard.UserKey] = ethers.utils.computeAddress(`0x${appPubKey}`);
-        return true;
+      for (const wallet of (jwtDecode.payload as any).wallets) {
+        if (wallet.public_key === appPubKey || wallet.address === appPubKey) {
+          request[Web3AuthGuard.UserKey] = wallet.address || ethers.utils.computeAddress(`0x${appPubKey}`);
+          return true;
+        }
       }
       return false;
     } catch (err) {

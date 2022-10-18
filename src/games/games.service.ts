@@ -117,7 +117,7 @@ export class GamesService {
   async find(filters: ListGamesFilters): Promise<GameRecord[]> {
     const matchParams: Record<string, any> = {};
     if (filters.search) {
-      matchParams['general.name'] = { $regex: filters.search, $options: 'i' };
+      matchParams['general.name'] = { $in: [new RegExp(filters.search, 'gi')] };
     }
     const sortParams: Record<string, any> = {};
     if (filters.list === 'popular') {
