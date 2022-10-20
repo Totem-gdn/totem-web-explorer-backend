@@ -3,9 +3,6 @@ import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { isMongoId } from 'class-validator';
-import { InjectQueue, Process, Processor } from '@nestjs/bull';
-import { Job, Queue } from 'bull';
-import { AssetEvent, AssetPayload, AssetQueue } from '../config/queues/assets';
 import { AssetAggregationDocument } from './types/document';
 import { AssetRecord } from './common/interfaces/assetRecord';
 import { ListAssetsFilter } from './interfaces/filters';
@@ -22,14 +19,10 @@ import { GemLike, GemLikeDocument } from './schemas/gemLikes';
 import { AssetType } from './types/assets';
 
 @Injectable()
-@Processor(AssetQueue.Avatars)
-@Processor(AssetQueue.Items)
-@Processor(AssetQueue.Gems)
 export class AssetsService {
   private readonly perPage: number = 10;
   private readonly assetsModels: Record<AssetType, Model<AvatarDocument | ItemDocument | GemDocument>>;
   private readonly assetLikesModels: Record<AssetType, Model<AvatarLikeDocument | ItemLikeDocument | GemLikeDocument>>;
-  private readonly assetsQueues: Record<AssetType, Queue<AssetPayload>>;
   private readonly assetLikesTypes: Record<AssetType, LegacyLikedType> = {
     avatars: LegacyEvents.AvatarLiked,
     items: LegacyEvents.ItemLiked,
@@ -45,9 +38,6 @@ export class AssetsService {
     private readonly config: ConfigService,
     private readonly legacyService: LegacyService,
     private readonly explorerService: ExplorerService,
-    @InjectQueue(AssetQueue.Avatars) private readonly avatarsQueue: Queue<AssetPayload>,
-    @InjectQueue(AssetQueue.Items) private readonly itemsQueue: Queue<AssetPayload>,
-    @InjectQueue(AssetQueue.Gems) private readonly gemsQueue: Queue<AssetPayload>,
     @InjectModel(Avatar.name) private readonly avatarModel: Model<AvatarDocument>,
     @InjectModel(AvatarLike.name) private readonly avatarLikeModel: Model<AvatarLikeDocument>,
     @InjectModel(Item.name) private readonly itemModel: Model<ItemDocument>,
@@ -60,15 +50,11 @@ export class AssetsService {
       items: itemModel,
       gems: gemModel,
     };
+    // TODO: change legacy to direct asset likes
     this.assetLikesModels = {
       avatars: avatarLikeModel,
       items: itemLikeModel,
       gems: gemLikeModel,
-    };
-    this.assetsQueues = {
-      avatars: avatarsQueue,
-      items: itemsQueue,
-      gems: gemsQueue,
     };
   }
 
@@ -218,28 +204,5 @@ export class AssetsService {
       games: asset.games,
       lastUsed: asset.lastUsed[0] || '',
     };
-  }
-
-  @Process(AssetEvent.Create)
-  private async createAsset(job: Job<AssetPayload>) {
-    // const dna = await this.explorerService.getAssetDNA(job.data.assetType, job.data.tokenId);
-    await this.assetsModels[job.data.assetType].create({
-      tokenId: job.data.tokenId,
-      owner: job.data.to,
-      owners: [job.data.to],
-      views: 0,
-      // dna,
-    });
-  }
-
-  @Process(AssetEvent.Transfer)
-  private async transferAsset(job: Job<AssetPayload>) {
-    await this.assetsModels[job.data.assetType].findOneAndUpdate(
-      { tokenId: job.data.tokenId },
-      {
-        $set: { owner: job.data.to },
-        $push: { owners: job.data.from },
-      },
-    );
   }
 }

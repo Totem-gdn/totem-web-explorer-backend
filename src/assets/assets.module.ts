@@ -14,6 +14,9 @@ import { ItemLike, ItemLikeSchema } from './schemas/itemLikes';
 import { Gem, GemSchema } from './schemas/gems';
 import { GemLike, GemLikeSchema } from './schemas/gemLikes';
 import { ExplorerModule } from '../explorer/explorer.module';
+import { AvatarsProcessor } from './avatars.processor';
+import { ItemsProcessor } from './items.processor';
+import { GemsProcessor } from './gems.processor';
 
 @Module({
   imports: [
@@ -34,6 +37,6 @@ import { ExplorerModule } from '../explorer/explorer.module';
     ExplorerModule,
   ],
   controllers: [AssetsController],
-  providers: [AssetsService],
+  providers: [AssetsService, AvatarsProcessor, ItemsProcessor, GemsProcessor],
 })
 export class AssetsModule {}
