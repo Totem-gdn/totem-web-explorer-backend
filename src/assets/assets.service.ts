@@ -12,6 +12,7 @@ import { ListAssetsFilter } from './interfaces/filters';
 import { LegacyService } from '../legacy/legacy.service';
 import { LegacyEvents } from '../legacy/enums/legacy.enums';
 import { LegacyLikedType, LegacyUsedType } from '../legacy/types/legacy.types';
+import { ExplorerService } from '../explorer/explorer.service';
 import { Avatar, AvatarDocument } from './schemas/avatars';
 import { AvatarLike, AvatarLikeDocument } from './schemas/avatarLikes';
 import { Item, ItemDocument } from './schemas/items';
@@ -43,6 +44,7 @@ export class AssetsService {
   constructor(
     private readonly config: ConfigService,
     private readonly legacyService: LegacyService,
+    private readonly explorerService: ExplorerService,
     @InjectQueue(AssetQueue.Avatars) private readonly avatarsQueue: Queue<AssetPayload>,
     @InjectQueue(AssetQueue.Items) private readonly itemsQueue: Queue<AssetPayload>,
     @InjectQueue(AssetQueue.Gems) private readonly gemsQueue: Queue<AssetPayload>,
@@ -220,11 +222,13 @@ export class AssetsService {
 
   @Process(AssetEvent.Create)
   private async createAsset(job: Job<AssetPayload>) {
+    // const dna = await this.explorerService.getAssetDNA(job.data.assetType, job.data.tokenId);
     await this.assetsModels[job.data.assetType].create({
       tokenId: job.data.tokenId,
       owner: job.data.to,
       owners: [job.data.to],
       views: 0,
+      // dna,
     });
   }
 

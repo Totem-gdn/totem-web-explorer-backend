@@ -13,6 +13,7 @@ import { Item, ItemSchema } from './schemas/items';
 import { ItemLike, ItemLikeSchema } from './schemas/itemLikes';
 import { Gem, GemSchema } from './schemas/gems';
 import { GemLike, GemLikeSchema } from './schemas/gemLikes';
+import { ExplorerModule } from '../explorer/explorer.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { GemLike, GemLikeSchema } from './schemas/gemLikes';
       { name: GemLike.name, schema: GemLikeSchema },
       { name: LegacyRecord.name, schema: LegacyRecordSchema },
     ]),
+    ExplorerModule,
   ],
   controllers: [AssetsController],
   providers: [AssetsService],

@@ -55,46 +55,53 @@ export class ExplorerService {
     void this.initContract('gems');
   }
 
-  private async initContract(asset: AssetType) {
-    await this.fetchPreviousEvents(asset);
-    this.contracts[asset].on(
-      this.contracts[asset].filters.Transfer(),
+  async getAssetDNA(assetType: AssetType, tokenId: string): Promise<string> {
+    return await this.contracts[assetType].tokenURI(BigNumber.from(tokenId));
+  }
+
+  private async initContract(assetType: AssetType) {
+    await this.fetchPreviousEvents(assetType);
+    this.contracts[assetType].on(
+      this.contracts[assetType].filters.Transfer(),
       (from: string, to: string, tokenId: BigNumber, event: Event) => {
-        void this.addEventToQueue(asset, from, to, tokenId, event).catch((err) => this.logger.error(err));
+        void this.addEventToQueue(assetType, from, to, tokenId, event).catch((err) => this.logger.error(err));
       },
     );
   }
 
-  private async fetchPreviousEvents(asset: AssetType) {
+  private async fetchPreviousEvents(assetType: AssetType) {
     let block = await this.redis
-      .get(this.storageKeys[asset])
-      .then((blockNumber: string | null) => parseInt(blockNumber || this.deployBlockNumber[asset], 16));
+      .get(this.storageKeys[assetType])
+      .then((blockNumber: string | null) => parseInt(blockNumber || this.deployBlockNumber[assetType], 16));
     let currentBlock = await this.provider.getBlockNumber();
     const perPage = 2000; // Alchemy recommended https://docs.alchemy.com/reference/eth-getlogs-polygon
     while (currentBlock > block) {
-      this.logger.log(`[${asset}] fetching blocks from ${block} to ${block + perPage}`);
+      this.logger.log(`[${assetType}] fetching blocks from ${block} to ${block + perPage}`);
       // request events in blocks range
-      const events = await this.contracts[asset].queryFilter('Transfer', block, block + perPage);
+      const events = await this.contracts[assetType].queryFilter('Transfer', block, block + perPage);
       // process all events, update block number in redis on every processed event
       for (const event of events) {
         const [from, to, tokenId] = event.args;
-        await this.addEventToQueue(asset, from, to, tokenId, event);
+        await this.addEventToQueue(assetType, from, to, tokenId, event);
       }
       // update currentBlock because we don't listen to events while processing previous events
       block += perPage + 1;
       currentBlock = await this.provider.getBlockNumber();
-      await this.redis.set(this.storageKeys[asset], `0x${(block < currentBlock ? block : currentBlock).toString(16)}`);
+      await this.redis.set(
+        this.storageKeys[assetType],
+        `0x${(block < currentBlock ? block : currentBlock).toString(16)}`,
+      );
     }
-    this.logger.log(`[${asset}] fetching of previous events completed`);
-    this.logger.log(`[${asset}] current block ${currentBlock}`);
+    this.logger.log(`[${assetType}] fetching of previous events completed`);
+    this.logger.log(`[${assetType}] current block ${currentBlock}`);
   }
 
-  private async addEventToQueue(asset: AssetType, from: string, to: string, tokenId: BigNumber, event: Event) {
-    this.logger.log(`[${asset}] Transfer(${from}, ${to}, ${tokenId.toString()})`);
-    await this.queues[asset].add(
+  private async addEventToQueue(assetType: AssetType, from: string, to: string, tokenId: BigNumber, event: Event) {
+    this.logger.log(`[${assetType}] Transfer(${from}, ${to}, ${tokenId.toString()})`);
+    await this.queues[assetType].add(
       from === constants.AddressZero ? AssetEvent.Create : AssetEvent.Transfer,
       {
-        assetType: asset,
+        assetType: assetType,
         from,
         to,
         tokenId: (tokenId as BigNumber).toString(),
@@ -105,6 +112,6 @@ export class ExplorerService {
         ...DefaultJobOptions,
       },
     );
-    await this.redis.set(this.storageKeys[asset], `0x${event.blockNumber.toString(16)}`);
+    await this.redis.set(this.storageKeys[assetType], `0x${event.blockNumber.toString(16)}`);
   }
 }

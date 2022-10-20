@@ -12,5 +12,6 @@ import { AssetQueue } from '../config/queues/assets';
     BullModule.registerQueue({ name: AssetQueue.Gems }),
   ],
   providers: [ExplorerService],
+  exports: [ExplorerService],
 })
 export class ExplorerModule {}

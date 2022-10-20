@@ -13,4 +13,7 @@ export class BaseAsset {
 
   @Prop({ type: SchemaTypes.Number, required: true, default: () => 0 })
   views: number;
+
+  // @Prop({ type: SchemaTypes.String, required: true })
+  // dna: string;
 }
