@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, SchemaTypes } from 'mongoose';
-import { DocumentTimestamps } from '../../assets/common/types/document';
+import { DocumentTimestamps } from '../../assets/types/document';
 
 @Schema({ _id: false })
 class GeneralInformation {

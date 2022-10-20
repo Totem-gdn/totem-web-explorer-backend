@@ -1,7 +1,7 @@
 import { Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import { BaseAsset } from '../../common/schemas/baseAsset';
-import { DocumentTimestamps } from '../../common/types/document';
+import { BaseAsset } from '../common/schemas/baseAsset';
+import { DocumentTimestamps } from '../types/document';
 
 @Schema({
   autoCreate: true,

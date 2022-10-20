@@ -1,6 +1,6 @@
 import { Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import { BaseAssetLike } from '../../common/schemas/baseAssetLike';
+import { BaseAssetLike } from '../common/schemas/baseAssetLike';
 
 @Schema({
   autoCreate: true,

@@ -7,9 +7,7 @@ import appConfig from './config/app.config';
 import { HealthModule } from './health/health.module';
 import { GamesModule } from './games/games.module';
 import { LegacyModule } from './legacy/legacy.module';
-import { AvatarsModule } from './assets/avatars/avatars.module';
-import { ItemsModule } from './assets/items/items.module';
-import { GemsModule } from './assets/gems/gems.module';
+import { AssetsModule } from './assets/assets.module';
 import { AppRouterModule } from './router.module';
 import { ExplorerModule } from './explorer/explorer.module';
 
@@ -45,9 +43,7 @@ import { ExplorerModule } from './explorer/explorer.module';
     LegacyModule,
     ExplorerModule,
     GamesModule,
-    AvatarsModule,
-    ItemsModule,
-    GemsModule,
+    AssetsModule,
     AppRouterModule,
   ],
 })

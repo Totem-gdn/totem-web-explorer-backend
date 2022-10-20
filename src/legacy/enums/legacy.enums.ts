@@ -1,4 +1,4 @@
-export enum LegacyTypes {
+export enum LegacyEvents {
   // games events
   GamePlayed = 'gamePlayed',
   GameLiked = 'gameLiked',

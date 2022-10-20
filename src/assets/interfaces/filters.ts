@@ -1,4 +1,4 @@
-export interface ListItemsFilter {
+export interface ListAssetsFilter {
   list: 'popular' | 'latest' | 'my';
   page?: number;
   gameId?: string;

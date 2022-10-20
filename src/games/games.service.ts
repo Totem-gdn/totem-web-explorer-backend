@@ -8,7 +8,7 @@ import { Model, Types } from 'mongoose';
 import { Game, GameAggregationDocument, GameDocument } from './schemas/games';
 import { ConfigService } from '@nestjs/config';
 import { ListGamesFilters } from './interfaces/listGamesFilters';
-import { LegacyTypes } from '../legacy/legacy.constants';
+import { LegacyEvents } from '../legacy/enums/legacy.enums';
 import { GameImage } from './interfaces/gameImage';
 import { GameRecord } from './interfaces/gameRecord';
 import { CreateGameRequest } from './interfaces/createGameRequest';
@@ -62,11 +62,11 @@ export class GamesService {
     const games = await this.gameModel
       .aggregate<GameAggregationDocument>([
         { $match: { _id: new Types.ObjectId(id) } },
-        this.legacyLookupPipeline('isLiked', [{ $match: { type: LegacyTypes.GameLiked, user } }]),
-        this.legacyLookupPipeline('players', [{ $match: { type: LegacyTypes.GamePlayed } }]),
-        this.legacyLookupPipeline('likes', [{ $match: { type: LegacyTypes.GameLiked } }]),
-        this.legacyLookupPipeline('itemsUsed', [{ $match: { type: LegacyTypes.ItemUsed } }]),
-        this.legacyLookupPipeline('avatarsUsed', [{ $match: { type: LegacyTypes.AvatarUsed } }]),
+        this.legacyLookupPipeline('isLiked', [{ $match: { type: LegacyEvents.GameLiked, user } }]),
+        this.legacyLookupPipeline('players', [{ $match: { type: LegacyEvents.GamePlayed } }]),
+        this.legacyLookupPipeline('likes', [{ $match: { type: LegacyEvents.GameLiked } }]),
+        this.legacyLookupPipeline('itemsUsed', [{ $match: { type: LegacyEvents.ItemUsed } }]),
+        this.legacyLookupPipeline('avatarsUsed', [{ $match: { type: LegacyEvents.AvatarUsed } }]),
         {
           $addFields: {
             isLiked: { $gt: [{ $size: '$isLiked' }, 0] },
@@ -91,11 +91,11 @@ export class GamesService {
     const query = this.gameModel.aggregate<GameAggregationDocument>([
       { $match: { approved: true } },
       { $sample: { size: 5 } },
-      this.legacyLookupPipeline('isLiked', [{ $match: { type: LegacyTypes.GameLiked, user } }]),
-      this.legacyLookupPipeline('players', [{ $match: { type: LegacyTypes.GamePlayed } }]),
-      this.legacyLookupPipeline('likes', [{ $match: { type: LegacyTypes.GameLiked } }]),
-      this.legacyLookupPipeline('itemsUsed', [{ $match: { type: LegacyTypes.ItemUsed } }]),
-      this.legacyLookupPipeline('avatarsUsed', [{ $match: { type: LegacyTypes.AvatarUsed } }]),
+      this.legacyLookupPipeline('isLiked', [{ $match: { type: LegacyEvents.GameLiked, user } }]),
+      this.legacyLookupPipeline('players', [{ $match: { type: LegacyEvents.GamePlayed } }]),
+      this.legacyLookupPipeline('likes', [{ $match: { type: LegacyEvents.GameLiked } }]),
+      this.legacyLookupPipeline('itemsUsed', [{ $match: { type: LegacyEvents.ItemUsed } }]),
+      this.legacyLookupPipeline('avatarsUsed', [{ $match: { type: LegacyEvents.AvatarUsed } }]),
       {
         $addFields: {
           isLiked: { $gt: [{ $size: '$isLiked' }, 0] },
@@ -140,11 +140,11 @@ export class GamesService {
       { $sort: { ...sortParams } },
       { $skip: (page - 1) * this.perPage },
       { $limit: this.perPage },
-      this.legacyLookupPipeline('isLiked', [{ $match: { type: LegacyTypes.GameLiked, user } }]),
-      this.legacyLookupPipeline('players', [{ $match: { type: LegacyTypes.GamePlayed } }]),
-      this.legacyLookupPipeline('likes', [{ $match: { type: LegacyTypes.GameLiked } }]),
-      this.legacyLookupPipeline('itemsUsed', [{ $match: { type: LegacyTypes.ItemUsed } }]),
-      this.legacyLookupPipeline('avatarsUsed', [{ $match: { type: LegacyTypes.AvatarUsed } }]),
+      this.legacyLookupPipeline('isLiked', [{ $match: { type: LegacyEvents.GameLiked, user } }]),
+      this.legacyLookupPipeline('players', [{ $match: { type: LegacyEvents.GamePlayed } }]),
+      this.legacyLookupPipeline('likes', [{ $match: { type: LegacyEvents.GameLiked } }]),
+      this.legacyLookupPipeline('itemsUsed', [{ $match: { type: LegacyEvents.ItemUsed } }]),
+      this.legacyLookupPipeline('avatarsUsed', [{ $match: { type: LegacyEvents.AvatarUsed } }]),
       {
         $addFields: {
           isLiked: { $gt: [{ $size: '$isLiked' }, 0] },

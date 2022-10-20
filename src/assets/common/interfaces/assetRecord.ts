@@ -1,4 +1,4 @@
-export interface BaseAssetRecord {
+export interface AssetRecord {
   id: string;
   owner: string;
   owners: string[];

@@ -5,8 +5,9 @@ import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { BigNumber, constants, Contract, Event, providers } from 'ethers';
 import * as abi from './contract-abi.json';
-import { AssetEvent, AssetPayload, AssetQueue, AssetType } from '../config/queues/assets';
+import { AssetEvent, AssetPayload, AssetQueue } from '../config/queues/assets';
 import { DefaultJobOptions } from '../config/queues/defaults';
+import { AssetType } from '../assets/types/assets';
 
 @Injectable()
 export class ExplorerService {
@@ -15,14 +16,14 @@ export class ExplorerService {
   private readonly contracts: Record<AssetType, Contract>;
   private readonly queues: Record<AssetType, Queue<AssetPayload>>;
   private readonly storageKeys: Record<AssetType, string> = {
-    avatar: `provider::avatar::blockNumber`,
-    item: `provider::item::blockNumber`,
-    gem: `provider::gem::blockNumber`,
+    avatars: `provider::avatar::blockNumber`,
+    items: `provider::item::blockNumber`,
+    gems: `provider::gem::blockNumber`,
   };
   private readonly deployBlockNumber: Record<AssetType, string> = {
-    avatar: '0x1a683fc',
-    item: '0x1a6c2ae',
-    gem: '0x1a6c357',
+    avatars: '0x1a683fc',
+    items: '0x1a6c2ae',
+    gems: '0x1a6c357',
   };
 
   constructor(
@@ -36,22 +37,22 @@ export class ExplorerService {
     private readonly gemsQueue: Queue<AssetPayload>,
   ) {
     this.queues = {
-      avatar: this.avatarsQueue,
-      item: this.itemsQueue,
-      gem: this.gemsQueue,
+      avatars: this.avatarsQueue,
+      items: this.itemsQueue,
+      gems: this.gemsQueue,
     };
     this.provider = new providers.JsonRpcProvider(config.get<string>('provider.rpc'));
     this.contracts = {
-      avatar: new Contract(this.config.get<string>('provider.assets.avatar'), abi, this.provider),
-      item: new Contract(this.config.get<string>('provider.assets.item'), abi, this.provider),
-      gem: new Contract(this.config.get<string>('provider.assets.gem'), abi, this.provider),
+      avatars: new Contract(this.config.get<string>('provider.assets.avatar'), abi, this.provider),
+      items: new Contract(this.config.get<string>('provider.assets.item'), abi, this.provider),
+      gems: new Contract(this.config.get<string>('provider.assets.gem'), abi, this.provider),
     };
     // FIXME: deployBlock can be found only manually from explorers
     // Example: https://mumbai.polygonscan.com/token/0xEE7ff88E92F2207dBC19d89C1C9eD3F385513b35
     // use Alchemy or Infura as better solution to receive previous contract events
-    void this.initContract('avatar');
-    void this.initContract('item');
-    void this.initContract('gem');
+    void this.initContract('avatars');
+    void this.initContract('items');
+    void this.initContract('gems');
   }
 
   private async initContract(asset: AssetType) {

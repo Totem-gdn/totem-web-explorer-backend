@@ -1,3 +1,5 @@
+import { AssetType } from '../../assets/types/assets';
+
 export enum AssetQueue {
   Avatars = 'avatars',
   Items = 'items',
@@ -8,8 +10,6 @@ export enum AssetEvent {
   Create = 'create-asset',
   Transfer = 'transfer-asset',
 }
-
-export type AssetType = 'avatar' | 'item' | 'gem';
 
 export type AssetPayload = {
   assetType: AssetType;

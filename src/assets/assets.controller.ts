@@ -12,32 +12,33 @@ import {
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
-import { Web3AuthGuard } from '../../auth/guards/web3auth.guard';
-import { CurrentUser } from '../../auth/decorators/currentUser';
+import { Web3AuthGuard } from '../auth/guards/web3auth.guard';
+import { CurrentUser } from '../auth/decorators/currentUser';
 import { isMongoId, isNumberString } from 'class-validator';
-import { ListGemsFilters } from './interfaces/filters';
-import { BaseAssetRecord } from '../common/interfaces/baseAssetRecord';
-import { GemsService } from './gems.service';
-import { LegacyService } from '../../legacy/legacy.service';
-import { LegacyTypes } from '../../legacy/legacy.constants';
+import { ListAssetsFilter } from './interfaces/filters';
+import { AssetRecord } from './common/interfaces/assetRecord';
+import { AssetsService } from './assets.service';
+import { LegacyService } from '../legacy/legacy.service';
+import { AssetType } from './types/assets';
 
 @Controller()
-export class GemsController {
-  constructor(private readonly gemsService: GemsService, private readonly legacyService: LegacyService) {}
+export class AssetsController {
+  constructor(private readonly service: AssetsService, private readonly legacyService: LegacyService) {}
 
-  @Get()
+  @Get(':assetType')
   @UseGuards(new Web3AuthGuard(true))
   async find(
     @CurrentUser() user: string,
+    @Param('assetType') assetType: AssetType,
     @Query('list', new DefaultValuePipe('latest')) list: 'latest' | 'popular' | 'my',
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('gameId', new DefaultValuePipe('')) gameId: string,
     @Query('search', new DefaultValuePipe('')) search: string,
-  ): Promise<BaseAssetRecord[]> {
+  ): Promise<AssetRecord[]> {
     if (page < 1) {
       throw new BadRequestException('invalid page number');
     }
-    const filters: ListGemsFilters = { list, page };
+    const filters: ListAssetsFilter = { list, page };
     if (list === 'my' && !user) {
       throw new UnauthorizedException();
     }
@@ -50,26 +51,31 @@ export class GemsController {
     if (search) {
       filters.search = search;
     }
-    return await this.gemsService.find(filters);
+    return await this.service.find(assetType, filters);
   }
 
-  @Get(':id')
+  @Get(':assetType/:id')
   @UseGuards(new Web3AuthGuard(true))
-  async findOne(@CurrentUser() user: string, @Param('id') id: string): Promise<BaseAssetRecord> {
+  async findOne(
+    @CurrentUser() user: string,
+    @Param('assetType') assetType: AssetType,
+    @Param('id') id: string,
+  ): Promise<AssetRecord> {
     if (!isMongoId(id) && !isNumberString(id)) {
       throw new BadRequestException('invalid id');
     }
-    const gem = await this.gemsService.findOne(id, user);
-    if (!gem) {
+    const item = await this.service.findOne(assetType, id, user);
+    if (!item) {
       throw new NotFoundException();
     }
-    return gem;
+    return item;
   }
 
-  @Patch(':id/:operation/:gameId?')
+  @Patch(':assetType/:id/:operation/:gameId?')
   @UseGuards(new Web3AuthGuard(false))
   async update(
     @CurrentUser() user: string,
+    @Param('assetType') assetType: AssetType,
     @Param('id') id: string,
     @Param('operation') operation: string,
     @Param('gameId', new DefaultValuePipe('')) gameId: string,
@@ -80,9 +86,9 @@ export class GemsController {
     }
     switch (operation) {
       case 'like':
-        return await this.legacyService.likeAsset(user, id, LegacyTypes.GemLiked);
+        return await this.legacyService.likeAsset(assetType, user, id);
       case 'dislike':
-        return await this.legacyService.dislikeAsset(user, id, LegacyTypes.GemLiked);
+        return await this.legacyService.dislikeAsset(assetType, user, id);
     }
     // game specific operations
     if (!isMongoId(gameId)) {
@@ -90,9 +96,9 @@ export class GemsController {
     }
     switch (operation) {
       case 'use':
-        return await this.legacyService.useAssetInGame(user, id, gameId, LegacyTypes.GemUsed, data);
+        return await this.legacyService.useAssetInGame(assetType, user, id, gameId, data);
       case 'add':
-        return await this.legacyService.addAssetToGame(user, id, gameId, LegacyTypes.GemAdded);
+        return await this.legacyService.addAssetToGame(assetType, user, id, gameId);
     }
     throw new BadRequestException('invalid operation');
   }
