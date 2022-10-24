@@ -33,6 +33,14 @@ spec:
               value: https://static.totem-explorer.com
             - name: AWS_S3_BUCKET
               value: totem-web-explorer
+            - name: PROVIDER_RPC
+              value: https://matic-mumbai.chainstacklabs.com
+            - name: ASSETS_AVATAR_CONTRACT
+              value: 0xEE7ff88E92F2207dBC19d89C1C9eD3F385513b35
+            - name: ASSETS_ITEM_CONTRACT
+              value: 0xfC5654489b23379ebE98BaF37ae7017130B45086
+            - name: ASSETS_GEM_CONTRACT
+              value: 0x0e2a085063e15FEce084801C6806F3aE7eaDfBf5
           envFrom:
             - secretRef:
                 name: web-explorer-backend
