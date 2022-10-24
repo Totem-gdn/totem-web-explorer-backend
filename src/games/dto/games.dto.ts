@@ -129,6 +129,7 @@ export class GameConnections {
   @IsUrl()
   assetRenderer: string;
 
+  @IsOptional()
   @ValidateNested()
   @Type(() => DNAFilter)
   dnaFilter: DNAFilter;
