@@ -171,7 +171,7 @@ export class GamesService {
   ): Promise<GameRecord[]> {
     const games: GameRecord[] = [];
     const aggregation = this.gameModel.aggregate<GameAggregationDocument>([
-      { $match: { approved: true, ...matchParams } },
+      { $match: { ...matchParams } },
       { $sort: { ...sortParams } },
       { $skip: (page - 1) * this.perPage },
       { $limit: this.perPage },
