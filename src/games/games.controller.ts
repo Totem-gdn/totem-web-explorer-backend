@@ -53,6 +53,7 @@ export class GamesController {
     if (list === 'random') {
       return await this.gamesService.random(user);
     } else {
+      approved = approved.toString() === 'false' ? false : true;
       const filters: ListGamesFilters = { list, page, search, approved };
       if (user) {
         filters.user = user;
