@@ -127,9 +127,9 @@ export class GamesService {
     if (filters.search) {
       matchParams['general.name'] = { $in: [new RegExp(filters.search, 'gi')] };
     }
-    if (filters.approved) {
-      matchParams['approved'] = true;
-    }
+
+    matchParams['approved'] = filters.approved;
+
     const sortParams: Record<string, any> = {};
     if (filters.list === 'popular') {
       sortParams.views = -1;
