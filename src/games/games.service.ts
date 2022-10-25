@@ -155,9 +155,9 @@ export class GamesService {
       },
     });
 
-    console.log(deleteCommand);
-    return imagesForDelete;
-    // const deleteResult = await this.s3Client.send(deleteCommand);
+    // return imagesForDelete;
+    const deleteResult = await this.s3Client.send(deleteCommand);
+    return deleteResult;
   }
 
   private async aggregateGames(
