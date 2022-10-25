@@ -1,7 +1,7 @@
 import { join } from 'path';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { PutObjectCommand, DeleteObjectsCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { v4 as uuidv4 } from 'uuid';
 import { Model, Types } from 'mongoose';
@@ -88,6 +88,12 @@ export class GamesService {
     return await this.toGameRecord(games[0]);
   }
 
+  async findOneByIdAndOwner(id: string, owner: string) {
+    const game = await this.gameModel.findOne({ _id: id, owner }).exec();
+
+    return game ? game : null;
+  }
+
   async random(user: string): Promise<GameRecord[]> {
     const games: GameRecord[] = [];
     const query = this.gameModel.aggregate<GameAggregationDocument>([
@@ -128,6 +134,30 @@ export class GamesService {
       sortParams.createdAt = -1;
     }
     return await this.aggregateGames(matchParams, sortParams, filters.page, filters.user);
+  }
+
+  async delete(game) {
+    console.log(game);
+
+    const imagesForDelete = [];
+    imagesForDelete.push({ Key: join(game._id.toString(), game.images?.coverImage?.filename) }); // coverImage
+    imagesForDelete.push({ Key: join(game._id.toString(), game.images?.cardThumbnail?.filename) }); // cardThumbnail
+    imagesForDelete.push({ Key: join(game._id.toString(), game.images?.smallThumbnail?.filename) }); // smallThumbnail
+    // DeleteObjectsCommand;
+    game.images?.gallery?.forEach((image) => {
+      imagesForDelete.push({ Key: join(game._id.toString(), image.filename) });
+    });
+
+    const deleteCommand = new DeleteObjectsCommand({
+      Bucket: this.bucket,
+      Delete: {
+        Objects: imagesForDelete,
+      },
+    });
+
+    console.log(deleteCommand);
+    return imagesForDelete;
+    // const deleteResult = await this.s3Client.send(deleteCommand);
   }
 
   private async aggregateGames(

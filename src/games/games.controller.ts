@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   DefaultValuePipe,
+  Delete,
   Get,
   NotFoundException,
   Param,
@@ -103,5 +104,19 @@ export class GamesController {
     }
     // invalid operation
     throw new BadRequestException('invalid operation');
+  }
+
+  @Delete(':id')
+  @UseGuards(new Web3AuthGuard(false))
+  @UsePipes(new ValidationPipe({ transform: true }))
+  async delete(@CurrentUser() user: string, @Param('id') id: string) {
+    if (!isMongoId(id)) {
+      throw new BadRequestException('invalid id');
+    }
+    const game = await this.gamesService.findOneByIdAndOwner(id, user);
+    if (!game) {
+      throw new NotFoundException();
+    }
+    return await this.gamesService.delete(game);
   }
 }
