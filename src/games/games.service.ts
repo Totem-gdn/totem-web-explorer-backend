@@ -137,8 +137,6 @@ export class GamesService {
   }
 
   async delete(game) {
-    console.log(game);
-
     const imagesForDelete = [];
     imagesForDelete.push({ Key: join(game._id.toString(), game.images?.coverImage?.filename) }); // coverImage
     imagesForDelete.push({ Key: join(game._id.toString(), game.images?.cardThumbnail?.filename) }); // cardThumbnail
@@ -155,9 +153,10 @@ export class GamesService {
       },
     });
 
-    // return imagesForDelete;
-    const deleteResult = await this.s3Client.send(deleteCommand);
-    return deleteResult;
+    const deleteS3Result = await this.s3Client.send(deleteCommand);
+
+    const deleteDBResult = await this.gameModel.deleteOne({ _id: game._id });
+    return { deleteS3Result, deleteDBResult };
   }
 
   private async aggregateGames(
