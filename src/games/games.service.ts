@@ -141,7 +141,7 @@ export class GamesService {
     imagesForDelete.push({ Key: join(game._id.toString(), game.images?.coverImage?.filename) }); // coverImage
     imagesForDelete.push({ Key: join(game._id.toString(), game.images?.cardThumbnail?.filename) }); // cardThumbnail
     imagesForDelete.push({ Key: join(game._id.toString(), game.images?.smallThumbnail?.filename) }); // smallThumbnail
-    // DeleteObjectsCommand;
+
     game.images?.gallery?.forEach((image) => {
       imagesForDelete.push({ Key: join(game._id.toString(), image.filename) });
     });
@@ -156,7 +156,11 @@ export class GamesService {
     const deleteS3Result = await this.s3Client.send(deleteCommand);
 
     const deleteDBResult = await this.gameModel.deleteOne({ _id: game._id });
-    return { deleteS3Result, deleteDBResult };
+
+    return {
+      images: deleteS3Result?.Deleted?.length > 0 ? true : false,
+      db: deleteDBResult?.deletedCount > 0 ? true : false,
+    };
   }
 
   private async aggregateGames(
