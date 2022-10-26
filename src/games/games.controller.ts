@@ -46,6 +46,7 @@ export class GamesController {
     @Query('search', new DefaultValuePipe('')) search: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('approved', new DefaultValuePipe(true)) approved: boolean,
+    @Query('owner', new DefaultValuePipe('')) owner: string,
   ): Promise<GameRecord[]> {
     if (page < 1) {
       throw new BadRequestException('invalid page number');
@@ -54,7 +55,7 @@ export class GamesController {
       return await this.gamesService.random(user);
     } else {
       approved = approved.toString() === 'false' ? false : true;
-      const filters: ListGamesFilters = { list, page, search, approved };
+      const filters: ListGamesFilters = { list, page, search, approved, owner };
       if (user) {
         filters.user = user;
       }

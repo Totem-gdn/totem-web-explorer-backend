@@ -4,4 +4,5 @@ export interface ListGamesFilters {
   page?: number;
   user?: string;
   approved?: boolean;
+  owner?: string;
 }

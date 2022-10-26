@@ -129,6 +129,9 @@ export class GamesService {
     }
 
     matchParams['approved'] = filters.approved;
+    if (filters.owner !== '') {
+      matchParams['owner'] = filters.owner;
+    }
 
     const sortParams: Record<string, any> = {};
     if (filters.list === 'popular') {
