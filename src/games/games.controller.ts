@@ -63,6 +63,13 @@ export class GamesController {
     }
   }
 
+  @Get('search')
+  async search(@Query('name', new DefaultValuePipe('')) name: string) {
+    const games = await this.gamesService.searchByName(name);
+
+    return games;
+  }
+
   @Get(':id')
   @UseGuards(new Web3AuthGuard(true))
   async findOne(@CurrentUser() user: string, @Param('id') id: string): Promise<GameRecord> {

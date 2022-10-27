@@ -10,7 +10,7 @@ import { ConfigService } from '@nestjs/config';
 import { ListGamesFilters } from './interfaces/listGamesFilters';
 import { LegacyEvents } from '../legacy/enums/legacy.enums';
 import { GameImage } from './interfaces/gameImage';
-import { GameRecord } from './interfaces/gameRecord';
+import { GameRecord, GameSearchRecord } from './interfaces/gameRecord';
 import { CreateGameRequest } from './interfaces/createGameRequest';
 import { CreateGameResponse } from './interfaces/createGameResponse';
 
@@ -169,6 +169,25 @@ export class GamesService {
     };
   }
 
+  async searchByName(name: string): Promise<GameSearchRecord[]> {
+    let payload = {};
+    if (name !== '') {
+      payload = {
+        'general.name': new RegExp(`${name}`, 'i'),
+      };
+    }
+
+    const results = await this.gameModel.find(payload);
+
+    const games = [];
+
+    for (const game of results) {
+      games.push(await this.toSearchGameRecord(game));
+    }
+
+    return games;
+  }
+
   private async aggregateGames(
     matchParams: Record<string, any>,
     sortParams: Record<string, any>,
@@ -202,6 +221,19 @@ export class GamesService {
       games.push(await this.toGameRecord(game));
     }
     return games;
+  }
+
+  private async toSearchGameRecord(game) {
+    const gameId = game._id.toString();
+    return {
+      id: gameId,
+      general: {
+        name: game.general.name,
+      },
+      images: {
+        smallThumbnail: await this.getStaticUrl(gameId, game.images.smallThumbnail),
+      },
+    };
   }
 
   private legacyLookupPipeline(as: string, pipeline: any[]) {
