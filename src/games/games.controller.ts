@@ -9,6 +9,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Delete,
   Query,
   UnauthorizedException,
   UseGuards,
@@ -44,6 +45,8 @@ export class GamesController {
     @Query('list', new DefaultValuePipe('latest')) list: 'latest' | 'popular' | 'random',
     @Query('search', new DefaultValuePipe('')) search: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('approved', new DefaultValuePipe(true)) approved: boolean,
+    @Query('owner', new DefaultValuePipe('')) owner: string,
   ): Promise<GameRecord[]> {
     if (page < 1) {
       throw new BadRequestException('invalid page number');
@@ -51,12 +54,20 @@ export class GamesController {
     if (list === 'random') {
       return await this.gamesService.random(user);
     } else {
-      const filters: ListGamesFilters = { list, page, search };
+      approved = approved.toString() === 'false' ? false : true;
+      const filters: ListGamesFilters = { list, page, search, approved, owner };
       if (user) {
         filters.user = user;
       }
       return await this.gamesService.find(filters);
     }
+  }
+
+  @Get('search')
+  async search(@Query('name', new DefaultValuePipe('')) name: string) {
+    const games = await this.gamesService.searchByName(name);
+
+    return games;
   }
 
   @Get(':id')
@@ -103,5 +114,19 @@ export class GamesController {
     }
     // invalid operation
     throw new BadRequestException('invalid operation');
+  }
+
+  @Delete(':id')
+  @UseGuards(new Web3AuthGuard(false))
+  @UsePipes(new ValidationPipe({ transform: true }))
+  async delete(@CurrentUser() user: string, @Param('id') id: string) {
+    if (!isMongoId(id)) {
+      throw new BadRequestException('invalid id');
+    }
+    const game = await this.gamesService.findOneByIdAndOwner(id, user);
+    if (!game) {
+      throw new NotFoundException();
+    }
+    return await this.gamesService.delete(game);
   }
 }

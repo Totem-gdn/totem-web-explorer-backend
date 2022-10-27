@@ -3,4 +3,6 @@ export interface ListGamesFilters {
   search?: string;
   page?: number;
   user?: string;
+  approved?: boolean;
+  owner?: string;
 }

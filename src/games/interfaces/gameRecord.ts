@@ -1,5 +1,15 @@
 import { SocialLink } from './socialLink';
 
+export interface GameSearchRecord {
+  id: string;
+  general: {
+    name: string;
+  };
+  images: {
+    smallThumbnail: string;
+  };
+}
+
 export interface GameRecord {
   id: string;
   owner: string;

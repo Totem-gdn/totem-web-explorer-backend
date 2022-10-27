@@ -1,7 +1,7 @@
 import { join } from 'path';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { PutObjectCommand, DeleteObjectsCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { v4 as uuidv4 } from 'uuid';
 import { Model, Types } from 'mongoose';
@@ -10,7 +10,7 @@ import { ConfigService } from '@nestjs/config';
 import { ListGamesFilters } from './interfaces/listGamesFilters';
 import { LegacyEvents } from '../legacy/enums/legacy.enums';
 import { GameImage } from './interfaces/gameImage';
-import { GameRecord } from './interfaces/gameRecord';
+import { GameRecord, GameSearchRecord } from './interfaces/gameRecord';
 import { CreateGameRequest } from './interfaces/createGameRequest';
 import { CreateGameResponse } from './interfaces/createGameResponse';
 
@@ -88,6 +88,12 @@ export class GamesService {
     return await this.toGameRecord(games[0]);
   }
 
+  async findOneByIdAndOwner(id: string, owner: string) {
+    const game = await this.gameModel.findOne({ _id: id, owner }).exec();
+
+    return game ? game : null;
+  }
+
   async random(user: string): Promise<GameRecord[]> {
     const games: GameRecord[] = [];
     const query = this.gameModel.aggregate<GameAggregationDocument>([
@@ -121,6 +127,12 @@ export class GamesService {
     if (filters.search) {
       matchParams['general.name'] = { $in: [new RegExp(filters.search, 'gi')] };
     }
+
+    matchParams['approved'] = filters.approved;
+    if (filters.owner !== '') {
+      matchParams['owner'] = filters.owner;
+    }
+
     const sortParams: Record<string, any> = {};
     if (filters.list === 'popular') {
       sortParams.views = -1;
@@ -128,6 +140,52 @@ export class GamesService {
       sortParams.createdAt = -1;
     }
     return await this.aggregateGames(matchParams, sortParams, filters.page, filters.user);
+  }
+
+  async delete(game) {
+    const imagesForDelete = [];
+    imagesForDelete.push({ Key: join(game._id.toString(), game.images?.coverImage?.filename) }); // coverImage
+    imagesForDelete.push({ Key: join(game._id.toString(), game.images?.cardThumbnail?.filename) }); // cardThumbnail
+    imagesForDelete.push({ Key: join(game._id.toString(), game.images?.smallThumbnail?.filename) }); // smallThumbnail
+
+    game.images?.gallery?.forEach((image) => {
+      imagesForDelete.push({ Key: join(game._id.toString(), image.filename) });
+    });
+
+    const deleteCommand = new DeleteObjectsCommand({
+      Bucket: this.bucket,
+      Delete: {
+        Objects: imagesForDelete,
+      },
+    });
+
+    const deleteS3Result = await this.s3Client.send(deleteCommand);
+
+    const deleteDBResult = await this.gameModel.deleteOne({ _id: game._id });
+
+    return {
+      images: deleteS3Result?.Deleted?.length > 0 ? true : false,
+      db: deleteDBResult?.deletedCount > 0 ? true : false,
+    };
+  }
+
+  async searchByName(name: string): Promise<GameSearchRecord[]> {
+    let payload = {};
+    if (name !== '') {
+      payload = {
+        'general.name': new RegExp(`${name}`, 'i'),
+      };
+    }
+
+    const results = await this.gameModel.find(payload);
+
+    const games = [];
+
+    for (const game of results) {
+      games.push(await this.toSearchGameRecord(game));
+    }
+
+    return games;
   }
 
   private async aggregateGames(
@@ -138,7 +196,7 @@ export class GamesService {
   ): Promise<GameRecord[]> {
     const games: GameRecord[] = [];
     const aggregation = this.gameModel.aggregate<GameAggregationDocument>([
-      { $match: { approved: true, ...matchParams } },
+      { $match: { ...matchParams } },
       { $sort: { ...sortParams } },
       { $skip: (page - 1) * this.perPage },
       { $limit: this.perPage },
@@ -163,6 +221,19 @@ export class GamesService {
       games.push(await this.toGameRecord(game));
     }
     return games;
+  }
+
+  private async toSearchGameRecord(game) {
+    const gameId = game._id.toString();
+    return {
+      id: gameId,
+      general: {
+        name: game.general.name,
+      },
+      images: {
+        smallThumbnail: await this.getStaticUrl(gameId, game.images.smallThumbnail),
+      },
+    };
   }
 
   private legacyLookupPipeline(as: string, pipeline: any[]) {
