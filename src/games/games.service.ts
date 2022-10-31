@@ -10,9 +10,11 @@ import { ConfigService } from '@nestjs/config';
 import { ListGamesFilters } from './interfaces/listGamesFilters';
 import { LegacyEvents } from '../legacy/enums/legacy.enums';
 import { GameImage } from './interfaces/gameImage';
-import { GameRecord, GameSearchRecord } from './interfaces/gameRecord';
+import { GameRecord } from './interfaces/gameRecord';
 import { CreateGameRequest } from './interfaces/createGameRequest';
+import { UpdateGameRequest } from './interfaces/UpdateGameRequest';
 import { CreateGameResponse } from './interfaces/createGameResponse';
+import { UpdateGameResponse } from './interfaces/updateGameResponse';
 
 @Injectable()
 export class GamesService {
@@ -53,6 +55,64 @@ export class GamesService {
         imagesGallery: await this.getPutSignedUrls(newGame.id, game.images.gallery),
       },
     };
+  }
+
+  async update(id: string, payload: UpdateGameRequest, game): Promise<UpdateGameResponse> {
+    const response: UpdateGameResponse = {
+      id,
+    };
+
+    // files part
+    const filesForDelete = [];
+    if (payload.connections?.dnaFilter) {
+      if (game.connections?.dnaFilter) {
+        filesForDelete.push({ Key: join(id.toString(), game.connections.dnaFilter) }); // DNA JSON
+      }
+      payload.connections.dnaFilter.filename = `${uuidv4()}-${payload.connections.dnaFilter.filename}`;
+      response.connections = {
+        dnaFilter: await this.getPutSignedUrl(id, payload.connections.dnaFilter),
+      };
+    }
+
+    if (payload.images) {
+      if (payload.images.coverImage) {
+        if (game.images.coverImage) {
+          filesForDelete.push({ Key: join(id.toString(), game.images.coverImage) }); // Cover Image
+        }
+        payload.images.coverImage.filename = `${uuidv4()}-${payload.images.coverImage.filename}`;
+        response.uploadImageURLs = {
+          ...response.uploadImageURLs,
+          coverImage: await this.getPutSignedUrl(id, payload.images.coverImage),
+        };
+      }
+      if (payload.images.cardThumbnail) {
+        if (game.images.cardThumbnail) {
+          filesForDelete.push({ Key: join(id.toString(), game.images.cardThumbnail) }); // Card Thumbnail Image
+        }
+        payload.images.cardThumbnail.filename = `${uuidv4()}-${payload.images.cardThumbnail.filename}`;
+        response.uploadImageURLs = {
+          ...response.uploadImageURLs,
+          cardThumbnail: await this.getPutSignedUrl(id, payload.images.cardThumbnail),
+        };
+      }
+      if (payload.images.smallThumbnail) {
+        if (game.images.smallThumbnail) {
+          filesForDelete.push({ Key: join(id.toString(), game.images.smallThumbnail) }); // Snall Thumbnail Image
+        }
+        payload.images.smallThumbnail.filename = `${uuidv4()}-${payload.images.smallThumbnail.filename}`;
+        response.uploadImageURLs = {
+          ...response.uploadImageURLs,
+          smallThumbnail: await this.getPutSignedUrl(id, payload.images.smallThumbnail),
+        };
+      }
+    }
+    // Finish files part
+
+    game.set({ ...payload });
+
+    await game.save();
+
+    return response;
   }
 
   async changeApprovance(id: string, approved: boolean): Promise<void> {
@@ -144,6 +204,9 @@ export class GamesService {
 
   async delete(game) {
     const imagesForDelete = [];
+    if (game.connections && game.connections.dnaFilter) {
+      imagesForDelete.push({ Key: join(game._id.toString(), game.connections.dnaFilter) }); // DNA JSON
+    }
     imagesForDelete.push({ Key: join(game._id.toString(), game.images?.coverImage?.filename) }); // coverImage
     imagesForDelete.push({ Key: join(game._id.toString(), game.images?.cardThumbnail?.filename) }); // cardThumbnail
     imagesForDelete.push({ Key: join(game._id.toString(), game.images?.smallThumbnail?.filename) }); // smallThumbnail
@@ -167,25 +230,6 @@ export class GamesService {
       images: deleteS3Result?.Deleted?.length > 0 ? true : false,
       db: deleteDBResult?.deletedCount > 0 ? true : false,
     };
-  }
-
-  async searchByName(name: string): Promise<GameSearchRecord[]> {
-    let payload = {};
-    if (name !== '') {
-      payload = {
-        'general.name': new RegExp(`${name}`, 'i'),
-      };
-    }
-
-    const results = await this.gameModel.find(payload);
-
-    const games = [];
-
-    for (const game of results) {
-      games.push(await this.toSearchGameRecord(game));
-    }
-
-    return games;
   }
 
   private async aggregateGames(
@@ -218,7 +262,11 @@ export class GamesService {
       },
     ]);
     for (const game of await aggregation.exec()) {
-      games.push(await this.toGameRecord(game));
+      if (matchParams['general.name']) {
+        games.push(await this.toSearchGameRecord(game));
+      } else {
+        games.push(await this.toGameRecord(game));
+      }
     }
     return games;
   }

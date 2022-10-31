@@ -9,6 +9,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Put,
   Delete,
   Query,
   UnauthorizedException,
@@ -21,6 +22,8 @@ import { CurrentUser } from '../auth/decorators/currentUser';
 import { isMongoId } from 'class-validator';
 import { ListGamesFilters } from './interfaces/listGamesFilters';
 import { CreateGameResponse } from './interfaces/createGameResponse';
+import { UpdateGameResponse } from './interfaces/updateGameResponse';
+import { UpdateGameRequest } from './interfaces/UpdateGameRequest';
 import { GameRecord } from './interfaces/gameRecord';
 import { CreateGameRequestDto } from './dto/games.dto';
 import { GamesService } from './games.service';
@@ -36,6 +39,26 @@ export class GamesController {
   async create(@CurrentUser() user: string, @Body() createGameDto: CreateGameRequestDto): Promise<CreateGameResponse> {
     createGameDto.owner = user;
     return await this.gamesService.create(createGameDto);
+  }
+
+  @Put(':id')
+  @UseGuards(new Web3AuthGuard(false))
+  @UsePipes(new ValidationPipe({ transform: true }))
+  async updateGame(
+    @CurrentUser() user: string,
+    @Body() updateGameDto: UpdateGameRequest,
+    @Param('id') id: string,
+  ): Promise<UpdateGameResponse> {
+    if (!isMongoId(id)) {
+      throw new BadRequestException('invalid id');
+    }
+    const game = await this.gamesService.findOne(id, user);
+    if (!game || game.owner !== user) {
+      throw new NotFoundException();
+    }
+
+    const result = await this.gamesService.update(id, updateGameDto, game);
+    return result;
   }
 
   @Get()
@@ -61,13 +84,6 @@ export class GamesController {
       }
       return await this.gamesService.find(filters);
     }
-  }
-
-  @Get('search')
-  async search(@Query('name', new DefaultValuePipe('')) name: string) {
-    const games = await this.gamesService.searchByName(name);
-
-    return games;
   }
 
   @Get(':id')
