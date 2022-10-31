@@ -23,7 +23,7 @@ import { isMongoId } from 'class-validator';
 import { ListGamesFilters } from './interfaces/listGamesFilters';
 import { CreateGameResponse } from './interfaces/createGameResponse';
 import { UpdateGameResponse } from './interfaces/updateGameResponse';
-import { UpdateGameRequest } from './interfaces/UpdateGameRequest';
+import { UpdateGameRequest } from './interfaces/updateGameRequest';
 import { GameRecord } from './interfaces/gameRecord';
 import { CreateGameRequestDto } from './dto/games.dto';
 import { GamesService } from './games.service';

@@ -12,7 +12,7 @@ import { LegacyEvents } from '../legacy/enums/legacy.enums';
 import { GameImage } from './interfaces/gameImage';
 import { GameRecord } from './interfaces/gameRecord';
 import { CreateGameRequest } from './interfaces/createGameRequest';
-import { UpdateGameRequest } from './interfaces/UpdateGameRequest';
+import { UpdateGameRequest } from './interfaces/updateGameRequest';
 import { CreateGameResponse } from './interfaces/createGameResponse';
 import { UpdateGameResponse } from './interfaces/updateGameResponse';
 
