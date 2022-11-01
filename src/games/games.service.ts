@@ -277,6 +277,7 @@ export class GamesService {
       id: gameId,
       general: {
         name: game.general.name,
+        genre: game.general.genre,
       },
       images: {
         smallThumbnail: await this.getStaticUrl(gameId, game.images.smallThumbnail),

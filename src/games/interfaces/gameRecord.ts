@@ -15,7 +15,7 @@ export interface GameRecord {
     author?: string;
     description?: string;
     fullDescription?: string;
-    genre?: string[];
+    genre: string[];
   };
   details?: {
     status: string;
