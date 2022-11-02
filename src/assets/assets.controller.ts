@@ -71,6 +71,16 @@ export class AssetsController {
     return item;
   }
 
+  @Get(':assetType/:id/ownershipHistory')
+  @UseGuards(new Web3AuthGuard(true))
+  async get(
+    @CurrentUser() user: string,
+    @Param('assetType') assetType: AssetType,
+    @Param('id') id: string,
+  ): Promise<any> {
+    return await this.legacyService.ownershipHistory(assetType, id);
+  }
+
   @Patch(':assetType/:id/:operation/:gameId?')
   @UseGuards(new Web3AuthGuard(false))
   async update(
