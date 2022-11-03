@@ -78,7 +78,7 @@ export class AssetsController {
     @Param('assetType') assetType: AssetType,
     @Param('id') id: string,
   ): Promise<any> {
-    return await this.legacyService.ownershipHistory(assetType, id);
+    return await this.service.ownershipHistory(assetType, id);
   }
 
   @Patch(':assetType/:id/:operation/:gameId?')

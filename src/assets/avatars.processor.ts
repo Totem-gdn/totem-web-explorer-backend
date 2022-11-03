@@ -8,6 +8,7 @@ import { AssetEvent, AssetPayload, AssetQueue } from '../config/queues/assets';
 import { LegacyService } from '../legacy/legacy.service';
 import { ExplorerService } from '../explorer/explorer.service';
 import { Avatar, AvatarDocument } from './schemas/avatars';
+import { AssetsOwnershipHistory, AssetsOwnershipHistoryDocument } from './schemas/assetsOwnershipHistory';
 
 @Injectable()
 @Processor(AssetQueue.Avatars)
@@ -20,6 +21,7 @@ export class AvatarsProcessor {
     private readonly explorerService: ExplorerService,
     @InjectQueue(AssetQueue.Avatars) private readonly avatarsQueue: Queue<AssetPayload>,
     @InjectModel(Avatar.name) private readonly avatarModel: Model<AvatarDocument>,
+    @InjectModel(AssetsOwnershipHistory.name) private readonly ownershipModel: Model<AssetsOwnershipHistoryDocument>,
   ) {}
 
   @Process(AssetEvent.Create)
@@ -33,6 +35,14 @@ export class AvatarsProcessor {
       views: 0,
       // dna,
     });
+    await this.ownershipModel.create({
+      from: '0',
+      to: job.data.to,
+      tokenId: job.data.tokenId,
+      tokenType: job.data.assetType,
+      hash: job.data.transactionHash,
+      price: 0,
+    });
   }
 
   @Process(AssetEvent.Transfer)
@@ -45,5 +55,13 @@ export class AvatarsProcessor {
         $push: { owners: job.data.from },
       },
     );
+    await this.ownershipModel.create({
+      from: job.data.from,
+      to: job.data.to,
+      tokenId: job.data.tokenId,
+      tokenType: job.data.assetType,
+      hash: job.data.transactionHash,
+      price: '0',
+    });
   }
 }

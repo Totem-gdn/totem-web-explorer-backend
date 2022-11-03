@@ -13,6 +13,7 @@ import { Item, ItemSchema } from './schemas/items';
 import { ItemLike, ItemLikeSchema } from './schemas/itemLikes';
 import { Gem, GemSchema } from './schemas/gems';
 import { GemLike, GemLikeSchema } from './schemas/gemLikes';
+import { AssetsOwnershipHistory, AssetsOwnershipHistorySchema } from './schemas/assetsOwnershipHistory';
 import { ExplorerModule } from '../explorer/explorer.module';
 import { AvatarsProcessor } from './avatars.processor';
 import { ItemsProcessor } from './items.processor';
@@ -33,6 +34,7 @@ import { GemsProcessor } from './gems.processor';
       { name: Gem.name, schema: GemSchema },
       { name: GemLike.name, schema: GemLikeSchema },
       { name: LegacyRecord.name, schema: LegacyRecordSchema },
+      { name: AssetsOwnershipHistory.name, schema: AssetsOwnershipHistorySchema },
     ]),
     ExplorerModule,
   ],

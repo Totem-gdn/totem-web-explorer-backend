@@ -69,19 +69,4 @@ export class LegacyService {
   async useAssetInGame(assetType: AssetType, user: string, itemId: string, gameId: string, data: any) {
     await this.legacyRecordModel.create({ user, assetId: itemId, gameId, type: this.assetUsedTypes[assetType], data });
   }
-
-  async ownershipHistory(assetType: AssetType, assetId: string) {
-    return [
-      {
-        created_at: '2022-10-31T15:06:05.838Z',
-        from: '',
-        to: '0xC3406512B44Ce941Fd073679d20E613035Dc5008',
-      },
-      {
-        created_at: '2022-11-01T15:06:05.838Z',
-        from: '0xC3406512B44Ce941Fd073679d20E613035Dc5008',
-        to: '0x19975EF228779Ab0Cd803de843240c13d84EDD9E',
-      },
-    ];
-  }
 }
