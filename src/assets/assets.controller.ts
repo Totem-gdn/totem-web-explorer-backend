@@ -71,7 +71,7 @@ export class AssetsController {
     return item;
   }
 
-  @Get(':assetType/:id/ownershipHistory')
+  @Get(':assetType/:id/ownership-history')
   @UseGuards(new Web3AuthGuard(true))
   async get(
     @CurrentUser() user: string,
