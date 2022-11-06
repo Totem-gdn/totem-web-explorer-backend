@@ -34,7 +34,11 @@ export interface GameRecord {
   connections?: {
     webpage: string;
     assetRenderer: string;
-    dnaFilter: string;
+    dnaFilters: {
+      avatarFilter?: string;
+      assetFilter?: string;
+      gemFilter?: string;
+    };
     promoVideo: string;
     socialLinks: SocialLink[];
   };

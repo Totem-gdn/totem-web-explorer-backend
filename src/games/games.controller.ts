@@ -52,13 +52,11 @@ export class GamesController {
     if (!isMongoId(id)) {
       throw new BadRequestException('invalid id');
     }
-    const game = await this.gamesService.findOne(id, user);
+    const game = await this.gamesService.findOneByIdAndOwner(id, user);
     if (!game || game.owner !== user) {
       throw new NotFoundException();
     }
-
-    const result = await this.gamesService.update(id, updateGameDto, game);
-    return result;
+    return await this.gamesService.update(game, updateGameDto);
   }
 
   @Get()
@@ -77,7 +75,7 @@ export class GamesController {
     if (list === 'random') {
       return await this.gamesService.random(user);
     } else {
-      approved = approved.toString() === 'false' ? false : true;
+      approved = approved.toString() !== 'false';
       const filters: ListGamesFilters = { list, page, search, approved, owner };
       if (user) {
         filters.user = user;

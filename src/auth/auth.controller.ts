@@ -2,7 +2,7 @@ import { Controller, UseGuards, Get, Patch, Body } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Web3AuthGuard } from './guards/web3auth.guard';
 import { CurrentUser } from './decorators/currentUser';
-import { IMeResponse } from './auth.interfaces';
+import { IMeResponse } from './interfaces/user-profile';
 
 @Controller('auth')
 export class AuthController {

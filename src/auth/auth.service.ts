@@ -1,8 +1,8 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { IMeResponse } from './auth.interfaces';
-import { UserProfile, UserProfileDocument } from './userProfile.schema';
+import { IMeResponse } from './interfaces/user-profile';
+import { UserProfile, UserProfileDocument } from './schemas/user-profile';
 
 @Injectable()
 export class AuthService {

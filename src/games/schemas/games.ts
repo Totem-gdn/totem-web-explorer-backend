@@ -60,20 +60,6 @@ class GameImage {
 const GameImageSchema = SchemaFactory.createForClass(GameImage);
 
 @Schema({ _id: false })
-class DNAFilter {
-  @Prop({ type: SchemaTypes.String, required: true })
-  filename: string;
-
-  @Prop({ type: SchemaTypes.String, required: true })
-  mimeType: string;
-
-  @Prop({ type: SchemaTypes.Number, required: true })
-  contentLength: number;
-}
-
-const DNAFilterSchema = SchemaFactory.createForClass(DNAFilter);
-
-@Schema({ _id: false })
 class GameImages {
   @Prop({ type: GameImageSchema })
   coverImage: GameImage;
@@ -89,6 +75,34 @@ class GameImages {
 }
 
 const GameImagesSchema = SchemaFactory.createForClass(GameImages);
+
+@Schema({ _id: false })
+class DNAFilter {
+  @Prop({ type: SchemaTypes.String, required: true })
+  filename: string;
+
+  @Prop({ type: SchemaTypes.String, required: true })
+  mimeType: string;
+
+  @Prop({ type: SchemaTypes.Number, required: true })
+  contentLength: number;
+}
+
+const DNAFilterSchema = SchemaFactory.createForClass(DNAFilter);
+
+@Schema({ _id: false })
+class DNAFilters {
+  @Prop({ type: DNAFilterSchema })
+  avatarFilter: DNAFilter;
+
+  @Prop({ type: DNAFilterSchema })
+  assetFilter: DNAFilter;
+
+  @Prop({ type: DNAFilterSchema })
+  gemFilter: DNAFilter;
+}
+
+const DNAFiltersSchema = SchemaFactory.createForClass(DNAFilters);
 
 @Schema({ _id: false })
 class SocialLink {
@@ -109,8 +123,8 @@ class GameConnections {
   @Prop({ type: SchemaTypes.String, default: () => '' })
   assetRenderer: string;
 
-  @Prop({ type: DNAFilterSchema })
-  dnaFilter: DNAFilter;
+  @Prop({ type: DNAFiltersSchema })
+  dnaFilters: DNAFilters;
 
   @Prop({ type: SchemaTypes.String, default: () => '' })
   promoVideo: string;

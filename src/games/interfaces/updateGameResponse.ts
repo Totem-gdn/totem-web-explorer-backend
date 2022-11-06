@@ -1,7 +1,11 @@
 export interface UpdateGameResponse {
   id: string;
   connections?: {
-    dnaFilter: string;
+    dnaFilters?: {
+      avatarFilter?: string;
+      assetFilter?: string;
+      gemFilter?: string;
+    };
   };
   uploadImageURLs?: {
     coverImage?: string;

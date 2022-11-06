@@ -1,6 +1,6 @@
 import { GameImage } from './gameImage';
 import { SocialLink } from './socialLink';
-import { DNAFilter } from './dnaFilter';
+import { DNAFilters } from './dnaFilters';
 
 export interface UpdateGameRequest {
   general?: {
@@ -27,7 +27,7 @@ export interface UpdateGameRequest {
   connections?: {
     webpage?: string;
     assetRenderer?: string;
-    dnaFilter?: DNAFilter;
+    dnaFilters?: DNAFilters;
     promoVideo?: string;
     socialLinks?: SocialLink[];
   };
