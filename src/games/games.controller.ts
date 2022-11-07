@@ -16,6 +16,7 @@ import {
   UseGuards,
   UsePipes,
   ValidationPipe,
+  ParseBoolPipe,
 } from '@nestjs/common';
 import { Web3AuthGuard } from '../auth/guards/web3auth.guard';
 import { CurrentUser } from '../auth/decorators/currentUser';
@@ -66,8 +67,9 @@ export class GamesController {
     @Query('list', new DefaultValuePipe('latest')) list: 'latest' | 'popular' | 'random',
     @Query('search', new DefaultValuePipe('')) search: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
-    @Query('approved', new DefaultValuePipe(true)) approved: boolean,
+    @Query('approved', new DefaultValuePipe(true), ParseBoolPipe) approved: boolean,
     @Query('owner', new DefaultValuePipe('')) owner: string,
+    @Query('result', new DefaultValuePipe('full')) result: 'full' | 'small',
   ): Promise<GameRecord[]> {
     if (page < 1) {
       throw new BadRequestException('invalid page number');
@@ -75,12 +77,12 @@ export class GamesController {
     if (list === 'random') {
       return await this.gamesService.random(user);
     } else {
-      approved = approved.toString() !== 'false';
+      // approved = approved.toString() !== 'false';
       const filters: ListGamesFilters = { list, page, search, approved, owner };
       if (user) {
         filters.user = user;
       }
-      return await this.gamesService.find(filters);
+      return await this.gamesService.find(filters, result);
     }
   }
 

@@ -187,7 +187,7 @@ export class GamesService {
     return games;
   }
 
-  async find(filters: ListGamesFilters): Promise<GameRecord[]> {
+  async find(filters: ListGamesFilters, result: 'full' | 'small' | null): Promise<GameRecord[]> {
     const matchParams: Record<string, any> = {};
     if (filters.search) {
       matchParams['general.name'] = { $in: [new RegExp(filters.search, 'gi')] };
@@ -204,7 +204,7 @@ export class GamesService {
     } else {
       sortParams.createdAt = -1;
     }
-    return await this.aggregateGames(matchParams, sortParams, filters.page, filters.user);
+    return await this.aggregateGames(matchParams, sortParams, filters.page, filters.user, result);
   }
 
   async delete(game: GameDocument) {
@@ -246,6 +246,7 @@ export class GamesService {
     sortParams: Record<string, any>,
     page: number,
     user = '',
+    result: 'full' | 'small' | null,
   ): Promise<GameRecord[]> {
     const games: GameRecord[] = [];
     const aggregation = this.gameModel.aggregate<GameAggregationDocument>([
@@ -271,7 +272,7 @@ export class GamesService {
       },
     ]);
     for (const game of await aggregation.exec()) {
-      if (matchParams['general.name']) {
+      if (result === 'small') {
         games.push(await this.toSearchGameRecord(game));
       } else {
         games.push(await this.toGameRecord(game));
