@@ -187,7 +187,7 @@ export class GamesService {
     return games;
   }
 
-  async find(filters: ListGamesFilters, result: 'full' | 'small' | null): Promise<GameRecord[]> {
+  async find(filters: ListGamesFilters, result: 'full' | 'small'): Promise<GameRecord[]> {
     const matchParams: Record<string, any> = {};
     if (filters.search) {
       matchParams['general.name'] = { $in: [new RegExp(filters.search, 'gi')] };
