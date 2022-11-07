@@ -2,22 +2,22 @@ import { SocialLink } from './socialLink';
 
 export interface GameRecord {
   id: string;
-  owner?: string;
-  views?: number;
-  isLiked?: boolean;
-  players?: number;
-  likes?: number;
-  assets?: { avatars: number; items: number };
-  createdAt?: string;
-  updatedAt?: string;
+  owner: string;
+  views: number;
+  isLiked: boolean;
+  players: number;
+  likes: number;
+  assets: { avatars: number; items: number };
+  createdAt: string;
+  updatedAt: string;
   general: {
     name: string;
-    author?: string;
-    description?: string;
-    fullDescription?: string;
+    author: string;
+    description: string;
+    fullDescription: string;
     genre: string[];
   };
-  details?: {
+  details: {
     status: string;
     platforms: string[];
     madeWith: string;
@@ -26,12 +26,12 @@ export interface GameRecord {
     inputs: string;
   };
   images: {
-    coverImage?: string;
-    cardThumbnail?: string;
+    coverImage: string;
+    cardThumbnail: string;
     smallThumbnail: string;
-    gallery?: string[];
+    gallery: string[];
   };
-  connections?: {
+  connections: {
     webpage: string;
     assetRenderer: string;
     dnaFilters: {
@@ -42,8 +42,19 @@ export interface GameRecord {
     promoVideo: string;
     socialLinks: SocialLink[];
   };
-  contacts?: {
+  contacts: {
     email: string;
     discord: string;
+  };
+}
+
+export interface SmallGameRecord {
+  id: string;
+  general: {
+    name: string;
+    genre: string[];
+  };
+  images: {
+    smallThumbnail: string;
   };
 }

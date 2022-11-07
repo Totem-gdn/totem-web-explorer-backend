@@ -10,7 +10,7 @@ import { ConfigService } from '@nestjs/config';
 import { ListGamesFilters } from './interfaces/listGamesFilters';
 import { LegacyEvents } from '../legacy/enums/legacy.enums';
 import { GameImage } from './interfaces/gameImage';
-import { GameRecord } from './interfaces/gameRecord';
+import { GameRecord, SmallGameRecord } from './interfaces/gameRecord';
 import { CreateGameRequest } from './interfaces/createGameRequest';
 import { UpdateGameRequest } from './interfaces/updateGameRequest';
 import { CreateGameResponse } from './interfaces/createGameResponse';
@@ -187,7 +187,7 @@ export class GamesService {
     return games;
   }
 
-  async find(filters: ListGamesFilters, result: 'full' | 'small'): Promise<GameRecord[]> {
+  async find(filters: ListGamesFilters): Promise<GameRecord[]> {
     const matchParams: Record<string, any> = {};
     if (filters.search) {
       matchParams['general.name'] = { $in: [new RegExp(filters.search, 'gi')] };
@@ -204,7 +204,17 @@ export class GamesService {
     } else {
       sortParams.createdAt = -1;
     }
-    return await this.aggregateGames(matchParams, sortParams, filters.page, filters.user, result);
+    return await this.aggregateGames(matchParams, sortParams, filters.page, filters.user);
+  }
+
+  async search(name: string): Promise<SmallGameRecord[]> {
+    const games: SmallGameRecord[] = [];
+    const results: GameDocument[] = await this.gameModel.find({ 'general.name': { $in: [new RegExp(name, 'gi')] } });
+
+    for (const game of results) {
+      games.push(await this.toSearchGameRecord(game));
+    }
+    return games;
   }
 
   async delete(game: GameDocument) {
@@ -246,9 +256,8 @@ export class GamesService {
     sortParams: Record<string, any>,
     page: number,
     user = '',
-    result: 'full' | 'small' | null,
   ): Promise<GameRecord[]> {
-    const games: GameRecord[] = [];
+    const games: Array<GameRecord> = [];
     const aggregation = this.gameModel.aggregate<GameAggregationDocument>([
       { $match: { ...matchParams } },
       { $sort: { ...sortParams } },
@@ -272,16 +281,12 @@ export class GamesService {
       },
     ]);
     for (const game of await aggregation.exec()) {
-      if (result === 'small') {
-        games.push(await this.toSearchGameRecord(game));
-      } else {
-        games.push(await this.toGameRecord(game));
-      }
+      games.push(await this.toGameRecord(game));
     }
     return games;
   }
 
-  private async toSearchGameRecord(game: GameAggregationDocument) {
+  private async toSearchGameRecord(game: GameDocument): Promise<SmallGameRecord> {
     const gameId = game._id.toString();
     return {
       id: gameId,

@@ -25,7 +25,7 @@ import { ListGamesFilters } from './interfaces/listGamesFilters';
 import { CreateGameResponse } from './interfaces/createGameResponse';
 import { UpdateGameResponse } from './interfaces/updateGameResponse';
 import { UpdateGameRequest } from './interfaces/updateGameRequest';
-import { GameRecord } from './interfaces/gameRecord';
+import { GameRecord, SmallGameRecord } from './interfaces/gameRecord';
 import { CreateGameRequestDto } from './dto/games.dto';
 import { GamesService } from './games.service';
 import { LegacyService } from '../legacy/legacy.service';
@@ -69,7 +69,6 @@ export class GamesController {
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('approved', new DefaultValuePipe(true), ParseBoolPipe) approved: boolean,
     @Query('owner', new DefaultValuePipe('')) owner: string,
-    @Query('result', new DefaultValuePipe('full')) result: 'full' | 'small',
   ): Promise<GameRecord[]> {
     if (page < 1) {
       throw new BadRequestException('invalid page number');
@@ -82,8 +81,17 @@ export class GamesController {
       if (user) {
         filters.user = user;
       }
-      return await this.gamesService.find(filters, result);
+      return await this.gamesService.find(filters);
     }
+  }
+
+  @Get('search')
+  @UseGuards(new Web3AuthGuard(true))
+  async search(
+    @CurrentUser() user: string,
+    @Query('name', new DefaultValuePipe('')) name: string,
+  ): Promise<SmallGameRecord[]> {
+    return await this.gamesService.search(name);
   }
 
   @Get(':id')
