@@ -57,4 +57,7 @@ export interface SmallGameRecord {
   images: {
     smallThumbnail: string;
   };
+  connections: {
+    assetRenderer: string;
+  };
 }

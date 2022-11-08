@@ -209,7 +209,10 @@ export class GamesService {
 
   async search(name: string): Promise<SmallGameRecord[]> {
     const games: SmallGameRecord[] = [];
-    const results: GameDocument[] = await this.gameModel.find({ 'general.name': { $in: [new RegExp(name, 'gi')] } });
+    const results: GameDocument[] = await this.gameModel.find({
+      'general.name': { $in: [new RegExp(name, 'gi')] },
+      approved: true,
+    });
 
     for (const game of results) {
       games.push(await this.toSearchGameRecord(game));
@@ -296,6 +299,9 @@ export class GamesService {
       },
       images: {
         smallThumbnail: await this.getStaticUrl(gameId, game.images.smallThumbnail),
+      },
+      connections: {
+        assetRenderer: game.connections.assetRenderer,
       },
     };
   }
