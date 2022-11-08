@@ -112,6 +112,23 @@ export class GameImages {
   gallery: GameImage[];
 }
 
+export class DNAFilters {
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => DNAFilter)
+  avatarFilter?: DNAFilter;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => DNAFilter)
+  assetFilter?: DNAFilter;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => DNAFilter)
+  gemFilter?: DNAFilter;
+}
+
 export class SocialLink {
   @IsString()
   @IsNotEmpty()
@@ -131,8 +148,8 @@ export class GameConnections {
 
   @IsOptional()
   @ValidateNested()
-  @Type(() => DNAFilter)
-  dnaFilter: DNAFilter;
+  @Type(() => DNAFilters)
+  dnaFilters: DNAFilters;
 
   @IsOptional()
   @IsUrl()

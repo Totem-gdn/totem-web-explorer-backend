@@ -9,19 +9,23 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Put,
   Delete,
   Query,
   UnauthorizedException,
   UseGuards,
   UsePipes,
   ValidationPipe,
+  ParseBoolPipe,
 } from '@nestjs/common';
 import { Web3AuthGuard } from '../auth/guards/web3auth.guard';
 import { CurrentUser } from '../auth/decorators/currentUser';
 import { isMongoId } from 'class-validator';
 import { ListGamesFilters } from './interfaces/listGamesFilters';
 import { CreateGameResponse } from './interfaces/createGameResponse';
-import { GameRecord } from './interfaces/gameRecord';
+import { UpdateGameResponse } from './interfaces/updateGameResponse';
+import { UpdateGameRequest } from './interfaces/updateGameRequest';
+import { GameRecord, SmallGameRecord } from './interfaces/gameRecord';
 import { CreateGameRequestDto } from './dto/games.dto';
 import { GamesService } from './games.service';
 import { LegacyService } from '../legacy/legacy.service';
@@ -38,6 +42,24 @@ export class GamesController {
     return await this.gamesService.create(createGameDto);
   }
 
+  @Put(':id')
+  @UseGuards(new Web3AuthGuard(false))
+  @UsePipes(new ValidationPipe({ transform: true }))
+  async updateGame(
+    @CurrentUser() user: string,
+    @Body() updateGameDto: UpdateGameRequest,
+    @Param('id') id: string,
+  ): Promise<UpdateGameResponse> {
+    if (!isMongoId(id)) {
+      throw new BadRequestException('invalid id');
+    }
+    const game = await this.gamesService.findOneByIdAndOwner(id, user);
+    if (!game || game.owner !== user) {
+      throw new NotFoundException();
+    }
+    return await this.gamesService.update(game, updateGameDto);
+  }
+
   @Get()
   @UseGuards(new Web3AuthGuard(true))
   async find(
@@ -45,7 +67,7 @@ export class GamesController {
     @Query('list', new DefaultValuePipe('latest')) list: 'latest' | 'popular' | 'random',
     @Query('search', new DefaultValuePipe('')) search: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
-    @Query('approved', new DefaultValuePipe(true)) approved: boolean,
+    @Query('approved', new DefaultValuePipe(true), ParseBoolPipe) approved: boolean,
     @Query('owner', new DefaultValuePipe('')) owner: string,
   ): Promise<GameRecord[]> {
     if (page < 1) {
@@ -54,7 +76,7 @@ export class GamesController {
     if (list === 'random') {
       return await this.gamesService.random(user);
     } else {
-      approved = approved.toString() === 'false' ? false : true;
+      // approved = approved.toString() !== 'false';
       const filters: ListGamesFilters = { list, page, search, approved, owner };
       if (user) {
         filters.user = user;
@@ -64,10 +86,12 @@ export class GamesController {
   }
 
   @Get('search')
-  async search(@Query('name', new DefaultValuePipe('')) name: string) {
-    const games = await this.gamesService.searchByName(name);
-
-    return games;
+  @UseGuards(new Web3AuthGuard(true))
+  async search(
+    @CurrentUser() user: string,
+    @Query('name', new DefaultValuePipe('')) name: string,
+  ): Promise<SmallGameRecord[]> {
+    return await this.gamesService.search(name);
   }
 
   @Get(':id')

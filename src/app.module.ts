@@ -8,6 +8,7 @@ import { HealthModule } from './health/health.module';
 import { GamesModule } from './games/games.module';
 import { LegacyModule } from './legacy/legacy.module';
 import { AssetsModule } from './assets/assets.module';
+import { AuthModule } from './auth/auth.module';
 import { AppRouterModule } from './router.module';
 import { ExplorerModule } from './explorer/explorer.module';
 
@@ -44,6 +45,7 @@ import { ExplorerModule } from './explorer/explorer.module';
     ExplorerModule,
     GamesModule,
     AssetsModule,
+    AuthModule,
     AppRouterModule,
   ],
 })

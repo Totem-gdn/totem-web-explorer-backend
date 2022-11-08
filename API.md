@@ -88,7 +88,11 @@ Response:
     "connections": {
       "webpage": "",
       "assetRenderer": "",
-      "dnaFilter": "",
+      "dnaFilters": {
+        "avatarFilter": "",
+        "assetFilter": "",
+        "gemFilter": ""
+      },
       "promoVideo": "",
       "socialLinks": [
         {
@@ -166,7 +170,11 @@ Response
   "connections": {
     "webpage": "",
     "assetRenderer": "",
-    "dnaFilter": "",
+    "dnaFilters": {
+      "avatarFilter": "",
+      "assetFilter": "",
+      "gemFilter": ""
+    },
     "promoVideo": "",
     "socialLinks": [
       {
@@ -248,10 +256,22 @@ Request:
     "assetRenderer": "is_url",
     "promoVideo": "is_url",
     "dnaFilter": {
-      "filename": "string, is_not_empty",
-      "mimeType": "is_mime_type",
-      "contentLength": 0 // number, is_positive
-    },
+      "avatarFilter": {
+        "filename": "string, is_not_empty",
+        "mimeType": "is_mime_type",
+        "contentLength": 0 // number, is_positive
+      },
+      "assetFilter": {
+        "filename": "string, is_not_empty",
+        "mimeType": "is_mime_type",
+        "contentLength": 0 // number, is_positive
+      },
+      "gemFilter": {
+        "filename": "string, is_not_empty",
+        "mimeType": "is_mime_type",
+        "contentLength": 0 // number, is_positive
+      }
+    }, // is_optional
     "socialLinks": [ // is_array, array_not_empty
       {
         "type": "string, is_not_empty",
@@ -272,7 +292,11 @@ Response
 {
   "id": "",
   "connections": {
-    "dnaFilter": ""
+    "dnaFilters": {
+      "avatarFilter": "",
+      "assetFilter": "",
+      "gemFilter": ""
+    }
   },
   "uploadImageURLs": {
     "coverImage": "",

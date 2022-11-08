@@ -17,6 +17,7 @@ import { ItemLike, ItemLikeDocument } from './schemas/itemLikes';
 import { Gem, GemDocument } from './schemas/gems';
 import { GemLike, GemLikeDocument } from './schemas/gemLikes';
 import { AssetType } from './types/assets';
+import { AssetsOwnershipHistory, AssetsOwnershipHistoryDocument } from './schemas/assetsOwnershipHistory';
 
 @Injectable()
 export class AssetsService {
@@ -44,6 +45,7 @@ export class AssetsService {
     @InjectModel(ItemLike.name) private readonly itemLikeModel: Model<ItemLikeDocument>,
     @InjectModel(Gem.name) private readonly gemModel: Model<GemDocument>,
     @InjectModel(GemLike.name) private readonly gemLikeModel: Model<GemLikeDocument>,
+    @InjectModel(AssetsOwnershipHistory.name) private readonly ownershipModel: Model<AssetsOwnershipHistoryDocument>,
   ) {
     this.assetsModels = {
       avatars: avatarModel,
@@ -204,5 +206,14 @@ export class AssetsService {
       games: asset.games,
       lastUsed: asset.lastUsed[0] || '',
     };
+  }
+
+  async ownershipHistory(assetType: AssetType, assetId: string) {
+    const history = this.ownershipModel.find({
+      tokenType: { $in: [new RegExp(assetType, 'gi')] },
+      tokenId: assetId.toString(),
+    });
+
+    return history;
   }
 }

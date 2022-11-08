@@ -1,15 +1,5 @@
 import { SocialLink } from './socialLink';
 
-export interface GameSearchRecord {
-  id: string;
-  general: {
-    name: string;
-  };
-  images: {
-    smallThumbnail: string;
-  };
-}
-
 export interface GameRecord {
   id: string;
   owner: string;
@@ -44,12 +34,30 @@ export interface GameRecord {
   connections: {
     webpage: string;
     assetRenderer: string;
-    dnaFilter: string;
+    dnaFilters: {
+      avatarFilter?: string;
+      assetFilter?: string;
+      gemFilter?: string;
+    };
     promoVideo: string;
     socialLinks: SocialLink[];
   };
   contacts: {
     email: string;
     discord: string;
+  };
+}
+
+export interface SmallGameRecord {
+  id: string;
+  general: {
+    name: string;
+    genre: string[];
+  };
+  images: {
+    smallThumbnail: string;
+  };
+  connections: {
+    assetRenderer: string;
   };
 }
