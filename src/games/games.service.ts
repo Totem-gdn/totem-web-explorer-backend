@@ -363,7 +363,7 @@ export class GamesService {
 
   private async toGameRecord(game: GameAggregationDocument): Promise<GameRecord> {
     const gameId = game._id.toString();
-    console.log(game.images.coverImage, await this.getStaticUrl(gameId, game.images.coverImage));
+
     return {
       id: gameId,
       owner: game.owner,
