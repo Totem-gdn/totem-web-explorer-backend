@@ -35,4 +35,6 @@ export interface UpdateGameRequest {
     email?: string;
     discord?: string;
   };
+  galleryImagesForDelete?: string[];
+  galleryImagesForUpload?: GameImage[];
 }
