@@ -87,7 +87,8 @@ export class GamesService {
     if (payload.connections?.dnaFilters) {
       response.connections = { dnaFilters: {} };
       for (const dnaFiltersKey in game.connections.dnaFilters) {
-        if (game.connections.dnaFilters[dnaFiltersKey]) {
+        if (game.connections.dnaFilters[dnaFiltersKey] && game.connections.dnaFilters[dnaFiltersKey].filename) {
+          // console.log(game.connections.dnaFilters[dnaFiltersKey]);
           filesToDelete.push({ Key: join(game.id, game.connections.dnaFilters[dnaFiltersKey].filename) }); // DNA JSON
         }
       }
