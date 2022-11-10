@@ -88,7 +88,7 @@ export class GamesService {
       response.connections = { dnaFilters: {} };
       for (const dnaFiltersKey in game.connections.dnaFilters) {
         if (game.connections.dnaFilters[dnaFiltersKey]) {
-          filesToDelete.push({ Key: join(game.id, game.connections.dnaFilters[dnaFiltersKey]) }); // DNA JSON
+          filesToDelete.push({ Key: join(game.id, game.connections.dnaFilters[dnaFiltersKey].filename) }); // DNA JSON
         }
       }
       for (const dnaFiltersKey in payload.connections.dnaFilters) {
@@ -107,7 +107,7 @@ export class GamesService {
       const { gallery: _gallery, ...payloadImages } = payload.images;
       for (const imageKey in payloadImages) {
         if (game.images[imageKey]) {
-          filesToDelete.push({ Key: join(game.id, game.images[imageKey]) });
+          filesToDelete.push({ Key: join(game.id, game.images[imageKey].filename) });
         }
         payload.images[imageKey].filename = `${uuidv4()}-${payload.images[imageKey].filename}`;
         response.uploadImageURLs[imageKey] = await this.getPutSignedUrl(game.id, payload.images[imageKey]);
@@ -132,6 +132,9 @@ export class GamesService {
     if (payload.images.gallery && payload.images.gallery.length) {
       const galleryImagesForUpload = payload.images.gallery;
       payload.images.gallery = game.images.gallery;
+      if (!response.uploadImageURLs.imagesGallery) {
+        response.uploadImageURLs.imagesGallery = [];
+      }
       for (const image of galleryImagesForUpload) {
         const imageObj = {
           ...image,
@@ -195,6 +198,7 @@ export class GamesService {
 
   async findOneByIdAndOwner(id: string, owner: string) {
     return await this.gameModel.findOne({ _id: new Types.ObjectId(id), owner }).exec();
+    // return await this.gameModel.findOne({ _id: new Types.ObjectId(id) }).exec();
   }
 
   async random(user: string): Promise<GameRecord[]> {
