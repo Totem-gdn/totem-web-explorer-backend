@@ -86,13 +86,14 @@ export class GamesService {
     const filesToDelete = [];
     if (payload.connections?.dnaFilters) {
       response.connections = { dnaFilters: {} };
+      const dnaFilters = payload.connections.dnaFilters;
+      payload.connections.dnaFilters = { ...payload.connections.dnaFilters, ...game.connections.dnaFilters };
       for (const dnaFiltersKey in game.connections.dnaFilters) {
         if (game.connections.dnaFilters[dnaFiltersKey] && game.connections.dnaFilters[dnaFiltersKey].filename) {
-          // console.log(game.connections.dnaFilters[dnaFiltersKey]);
           filesToDelete.push({ Key: join(game.id, game.connections.dnaFilters[dnaFiltersKey].filename) }); // DNA JSON
         }
       }
-      for (const dnaFiltersKey in payload.connections.dnaFilters) {
+      for (const dnaFiltersKey in dnaFilters) {
         payload.connections.dnaFilters[dnaFiltersKey].filename = `${uuidv4()}-${
           payload.connections.dnaFilters[dnaFiltersKey].filename
         }`;
@@ -106,6 +107,7 @@ export class GamesService {
     if (payload.images) {
       response.uploadImageURLs = {};
       const { gallery: _gallery, ...payloadImages } = payload.images;
+      payload.images = { ...game.images, ...payloadImages };
       for (const imageKey in payloadImages) {
         if (game.images[imageKey]) {
           filesToDelete.push({ Key: join(game.id, game.images[imageKey].filename) });
@@ -130,7 +132,7 @@ export class GamesService {
       delete payload.galleryImagesForDelete;
     }
 
-    if (payload.images.gallery && payload.images.gallery.length) {
+    if (payload.images && payload.images.gallery && payload.images.gallery.length) {
       const galleryImagesForUpload = payload.images.gallery;
       payload.images.gallery = game.images.gallery;
       if (!response.uploadImageURLs.imagesGallery) {
@@ -157,8 +159,8 @@ export class GamesService {
       );
     }
 
+    console.log(payload);
     // Finish files part
-    game.set({ ...payload });
     await game.save();
 
     return response;
