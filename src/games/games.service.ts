@@ -124,7 +124,7 @@ export class GamesService {
         const splittedPath = path.split('/');
         const filename = splittedPath[splittedPath.length - 1];
         filesToDelete.push({ Key: join(game.id, filename) });
-        const indexOfGame = newGames.map((e) => e.filename).indexOf('afe5f0d9-e4b1-4187-88f0-6e8c66992692-SS_02.png');
+        const indexOfGame = newGames.map((e) => e.filename).indexOf(filename);
         newGames.splice(indexOfGame, 1);
       });
       payload.images.gallery = newGames;
@@ -133,19 +133,16 @@ export class GamesService {
     }
 
     if (payload.images && payload.images.gallery && payload.images.gallery.length) {
-      const galleryImagesForUpload = payload.images.gallery;
-      payload.images.gallery = game.images.gallery;
       if (!response.uploadImageURLs.imagesGallery) {
         response.uploadImageURLs.imagesGallery = [];
       }
-      for (const image of galleryImagesForUpload) {
-        const imageObj = {
-          ...image,
-          filename: `${uuidv4()}-${image.filename}`,
-        };
-        payload.images.gallery.push(imageObj);
-        response.uploadImageURLs.imagesGallery.push(await this.getPutSignedUrl(game.id, imageObj));
+      for (const image of payload.images.gallery) {
+        image.filename = `${uuidv4()}-${image.filename}`;
+        console.log('!!!!!');
+        response.uploadImageURLs.imagesGallery.push(await this.getPutSignedUrl(game.id, image));
       }
+      const result = [...game.images.gallery, ...payload.images.gallery];
+      payload.images.gallery = result;
     }
 
     if (filesToDelete.length) {
@@ -159,8 +156,8 @@ export class GamesService {
       );
     }
 
-    console.log(payload);
     // Finish files part
+    game.set({ ...payload });
     await game.save();
 
     return response;
