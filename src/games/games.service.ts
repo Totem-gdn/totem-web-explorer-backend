@@ -125,21 +125,23 @@ export class GamesService {
         response.uploadImageURLs[imageKey] = await this.getPutSignedUrl(game.id, payload.images[imageKey]);
       }
 
-      for (const image of _gallery) {
-        const item = {
-          ...image,
-          filename: `${uuidv4()}-${image.filename}`,
-        };
+      if (_gallery) {
+        for (const image of _gallery) {
+          const item = {
+            ...image,
+            filename: `${uuidv4()}-${image.filename}`,
+          };
 
-        if (!payload.images.gallery) {
-          payload.images.gallery = [];
-        }
-        if (!response.uploadImageURLs.imagesGallery) {
-          response.uploadImageURLs.imagesGallery = [];
-        }
+          if (!payload.images.gallery) {
+            payload.images.gallery = [];
+          }
+          if (!response.uploadImageURLs.imagesGallery) {
+            response.uploadImageURLs.imagesGallery = [];
+          }
 
-        payload.images.gallery.push(item);
-        response.uploadImageURLs.imagesGallery.push(await this.getPutSignedUrl(game.id, item));
+          payload.images.gallery.push(item);
+          response.uploadImageURLs.imagesGallery.push(await this.getPutSignedUrl(game.id, item));
+        }
       }
     }
 
