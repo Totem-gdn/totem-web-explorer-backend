@@ -150,7 +150,7 @@ export class GamesService {
         const splittedPath = path.split('/');
         const filename = splittedPath[splittedPath.length - 1];
         filesToDelete.push({ Key: join(game.id, filename) });
-        const indexOfImage = payload.images.gallery.map((e) => e.filename).indexOf(filename);
+        const indexOfImage = payload.images.gallery.map((e) => e.filename).indexOf(decodeURI(filename));
         if (indexOfImage >= 0) {
           payload.images.gallery.splice(indexOfImage, 1);
         }

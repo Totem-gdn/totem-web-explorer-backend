@@ -54,7 +54,7 @@ export class GamesController {
       throw new BadRequestException('invalid id');
     }
     const game = await this.gamesService.findOneByIdAndOwner(id, user);
-    if (!game || game.owner !== user) {
+    if (!game) {
       throw new NotFoundException();
     }
     return await this.gamesService.update(game, updateGameDto);
