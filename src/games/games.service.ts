@@ -113,6 +113,10 @@ export class GamesService {
       }
     }
 
+    if (payload.connections) {
+      payload.connections = { ...game.connections, ...payload.connections };
+    }
+
     if (payload.images) {
       response.uploadImageURLs = {};
       const { gallery: _gallery, ...payloadImages } = payload.images;
@@ -171,6 +175,7 @@ export class GamesService {
 
     // console.log(payload);
     // Finish files part
+    // console.log(payload);
     gameDB.set({ ...payload });
     await gameDB.save();
 
