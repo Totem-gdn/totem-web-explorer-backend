@@ -77,47 +77,107 @@ export class GamesService {
     };
   }
 
-  async update(game: GameDocument, payload: UpdateGameRequest): Promise<UpdateGameResponse> {
+  async update(gameDB: GameDocument, payload: UpdateGameRequest): Promise<UpdateGameResponse> {
+    const game = gameDB.toJSON();
     const response: UpdateGameResponse = {
       id: game.id,
     };
+    game.id = game._id.toString();
 
     // files part
     const filesToDelete = [];
     if (payload.connections?.dnaFilters) {
       response.connections = { dnaFilters: {} };
-      for (const dnaFiltersKey in game.connections.dnaFilters) {
-        if (game.connections.dnaFilters[dnaFiltersKey]) {
-          filesToDelete.push({ Key: join(game.id, game.connections.dnaFilters[dnaFiltersKey]) }); // DNA JSON
+      const dnaFilters = payload.connections.dnaFilters;
+      for (const dnaFiltersKey in dnaFilters) {
+        if (
+          game.connections.dnaFilters &&
+          game.connections.dnaFilters[dnaFiltersKey] &&
+          game.connections.dnaFilters[dnaFiltersKey].filename
+        ) {
+          filesToDelete.push({ Key: join(game.id, game.connections.dnaFilters[dnaFiltersKey].filename) });
         }
+
+        if (payload.connections.dnaFilters[dnaFiltersKey] !== null) {
+          payload.connections.dnaFilters[dnaFiltersKey].filename = `${uuidv4()}-${
+            payload.connections.dnaFilters[dnaFiltersKey].filename
+          }`;
+          response.connections.dnaFilters[dnaFiltersKey] = await this.getPutSignedUrl(
+            game.id,
+            payload.connections.dnaFilters[dnaFiltersKey],
+          );
+        }
+        const filters = { ...game.connections.dnaFilters, ...payload.connections.dnaFilters };
+        const connections = { ...payload.connections, dnaFilters: filters };
+        payload.connections = connections;
       }
-      for (const dnaFiltersKey in payload.connections.dnaFilters) {
-        payload.connections.dnaFilters[dnaFiltersKey].filename = `${uuidv4()}-${
-          payload.connections.dnaFilters[dnaFiltersKey].filename
-        }`;
-        response.connections.dnaFilters[dnaFiltersKey] = await this.getPutSignedUrl(
-          game.id,
-          payload.connections.dnaFilters[dnaFiltersKey],
-        );
-      }
+    }
+
+    if (payload.connections) {
+      payload.connections = { ...game.connections, ...payload.connections };
     }
 
     if (payload.images) {
       response.uploadImageURLs = {};
       const { gallery: _gallery, ...payloadImages } = payload.images;
+      payload.images = { ...game.images, ...payloadImages };
       for (const imageKey in payloadImages) {
         if (game.images[imageKey]) {
-          filesToDelete.push({ Key: join(game.id, game.images[imageKey]) });
+          filesToDelete.push({ Key: join(game.id, game.images[imageKey].filename) });
         }
         payload.images[imageKey].filename = `${uuidv4()}-${payload.images[imageKey].filename}`;
         response.uploadImageURLs[imageKey] = await this.getPutSignedUrl(game.id, payload.images[imageKey]);
       }
-      // FIXME: how to delete specific gallery image from payload?
+
+      if (_gallery) {
+        for (const image of _gallery) {
+          const item = {
+            ...image,
+            filename: `${uuidv4()}-${image.filename}`,
+          };
+
+          if (!payload.images.gallery) {
+            payload.images.gallery = [];
+          }
+          if (!response.uploadImageURLs.imagesGallery) {
+            response.uploadImageURLs.imagesGallery = [];
+          }
+
+          payload.images.gallery.push(item);
+          response.uploadImageURLs.imagesGallery.push(await this.getPutSignedUrl(game.id, item));
+        }
+      }
     }
 
+    if (payload.galleryImagesForDelete && payload.galleryImagesForDelete.length) {
+      payload.galleryImagesForDelete.forEach((path) => {
+        const splittedPath = path.split('/');
+        const filename = splittedPath[splittedPath.length - 1];
+        filesToDelete.push({ Key: join(game.id, filename) });
+        const indexOfImage = payload.images.gallery.map((e) => e.filename).indexOf(decodeURI(filename));
+        if (indexOfImage >= 0) {
+          payload.images.gallery.splice(indexOfImage, 1);
+        }
+      });
+      delete payload.galleryImagesForDelete;
+    }
+
+    if (filesToDelete.length) {
+      await this.s3Client.send(
+        new DeleteObjectsCommand({
+          Bucket: this.bucket,
+          Delete: {
+            Objects: filesToDelete,
+          },
+        }),
+      );
+    }
+
+    // console.log(payload);
     // Finish files part
-    game.set({ ...payload });
-    await game.save();
+    // console.log(payload);
+    gameDB.set({ ...payload });
+    await gameDB.save();
 
     return response;
   }
@@ -157,6 +217,7 @@ export class GamesService {
 
   async findOneByIdAndOwner(id: string, owner: string) {
     return await this.gameModel.findOne({ _id: new Types.ObjectId(id), owner }).exec();
+    // return await this.gameModel.findOne({ _id: new Types.ObjectId(id) }).exec();
   }
 
   async random(user: string): Promise<GameRecord[]> {
@@ -223,15 +284,15 @@ export class GamesService {
   async delete(game: GameDocument) {
     const filesToDelete = [];
     for (const filterKey in game.connections.dnaFilters) {
-      filesToDelete.push({ Key: join(game.id, game.connections.dnaFilters[filterKey].filename) });
+      if (game.connections.dnaFilters[filterKey] && game.connections.dnaFilters[filterKey].filename) {
+        filesToDelete.push({ Key: join(game.id, game.connections.dnaFilters[filterKey].filename) });
+      }
     }
     for (const imageKey in game.images) {
-      filesToDelete.push({ Key: join(game.id, game.images[imageKey].filename) });
+      if (game.images[imageKey] && game.images[imageKey].filename && imageKey !== 'gallery') {
+        filesToDelete.push({ Key: join(game.id, game.images[imageKey].filename) });
+      }
     }
-
-    filesToDelete.push({ Key: join(game.id, game.images.coverImage?.filename) }); // coverImage
-    filesToDelete.push({ Key: join(game.id, game.images.cardThumbnail?.filename) }); // cardThumbnail
-    filesToDelete.push({ Key: join(game.id, game.images.smallThumbnail?.filename) }); // smallThumbnail
 
     game.images.gallery?.forEach((image) => {
       filesToDelete.push({ Key: join(game.id, image.filename) });
@@ -245,7 +306,7 @@ export class GamesService {
         },
       }),
     );
-    // await game.deleteOne();
+
     const deleteDBResult = await this.gameModel.deleteOne({ _id: game._id });
 
     return {
@@ -320,6 +381,7 @@ export class GamesService {
 
   private async toGameRecord(game: GameAggregationDocument): Promise<GameRecord> {
     const gameId = game._id.toString();
+
     return {
       id: gameId,
       owner: game.owner,
