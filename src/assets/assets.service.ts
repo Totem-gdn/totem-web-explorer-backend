@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -99,6 +99,9 @@ export class AssetsService {
     }
     if (filters.list === 'my') {
       matchParams.owner = filters.user;
+    }
+    if (filters.ids) {
+      matchParams['_id'] = { $in: filters.ids };
     }
     const sortParams: Record<string, any> = {};
     if (filters.list === 'popular') {
@@ -215,5 +218,55 @@ export class AssetsService {
     });
 
     return history;
+  }
+
+  async legacyHistory(assetType: AssetType, assetId: string) {
+    let item;
+    switch (assetType + '') {
+      case 'avatar':
+      case 'avatars':
+        item = await this.avatarModel.findOne({ tokenId: assetId.toString() });
+        break;
+      case 'item':
+      case 'items':
+        item = await this.itemModel.findOne({ tokenId: assetId.toString() });
+        break;
+      case 'gem':
+      case 'gems':
+        item = await this.gemModel.findOne({ tokenId: assetId.toString() });
+        break;
+    }
+
+    if (!item) {
+      throw new BadRequestException('Item not found');
+    }
+
+    const history = await this.legacyService.getLegacyHistory(item._id.toString());
+
+    return history;
+  }
+
+  async getFavorites(assetType: AssetType, user: string, page: number) {
+    let type;
+    switch (assetType) {
+      case 'avatars':
+        type = 'avatarLiked';
+        break;
+      case 'items':
+        type = 'itemLiked';
+        break;
+      case 'gems':
+        type = 'gemLiked';
+        break;
+    }
+    const favorites = await this.legacyService.getFavorites(type, user, page, this.perPage);
+
+    const ids = favorites.map((f) => {
+      return f.assetId ? f.assetId : f.gameId;
+    });
+
+    const result = await this.find(assetType, { ids, list: 'latest', page: 1 });
+
+    return result;
   }
 }
