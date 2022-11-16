@@ -85,6 +85,19 @@ export class GamesController {
     }
   }
 
+  @Get('favorites')
+  @UseGuards(new Web3AuthGuard(false))
+  async favorites(
+    @CurrentUser() user: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+  ): Promise<GameRecord[]> {
+    if (page < 1) {
+      throw new BadRequestException('invalid page number');
+    }
+
+    return await this.gamesService.favorites(user, page);
+  }
+
   @Get('search')
   @UseGuards(new Web3AuthGuard(true))
   async search(

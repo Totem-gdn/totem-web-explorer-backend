@@ -259,13 +259,9 @@ export class AssetsService {
         type = 'gemLiked';
         break;
     }
-    const favorites = await this.legacyService.getFavorites(type, user, page, this.perPage);
+    const favoritesIDs = await this.legacyService.getFavoritesIDs(type, user, page, this.perPage);
 
-    const ids = favorites.map((f) => {
-      return f.assetId ? f.assetId : f.gameId;
-    });
-
-    const result = await this.find(assetType, { ids, list: 'latest', page: 1, user });
+    const result = await this.find(assetType, { ids: favoritesIDs, list: 'latest', page: 1, user });
 
     return result;
   }

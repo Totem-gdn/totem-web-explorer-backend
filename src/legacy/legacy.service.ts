@@ -74,10 +74,21 @@ export class LegacyService {
     return await this.legacyRecordModel.find({ assetId });
   }
 
-  async getFavorites(type: AssetType, user: string, page: number, perPage: number) {
-    return await this.legacyRecordModel
+  async getFavoritesIDs(
+    type: 'avatarLiked' | 'gemLiked' | 'itemLiked' | 'gameLiked',
+    user: string,
+    page: number,
+    perPage: number,
+  ) {
+    const favorites = await this.legacyRecordModel
       .find({ type, user }, { gameId: 1, assetId: 1 })
       .skip((page - 1) * perPage)
       .limit(perPage);
+
+    const ids = favorites.map((f) => {
+      return f.assetId ? f.assetId : f.gameId;
+    });
+
+    return ids;
   }
 }
