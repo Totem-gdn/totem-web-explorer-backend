@@ -246,7 +246,7 @@ export class AssetsService {
     return history;
   }
 
-  async getFavorites(assetType: AssetType, user: string, page: number) {
+  async getFavorites(assetType: AssetType, user: string, page: number): Promise<AssetRecord[]> {
     let type;
     switch (assetType) {
       case 'avatars':
@@ -265,7 +265,7 @@ export class AssetsService {
       return f.assetId ? f.assetId : f.gameId;
     });
 
-    const result = await this.find(assetType, { ids, list: 'latest', page: 1 });
+    const result = await this.find(assetType, { ids, list: 'latest', page: 1, user });
 
     return result;
   }
