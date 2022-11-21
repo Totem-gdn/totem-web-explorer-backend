@@ -5,4 +5,5 @@ export interface ListGamesFilters {
   user?: string;
   approved?: boolean;
   owner?: string;
+  ids?: string[];
 }

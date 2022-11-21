@@ -4,4 +4,5 @@ export interface ListAssetsFilter {
   gameId?: string;
   user?: string;
   search?: string;
+  ids?: string[];
 }

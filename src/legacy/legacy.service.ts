@@ -69,4 +69,26 @@ export class LegacyService {
   async useAssetInGame(assetType: AssetType, user: string, itemId: string, gameId: string, data: any) {
     await this.legacyRecordModel.create({ user, assetId: itemId, gameId, type: this.assetUsedTypes[assetType], data });
   }
+
+  async getLegacyHistory(assetId: string) {
+    return await this.legacyRecordModel.find({ assetId });
+  }
+
+  async getFavoritesIDs(
+    type: 'avatarLiked' | 'gemLiked' | 'itemLiked' | 'gameLiked',
+    user: string,
+    page: number,
+    perPage: number,
+  ) {
+    const favorites = await this.legacyRecordModel
+      .find({ type, user }, { gameId: 1, assetId: 1 })
+      .skip((page - 1) * perPage)
+      .limit(perPage);
+
+    const ids = favorites.map((f) => {
+      return f.assetId ? f.assetId : f.gameId;
+    });
+
+    return ids;
+  }
 }

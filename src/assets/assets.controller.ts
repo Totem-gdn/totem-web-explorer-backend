@@ -54,6 +54,19 @@ export class AssetsController {
     return await this.service.find(assetType, filters);
   }
 
+  @Get('favorites/:type')
+  @UseGuards(new Web3AuthGuard(false))
+  async getFavorites(
+    @CurrentUser() user: string,
+    @Param('type') type: AssetType,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+  ) {
+    if (page < 1) {
+      throw new BadRequestException('invalid page number');
+    }
+    return await this.service.getFavorites(type, user, page);
+  }
+
   @Get(':assetType/:id')
   @UseGuards(new Web3AuthGuard(true))
   async findOne(
@@ -71,14 +84,20 @@ export class AssetsController {
     return item;
   }
 
-  @Get(':assetType/:id/ownership-history')
+  @Get(':assetType/:id/:operation')
   @UseGuards(new Web3AuthGuard(true))
   async get(
     @CurrentUser() user: string,
     @Param('assetType') assetType: AssetType,
     @Param('id') id: string,
+    @Param('operation') operation: string,
   ): Promise<any> {
-    return await this.service.ownershipHistory(assetType, id);
+    switch (operation) {
+      case 'ownership-history':
+        return await this.service.ownershipHistory(assetType, id);
+      case 'legacy-history':
+        return await this.service.legacyHistory(assetType, id);
+    }
   }
 
   @Patch(':assetType/:id/:operation/:gameId?')

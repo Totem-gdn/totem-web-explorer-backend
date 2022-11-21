@@ -15,6 +15,7 @@ import { CreateGameRequest } from './interfaces/createGameRequest';
 import { UpdateGameRequest } from './interfaces/updateGameRequest';
 import { CreateGameResponse } from './interfaces/createGameResponse';
 import { UpdateGameResponse } from './interfaces/updateGameResponse';
+import { LegacyService } from '../legacy/legacy.service';
 
 @Injectable()
 export class GamesService {
@@ -25,6 +26,7 @@ export class GamesService {
 
   constructor(
     private readonly configService: ConfigService,
+    private readonly legacyService: LegacyService,
     @InjectModel(Game.name) private readonly gameModel: Model<GameDocument>,
   ) {
     this.s3Client = new S3Client({});
@@ -173,9 +175,7 @@ export class GamesService {
       );
     }
 
-    // console.log(payload);
     // Finish files part
-    // console.log(payload);
     gameDB.set({ ...payload });
     await gameDB.save();
 
@@ -254,8 +254,11 @@ export class GamesService {
       matchParams['general.name'] = { $in: [new RegExp(filters.search, 'gi')] };
     }
 
-    matchParams['approved'] = filters.approved;
-    if (filters.owner !== '') {
+    if (filters.approved) {
+      matchParams['approved'] = filters.approved;
+    }
+
+    if (filters.owner && filters.owner !== '') {
       matchParams['owner'] = filters.owner;
     }
 
@@ -264,6 +267,10 @@ export class GamesService {
       sortParams.views = -1;
     } else {
       sortParams.createdAt = -1;
+    }
+
+    if (filters.ids) {
+      matchParams['_id'] = { $in: filters.ids };
     }
     return await this.aggregateGames(matchParams, sortParams, filters.page, filters.user);
   }
@@ -313,6 +320,14 @@ export class GamesService {
       images: deleteS3Result?.Deleted?.length > 0,
       db: deleteDBResult?.deletedCount > 0,
     };
+  }
+
+  async favorites(user: string, page: number): Promise<GameRecord[]> {
+    const favorites = await this.legacyService.getFavoritesIDs('gameLiked', user, page, this.perPage);
+
+    const result = await this.find({ ids: favorites, list: 'latest', page: 1, user });
+
+    return result;
   }
 
   private async aggregateGames(
