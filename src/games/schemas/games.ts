@@ -176,6 +176,9 @@ export class Game {
 
   @Prop({ type: GameContactsSchema })
   contacts: GameContacts;
+
+  @Prop({ type: SchemaTypes.Boolean, required: true, default: () => true })
+  hidden: boolean;
 }
 
 export type GameDocument = Game & Document & DocumentTimestamps;
