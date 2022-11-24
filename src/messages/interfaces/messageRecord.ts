@@ -4,5 +4,6 @@ export interface MessageRecord {
   type: string;
   date: string;
   message: string;
+  isRead?: boolean;
   createdAt?: string;
 }

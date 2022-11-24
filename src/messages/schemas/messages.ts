@@ -23,4 +23,8 @@ export class Messages {
 
 export type MessagesDocument = Messages & Document & { isRead: boolean; createdAt: string };
 
+export type MessageAggregationDocument = MessagesDocument & {
+  isRead: boolean;
+};
+
 export const MessagesSchema = SchemaFactory.createForClass(Messages);
