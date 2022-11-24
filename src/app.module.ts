@@ -11,6 +11,7 @@ import { AssetsModule } from './assets/assets.module';
 import { AuthModule } from './auth/auth.module';
 import { AppRouterModule } from './router.module';
 import { ExplorerModule } from './explorer/explorer.module';
+import { BlocksModule } from './blocks/blocks.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { ExplorerModule } from './explorer/explorer.module';
     GamesModule,
     AssetsModule,
     AuthModule,
+    BlocksModule,
     AppRouterModule,
   ],
 })

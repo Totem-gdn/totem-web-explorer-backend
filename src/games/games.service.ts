@@ -179,7 +179,7 @@ export class GamesService {
     }
 
     delete payload.owner;
-    delete payload.hidden;
+    // delete payload.hidden;
     // Finish files part
     gameDB.set({ ...payload });
     await gameDB.save();
@@ -221,8 +221,8 @@ export class GamesService {
   }
 
   async findOneByIdAndOwner(id: string, owner: string) {
-    return await this.gameModel.findOne({ _id: new Types.ObjectId(id), owner }).exec();
-    // return await this.gameModel.findOne({ _id: new Types.ObjectId(id) }).exec();
+    // return await this.gameModel.findOne({ _id: new Types.ObjectId(id), owner }).exec();
+    return await this.gameModel.findOne({ _id: new Types.ObjectId(id) }).exec();
   }
 
   async random(user: string): Promise<GameRecord[]> {
