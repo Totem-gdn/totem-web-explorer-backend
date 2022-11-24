@@ -4,6 +4,7 @@ import { GamesModule } from './games/games.module';
 import { AssetsModule } from './assets/assets.module';
 import { AuthModule } from './auth/auth.module';
 import { BlocksModule } from './blocks/blocks.module';
+import { MessagesModule } from './messages/messages.module';
 
 @Module({
   imports: [
@@ -23,6 +24,10 @@ import { BlocksModule } from './blocks/blocks.module';
       {
         path: 'blocks',
         module: BlocksModule,
+      },
+      {
+        path: 'messages',
+        module: MessagesModule,
       },
     ]),
   ],

@@ -12,6 +12,7 @@ import { AuthModule } from './auth/auth.module';
 import { AppRouterModule } from './router.module';
 import { ExplorerModule } from './explorer/explorer.module';
 import { BlocksModule } from './blocks/blocks.module';
+import { MessagesModule } from './messages/messages.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { BlocksModule } from './blocks/blocks.module';
     AssetsModule,
     AuthModule,
     BlocksModule,
+    MessagesModule,
     AppRouterModule,
   ],
 })
