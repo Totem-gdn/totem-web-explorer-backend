@@ -204,36 +204,53 @@ export class GameContacts {
   discord: string;
 }
 
-export class CreateGameRequestDto {
+export class UpdateGameRequestDto {
   owner: string;
 
-  @IsNotEmptyObject()
+  @IsOptional()
   @ValidateNested()
   @ApiProperty()
   @Type(() => GameGeneralInformation)
   general: GameGeneralInformation;
 
-  @IsNotEmptyObject()
+  @IsOptional()
   @ValidateNested()
   @Type(() => GameDetails)
   @ApiProperty()
   details: GameDetails;
 
-  @IsNotEmptyObject()
+  @IsOptional()
   @ValidateNested()
   @Type(() => GameImages)
   @ApiProperty()
   images: GameImages;
 
-  @IsNotEmptyObject()
+  @IsOptional()
   @ValidateNested()
   @Type(() => GameConnections)
   @ApiProperty()
   connections: GameConnections;
 
-  @IsNotEmptyObject()
+  @IsOptional()
   @ValidateNested()
   @Type(() => GameContacts)
   @ApiProperty()
   contacts: GameContacts;
+
+  @IsOptional()
+  @ApiProperty({
+    example: [
+      'https://static-dev.totem-explorer.com/6364c51be261234ed44481df/afe5f0d9-e4b1-4187-88f0-6e8c66992692-SS_02.png',
+    ],
+  })
+  galleryImagesForDelete?: string[];
+
+  @IsOptional()
+  @Type(() => Array<GameImage>)
+  @ApiProperty({
+    example: [
+      'https://static-dev.totem-explorer.com/6364c51be261234ed44481df/afe5f0d9-e4b1-4187-88f0-6e8c66992692-SS_02.png',
+    ],
+  })
+  galleryImagesForUpload?: GameImage[];
 }
