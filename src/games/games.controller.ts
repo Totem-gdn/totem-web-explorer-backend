@@ -89,7 +89,7 @@ export class GamesController {
     @Query('search', new DefaultValuePipe('')) search: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('approved', new DefaultValuePipe(true), ParseBoolPipe) approved: boolean,
-    @Query('hidden', new DefaultValuePipe(false), ParseBoolPipe) hidden: boolean,
+    @Query('hidden', new DefaultValuePipe('false')) hidden: 'false' | 'true' | 'all',
     @Query('owner', new DefaultValuePipe('')) owner: string,
   ): Promise<GameRecord[]> {
     if (page < 1) {
@@ -98,8 +98,13 @@ export class GamesController {
     if (list === 'random') {
       return await this.gamesService.random(user);
     } else {
+      let isHidden;
+      if (hidden === 'true' || hidden === 'false') {
+        isHidden = hidden === 'true';
+      }
+
       // approved = approved.toString() !== 'false';
-      const filters: ListGamesFilters = { list, page, search, approved, owner, hidden };
+      const filters: ListGamesFilters = { list, page, search, approved, owner, hidden: isHidden };
       if (user) {
         filters.user = user;
       }

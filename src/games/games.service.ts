@@ -263,7 +263,7 @@ export class GamesService {
       matchParams['approved'] = filters.approved;
     }
 
-    if (filters.hidden !== true) {
+    if (filters.hidden === true || filters.hidden === false) {
       matchParams['hidden'] = filters.hidden;
     }
 
