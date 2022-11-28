@@ -3,6 +3,8 @@ import { SocialLink } from './socialLink';
 import { DNAFilters } from './dnaFilters';
 
 export interface UpdateGameRequest {
+  hidden?: boolean;
+  owner?: string;
   general?: {
     name?: string;
     author?: string;

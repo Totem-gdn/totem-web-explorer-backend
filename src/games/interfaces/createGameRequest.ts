@@ -3,6 +3,7 @@ import { SocialLink } from './socialLink';
 import { DNAFilters } from './dnaFilters';
 
 export interface CreateGameRequest {
+  hidden?: boolean;
   owner: string;
   general: {
     name: string;

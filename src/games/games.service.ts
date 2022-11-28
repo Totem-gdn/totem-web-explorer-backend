@@ -54,6 +54,9 @@ export class GamesService {
     for (const image of game.images.gallery) {
       image.filename = `${uuidv4()}-${image.filename}`;
     }
+
+    delete game.hidden;
+
     const newGame = await this.gameModel.create(game);
     return {
       id: newGame.id,
@@ -175,6 +178,8 @@ export class GamesService {
       );
     }
 
+    delete payload.owner;
+    // delete payload.hidden;
     // Finish files part
     gameDB.set({ ...payload });
     await gameDB.save();
@@ -190,7 +195,7 @@ export class GamesService {
     await this.gameModel.findByIdAndUpdate(id, { $inc: { views: 1 } }).exec();
     const games = await this.gameModel
       .aggregate<GameAggregationDocument>([
-        { $match: { _id: new Types.ObjectId(id) } },
+        { $match: { _id: new Types.ObjectId(id), hidden: false } },
         this.legacyLookupPipeline('isLiked', [{ $match: { type: LegacyEvents.GameLiked, user } }]),
         this.legacyLookupPipeline('players', [{ $match: { type: LegacyEvents.GamePlayed } }]),
         this.legacyLookupPipeline('likes', [{ $match: { type: LegacyEvents.GameLiked } }]),
@@ -216,14 +221,14 @@ export class GamesService {
   }
 
   async findOneByIdAndOwner(id: string, owner: string) {
-    return await this.gameModel.findOne({ _id: new Types.ObjectId(id), owner }).exec();
-    // return await this.gameModel.findOne({ _id: new Types.ObjectId(id) }).exec();
+    // return await this.gameModel.findOne({ _id: new Types.ObjectId(id), owner }).exec();
+    return await this.gameModel.findOne({ _id: new Types.ObjectId(id) }).exec();
   }
 
   async random(user: string): Promise<GameRecord[]> {
     const games: GameRecord[] = [];
     const query = this.gameModel.aggregate<GameAggregationDocument>([
-      { $match: { approved: true } },
+      { $match: { approved: true, hidden: false } },
       { $sample: { size: 5 } },
       this.legacyLookupPipeline('isLiked', [{ $match: { type: LegacyEvents.GameLiked, user } }]),
       this.legacyLookupPipeline('players', [{ $match: { type: LegacyEvents.GamePlayed } }]),
@@ -338,7 +343,7 @@ export class GamesService {
   ): Promise<GameRecord[]> {
     const games: Array<GameRecord> = [];
     const aggregation = this.gameModel.aggregate<GameAggregationDocument>([
-      { $match: { ...matchParams } },
+      { $match: { ...matchParams, hidden: false } },
       { $sort: { ...sortParams } },
       { $skip: (page - 1) * this.perPage },
       { $limit: this.perPage },
