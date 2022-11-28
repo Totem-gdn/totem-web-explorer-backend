@@ -263,7 +263,9 @@ export class GamesService {
       matchParams['approved'] = filters.approved;
     }
 
-    matchParams['hidden'] = filters.hidden;
+    if (filters.hidden !== true) {
+      matchParams['hidden'] = filters.hidden;
+    }
 
     if (filters.owner && filters.owner !== '') {
       matchParams['owner'] = filters.owner;
