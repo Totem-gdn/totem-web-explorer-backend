@@ -204,7 +204,7 @@ export class GameContacts {
   discord: string;
 }
 
-export class CreateGameRequestDto {
+export class CreateGameRequestDTO {
   owner: string;
 
   @IsNotEmptyObject()

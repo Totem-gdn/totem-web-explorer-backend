@@ -25,8 +25,8 @@ import { ListGamesFilters } from './interfaces/listGamesFilters';
 import { CreateGameResponse } from './interfaces/createGameResponse';
 import { UpdateGameResponse } from './interfaces/updateGameResponse';
 import { GameRecord, SmallGameRecord } from './interfaces/gameRecord';
-import { CreateGameRequestDto } from './dto/games.dto';
-import { UpdateGameRequestDto } from './dto/updateGameRequest.dto';
+import { CreateGameRequestDTO } from './dto/games.dto';
+import { UpdateGameRequestDTO } from './dto/updateGameRequest.dto';
 import { GamesService } from './games.service';
 import { LegacyService } from '../legacy/legacy.service';
 import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -47,7 +47,7 @@ export class GamesController {
     type: GameCreateEntity,
   })
   @ApiOperation({ summary: 'Create Game' })
-  async create(@CurrentUser() user: string, @Body() createGameDto: CreateGameRequestDto): Promise<CreateGameResponse> {
+  async create(@CurrentUser() user: string, @Body() createGameDto: CreateGameRequestDTO): Promise<CreateGameResponse> {
     createGameDto.owner = user;
     return await this.gamesService.create(createGameDto);
   }
@@ -62,7 +62,7 @@ export class GamesController {
   @ApiOperation({ summary: 'Update Game' })
   async updateGame(
     @CurrentUser() user: string,
-    @Body() updateGameDto: UpdateGameRequestDto,
+    @Body() updateGameDTO: UpdateGameRequestDTO,
     @Param('id') id: string,
   ): Promise<UpdateGameResponse> {
     if (!isMongoId(id)) {
@@ -72,7 +72,7 @@ export class GamesController {
     if (!game) {
       throw new NotFoundException();
     }
-    return await this.gamesService.update(game, updateGameDto);
+    return await this.gamesService.update(game, updateGameDTO);
   }
 
   @Get()
@@ -89,6 +89,7 @@ export class GamesController {
     @Query('search', new DefaultValuePipe('')) search: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('approved', new DefaultValuePipe(true), ParseBoolPipe) approved: boolean,
+    @Query('hidden', new DefaultValuePipe(false), ParseBoolPipe) hidden: boolean,
     @Query('owner', new DefaultValuePipe('')) owner: string,
   ): Promise<GameRecord[]> {
     if (page < 1) {
@@ -98,7 +99,7 @@ export class GamesController {
       return await this.gamesService.random(user);
     } else {
       // approved = approved.toString() !== 'false';
-      const filters: ListGamesFilters = { list, page, search, approved, owner };
+      const filters: ListGamesFilters = { list, page, search, approved, owner, hidden };
       if (user) {
         filters.user = user;
       }

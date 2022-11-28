@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-class dnaFilters {
+class DnaFilters {
   @ApiProperty()
   avatarFilter: string;
 
@@ -11,12 +11,12 @@ class dnaFilters {
   gemFilter: string;
 }
 
-class connections {
+class Connections {
   @ApiProperty()
-  dnaFilters: dnaFilters;
+  dnaFilters: DnaFilters;
 }
 
-class uploadImageURLs {
+class UploadImageURLs {
   @ApiProperty()
   coverImage: string;
 
@@ -35,8 +35,8 @@ export class GameCreateEntity {
   id: string;
 
   @ApiProperty()
-  connections: connections;
+  connections: Connections;
 
   @ApiProperty()
-  uploadImageURLs: uploadImageURLs;
+  uploadImageURLs: UploadImageURLs;
 }

@@ -263,6 +263,8 @@ export class GamesService {
       matchParams['approved'] = filters.approved;
     }
 
+    matchParams['hidden'] = filters.hidden;
+
     if (filters.owner && filters.owner !== '') {
       matchParams['owner'] = filters.owner;
     }
@@ -343,7 +345,7 @@ export class GamesService {
   ): Promise<GameRecord[]> {
     const games: Array<GameRecord> = [];
     const aggregation = this.gameModel.aggregate<GameAggregationDocument>([
-      { $match: { ...matchParams, hidden: false } },
+      { $match: { ...matchParams } },
       { $sort: { ...sortParams } },
       { $skip: (page - 1) * this.perPage },
       { $limit: this.perPage },
