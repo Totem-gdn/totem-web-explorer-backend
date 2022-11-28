@@ -89,7 +89,7 @@ export class GamesController {
     @Query('search', new DefaultValuePipe('')) search: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('approved', new DefaultValuePipe(true), ParseBoolPipe) approved: boolean,
-    @Query('hidden', new DefaultValuePipe('false')) hidden: 'false' | 'true' | 'all',
+    @Query('hidden', new DefaultValuePipe('')) hidden: '' | 'true' | 'false',
     @Query('owner', new DefaultValuePipe('')) owner: string,
   ): Promise<GameRecord[]> {
     if (page < 1) {
