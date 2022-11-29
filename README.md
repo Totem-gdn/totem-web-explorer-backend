@@ -1,6 +1,8 @@
 # totem-web-explorer-backend
 
-# API Documentation available here: http://hostname/api
+# API Documentation available here: http://{hostname}/api
+
+- hostname - URL of your running instance of Totem Web Explorer
 
 # Requirements:
 
