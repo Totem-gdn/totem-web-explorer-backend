@@ -12,7 +12,4 @@ export class PageBlockEntity {
 
   @ApiProperty()
   data: object;
-
-  @ApiProperty()
-  createdAt: string;
 }

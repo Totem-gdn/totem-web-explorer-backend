@@ -17,7 +17,7 @@ import {
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class GameGeneralInformation {
+export class CreateGameRequestGeneral {
   @IsString()
   @IsNotEmpty()
   @ApiProperty()
@@ -46,7 +46,7 @@ export class GameGeneralInformation {
   genre: string[];
 }
 
-export class GameDetails {
+export class CreateGameRequestDetails {
   @IsString()
   @IsNotEmpty()
   @ApiProperty()
@@ -78,7 +78,7 @@ export class GameDetails {
   inputs: string;
 }
 
-export class GameImage {
+export class CreateGameRequestImage {
   @IsString()
   @IsNotEmpty()
   @ApiProperty()
@@ -94,7 +94,7 @@ export class GameImage {
   contentLength: number;
 }
 
-export class DNAFilter {
+export class CreateGameRequestDNAFilter {
   @IsString()
   @IsNotEmpty()
   @ApiProperty()
@@ -110,51 +110,51 @@ export class DNAFilter {
   contentLength: number;
 }
 
-export class GameImages {
+export class CreateGameRequestImages {
   @ValidateNested()
-  @Type(() => GameImage)
+  @Type(() => CreateGameRequestImage)
   @ApiProperty()
-  coverImage: GameImage;
+  coverImage: CreateGameRequestImage;
 
   @ValidateNested()
-  @Type(() => GameImage)
+  @Type(() => CreateGameRequestImage)
   @ApiProperty()
-  cardThumbnail: GameImage;
+  cardThumbnail: CreateGameRequestImage;
 
   @ValidateNested()
-  @Type(() => GameImage)
+  @Type(() => CreateGameRequestImage)
   @ApiProperty()
-  smallThumbnail: GameImage;
+  smallThumbnail: CreateGameRequestImage;
 
   @IsArray()
   @ArrayNotEmpty()
   @ValidateNested({ each: true })
-  @Type(() => GameImage)
+  @Type(() => CreateGameRequestImage)
   @ApiProperty()
-  gallery: GameImage[];
+  gallery: CreateGameRequestImage[];
 }
 
-export class DNAFilters {
+export class CreateGameRequestDNAFilters {
   @IsOptional()
   @ValidateNested()
-  @Type(() => DNAFilter)
+  @Type(() => CreateGameRequestDNAFilter)
   @ApiProperty()
-  avatarFilter?: DNAFilter;
+  avatarFilter?: CreateGameRequestDNAFilter;
 
   @IsOptional()
   @ValidateNested()
-  @Type(() => DNAFilter)
+  @Type(() => CreateGameRequestDNAFilter)
   @ApiProperty()
-  assetFilter?: DNAFilter;
+  assetFilter?: CreateGameRequestDNAFilter;
 
   @IsOptional()
   @ValidateNested()
-  @Type(() => DNAFilter)
+  @Type(() => CreateGameRequestDNAFilter)
   @ApiProperty()
-  gemFilter?: DNAFilter;
+  gemFilter?: CreateGameRequestDNAFilter;
 }
 
-export class SocialLink {
+export class CreateGameRequestSocialLink {
   @IsString()
   @IsNotEmpty()
   @ApiProperty()
@@ -165,7 +165,7 @@ export class SocialLink {
   url: string;
 }
 
-export class GameConnections {
+export class CreateGameRequestConnections {
   @IsUrl()
   @ApiProperty()
   webpage: string;
@@ -177,9 +177,9 @@ export class GameConnections {
 
   @IsOptional()
   @ValidateNested()
-  @Type(() => DNAFilters)
+  @Type(() => CreateGameRequestDNAFilters)
   @ApiProperty()
-  dnaFilters: DNAFilters;
+  dnaFilters: CreateGameRequestDNAFilters;
 
   @IsOptional()
   @IsUrl()
@@ -188,12 +188,12 @@ export class GameConnections {
 
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => SocialLink)
+  @Type(() => CreateGameRequestSocialLink)
   @ApiProperty()
-  socialLinks: SocialLink[];
+  socialLinks: CreateGameRequestSocialLink[];
 }
 
-export class GameContacts {
+export class CreateGameRequestContacts {
   @IsEmail()
   @ApiProperty()
   email: string;
@@ -210,30 +210,30 @@ export class CreateGameRequestDTO {
   @IsNotEmptyObject()
   @ValidateNested()
   @ApiProperty()
-  @Type(() => GameGeneralInformation)
-  general: GameGeneralInformation;
+  @Type(() => CreateGameRequestGeneral)
+  general: CreateGameRequestGeneral;
 
   @IsNotEmptyObject()
   @ValidateNested()
-  @Type(() => GameDetails)
+  @Type(() => CreateGameRequestDetails)
   @ApiProperty()
-  details: GameDetails;
+  details: CreateGameRequestDetails;
 
   @IsNotEmptyObject()
   @ValidateNested()
-  @Type(() => GameImages)
+  @Type(() => CreateGameRequestImages)
   @ApiProperty()
-  images: GameImages;
+  images: CreateGameRequestImages;
 
   @IsNotEmptyObject()
   @ValidateNested()
-  @Type(() => GameConnections)
+  @Type(() => CreateGameRequestConnections)
   @ApiProperty()
-  connections: GameConnections;
+  connections: CreateGameRequestConnections;
 
   @IsNotEmptyObject()
   @ValidateNested()
-  @Type(() => GameContacts)
+  @Type(() => CreateGameRequestContacts)
   @ApiProperty()
-  contacts: GameContacts;
+  contacts: CreateGameRequestContacts;
 }

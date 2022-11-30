@@ -17,7 +17,7 @@ import {
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class GameGeneralInformation {
+export class UpdateGameRequestGeneral {
   @IsString()
   @IsNotEmpty()
   @ApiProperty()
@@ -46,7 +46,7 @@ export class GameGeneralInformation {
   genre: string[];
 }
 
-export class GameDetails {
+export class UpdateGameRequestDetails {
   @IsString()
   @IsNotEmpty()
   @ApiProperty()
@@ -78,7 +78,7 @@ export class GameDetails {
   inputs: string;
 }
 
-export class GameImage {
+export class UpdateGameRequestImage {
   @IsString()
   @IsNotEmpty()
   @ApiProperty()
@@ -94,7 +94,7 @@ export class GameImage {
   contentLength: number;
 }
 
-export class DNAFilter {
+export class UpdateGameRequestDNAFilter {
   @IsString()
   @IsNotEmpty()
   @ApiProperty()
@@ -110,51 +110,51 @@ export class DNAFilter {
   contentLength: number;
 }
 
-export class GameImages {
+export class UpdateGameRequestImages {
   @ValidateNested()
-  @Type(() => GameImage)
+  @Type(() => UpdateGameRequestImage)
   @ApiProperty()
-  coverImage: GameImage;
+  coverImage: UpdateGameRequestImage;
 
   @ValidateNested()
-  @Type(() => GameImage)
+  @Type(() => UpdateGameRequestImage)
   @ApiProperty()
-  cardThumbnail: GameImage;
+  cardThumbnail: UpdateGameRequestImage;
 
   @ValidateNested()
-  @Type(() => GameImage)
+  @Type(() => UpdateGameRequestImage)
   @ApiProperty()
-  smallThumbnail: GameImage;
+  smallThumbnail: UpdateGameRequestImage;
 
   @IsArray()
   @ArrayNotEmpty()
   @ValidateNested({ each: true })
-  @Type(() => GameImage)
+  @Type(() => UpdateGameRequestImage)
   @ApiProperty()
-  gallery: GameImage[];
+  gallery: UpdateGameRequestImage[];
 }
 
-export class DNAFilters {
+export class UpdateGameRequestDNAFilters {
   @IsOptional()
   @ValidateNested()
-  @Type(() => DNAFilter)
+  @Type(() => UpdateGameRequestDNAFilter)
   @ApiProperty()
-  avatarFilter?: DNAFilter;
+  avatarFilter?: UpdateGameRequestDNAFilter;
 
   @IsOptional()
   @ValidateNested()
-  @Type(() => DNAFilter)
+  @Type(() => UpdateGameRequestDNAFilter)
   @ApiProperty()
-  assetFilter?: DNAFilter;
+  assetFilter?: UpdateGameRequestDNAFilter;
 
   @IsOptional()
   @ValidateNested()
-  @Type(() => DNAFilter)
+  @Type(() => UpdateGameRequestDNAFilter)
   @ApiProperty()
-  gemFilter?: DNAFilter;
+  gemFilter?: UpdateGameRequestDNAFilter;
 }
 
-export class SocialLink {
+export class UpdateGameRequestSocialLink {
   @IsString()
   @IsNotEmpty()
   @ApiProperty()
@@ -165,7 +165,7 @@ export class SocialLink {
   url: string;
 }
 
-export class GameConnections {
+export class UpdateGameRequestConnections {
   @IsUrl()
   @ApiProperty()
   webpage: string;
@@ -177,9 +177,9 @@ export class GameConnections {
 
   @IsOptional()
   @ValidateNested()
-  @Type(() => DNAFilters)
+  @Type(() => UpdateGameRequestDNAFilters)
   @ApiProperty()
-  dnaFilters: DNAFilters;
+  dnaFilters: UpdateGameRequestDNAFilters;
 
   @IsOptional()
   @IsUrl()
@@ -188,12 +188,12 @@ export class GameConnections {
 
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => SocialLink)
+  @Type(() => UpdateGameRequestSocialLink)
   @ApiProperty()
-  socialLinks: SocialLink[];
+  socialLinks: UpdateGameRequestSocialLink[];
 }
 
-export class GameContacts {
+export class UpdateGameRequestContacts {
   @IsEmail()
   @ApiProperty()
   email: string;
@@ -210,32 +210,32 @@ export class UpdateGameRequestDTO {
   @IsOptional()
   @ValidateNested()
   @ApiProperty()
-  @Type(() => GameGeneralInformation)
-  general: GameGeneralInformation;
+  @Type(() => UpdateGameRequestGeneral)
+  general: UpdateGameRequestGeneral;
 
   @IsOptional()
   @ValidateNested()
-  @Type(() => GameDetails)
+  @Type(() => UpdateGameRequestDetails)
   @ApiProperty()
-  details: GameDetails;
+  details: UpdateGameRequestDetails;
 
   @IsOptional()
   @ValidateNested()
-  @Type(() => GameImages)
+  @Type(() => UpdateGameRequestImages)
   @ApiProperty()
-  images: GameImages;
+  images: UpdateGameRequestImages;
 
   @IsOptional()
   @ValidateNested()
-  @Type(() => GameConnections)
+  @Type(() => UpdateGameRequestConnections)
   @ApiProperty()
-  connections: GameConnections;
+  connections: UpdateGameRequestConnections;
 
   @IsOptional()
   @ValidateNested()
-  @Type(() => GameContacts)
+  @Type(() => UpdateGameRequestContacts)
   @ApiProperty()
-  contacts: GameContacts;
+  contacts: UpdateGameRequestContacts;
 
   @IsOptional()
   @ApiProperty({
@@ -246,11 +246,11 @@ export class UpdateGameRequestDTO {
   galleryImagesForDelete?: string[];
 
   @IsOptional()
-  @Type(() => Array<GameImage>)
+  @Type(() => Array<UpdateGameRequestImage>)
   @ApiProperty({
     example: [
       'https://static-dev.totem-explorer.com/6364c51be261234ed44481df/afe5f0d9-e4b1-4187-88f0-6e8c66992692-SS_02.png',
     ],
   })
-  galleryImagesForUpload?: GameImage[];
+  galleryImagesForUpload?: UpdateGameRequestImage[];
 }

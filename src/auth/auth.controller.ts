@@ -4,8 +4,8 @@ import { Web3AuthGuard } from './guards/web3auth.guard';
 import { CurrentUser } from './decorators/currentUser';
 import { IProfileResponse } from './interfaces/user-profile';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { AuthEntity } from './entities/auth.entity';
-import { AuthDTO } from './dto/auth.dto';
+import { ProfileEntity } from './entities/auth.entity';
+import { ProfileDTO } from './dto/auth.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -18,7 +18,7 @@ export class AuthController {
   @ApiResponse({
     status: 200,
     description: 'Profile information',
-    type: AuthEntity,
+    type: ProfileEntity,
   })
   async me(@CurrentUser() user: string): Promise<IProfileResponse> {
     return this.authService.getMe(user);
@@ -30,9 +30,9 @@ export class AuthController {
   @ApiResponse({
     status: 200,
     description: 'Profile information',
-    type: AuthEntity,
+    type: ProfileEntity,
   })
-  async update(@CurrentUser() user: string, @Body() payload: AuthDTO): Promise<IProfileResponse> {
+  async update(@CurrentUser() user: string, @Body() payload: ProfileDTO): Promise<IProfileResponse> {
     return this.authService.updateMe(user, payload);
   }
 }

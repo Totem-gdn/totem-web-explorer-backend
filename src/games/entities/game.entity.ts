@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { SocialLink } from '../interfaces/socialLink';
 
-class General {
+class GameRecordGeneral {
   @ApiProperty()
   name: string;
 
@@ -18,7 +18,7 @@ class General {
   genre: string[];
 }
 
-class Assets {
+class GameRecordAssets {
   @ApiProperty()
   avatars: number;
 
@@ -26,7 +26,7 @@ class Assets {
   genre: number;
 }
 
-class Details {
+class GameRecordDetails {
   @ApiProperty()
   status: string;
 
@@ -46,7 +46,7 @@ class Details {
   inputs: string;
 }
 
-class Images {
+class GameRecordImages {
   @ApiProperty()
   coverImage: string;
 
@@ -60,7 +60,7 @@ class Images {
   gallery: string[];
 }
 
-class DnaFilters {
+class GameRecordDNAFilters {
   @ApiProperty()
   avatarFilter: string;
 
@@ -71,7 +71,7 @@ class DnaFilters {
   gemFilter: string;
 }
 
-class Connections {
+class GameRecordConnections {
   @ApiProperty()
   webpage: string;
 
@@ -79,7 +79,7 @@ class Connections {
   assetRenderer: string;
 
   @ApiProperty()
-  dnaFilters: DnaFilters;
+  dnaFilters: GameRecordDNAFilters;
 
   @ApiProperty()
   promoVideo: string;
@@ -88,7 +88,7 @@ class Connections {
   socialLinks: SocialLink[];
 }
 
-class Contacts {
+class GameRecordContacts {
   @ApiProperty()
   email: string;
 
@@ -116,7 +116,7 @@ export class GameRecordDTO {
   likes: number;
 
   @ApiProperty()
-  assets: Assets;
+  assets: GameRecordAssets;
 
   @ApiProperty()
   createdAt: string;
@@ -125,22 +125,22 @@ export class GameRecordDTO {
   updatedAt: string;
 
   @ApiProperty()
-  general: General;
+  general: GameRecordGeneral;
 
   @ApiProperty()
-  details: Details;
+  details: GameRecordDetails;
 
   @ApiProperty()
-  images: Images;
+  images: GameRecordImages;
 
   @ApiProperty()
-  connections: Connections;
+  connections: GameRecordConnections;
 
   @ApiProperty()
-  contacts: Contacts;
+  contacts: GameRecordContacts;
 }
 
-class SmallGeneral {
+class SmallGameRecordGeneral {
   @ApiProperty()
   name: string;
 
@@ -148,12 +148,12 @@ class SmallGeneral {
   genre: string[];
 }
 
-class SmallImages {
+class SmallGameRecordImages {
   @ApiProperty()
   smallThumbnail: string;
 }
 
-class SmallConnections {
+class SmallGameRecordConnections {
   @ApiProperty()
   assetRenderer: string;
 }
@@ -163,11 +163,11 @@ export class SmallGameRecordDTO {
   id: string;
 
   @ApiProperty()
-  general: SmallGeneral;
+  general: SmallGameRecordGeneral;
 
   @ApiProperty()
-  images: SmallImages;
+  images: SmallGameRecordImages;
 
   @ApiProperty()
-  connections: SmallConnections;
+  connections: SmallGameRecordConnections;
 }
