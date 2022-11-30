@@ -41,10 +41,13 @@ export class AuthService {
       });
     }
 
-    result.items = await this.getAssetsMetadataForProfile('items', user);
-    result.avatars = await this.getAssetsMetadataForProfile('avatars', user);
-    result.gems = await this.getAssetsMetadataForProfile('gems', user);
-    return result;
+    const [items, avatars, gems] = await Promise.all([
+      this.getAssetsMetadataForProfile('items', user),
+      this.getAssetsMetadataForProfile('avatars', user),
+      this.getAssetsMetadataForProfile('gems', user),
+    ]);
+
+    return this.toProfileRecord({ ...result, items, avatars, gems });
   }
 
   async updateMe(user: string, payload: ProfileDTO): Promise<IProfileResponse> {
@@ -61,7 +64,24 @@ export class AuthService {
 
     await profile.save();
 
-    return profile;
+    const [items, avatars, gems] = await Promise.all([
+      this.getAssetsMetadataForProfile('items', user),
+      this.getAssetsMetadataForProfile('avatars', user),
+      this.getAssetsMetadataForProfile('gems', user),
+    ]);
+
+    return this.toProfileRecord({ ...profile, items, avatars, gems });
+  }
+
+  private toProfileRecord(profile) {
+    return {
+      id: profile._id,
+      publicKey: profile.publicKey,
+      welcomeTokens: profile.welcomeTokens,
+      items: profile.items,
+      avatars: profile.avatars,
+      gems: profile.gems,
+    };
   }
 
   private async getAssetsMetadataForProfile(assetType: AssetType, owner: string): Promise<AssetMetadata> {
