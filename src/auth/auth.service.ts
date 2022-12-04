@@ -33,12 +33,13 @@ export class AuthService {
     let result: IProfileResponse = {};
 
     if (profile) {
-      result = { ...profile.toJSON(), ...result };
+      result = profile.toJSON();
     } else {
-      result = await this.userProfileModel.create({
+      const userCreationResult = await this.userProfileModel.create({
         publicKey: user,
         welcomeTokens: 0,
       });
+      result = userCreationResult.toJSON();
     }
 
     const [items, avatars, gems] = await Promise.all([
