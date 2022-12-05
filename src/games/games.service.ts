@@ -195,7 +195,7 @@ export class GamesService {
     await this.gameModel.findByIdAndUpdate(id, { $inc: { views: 1 } }).exec();
     const games = await this.gameModel
       .aggregate<GameAggregationDocument>([
-        { $match: { _id: new Types.ObjectId(id), hidden: false } },
+        { $match: { _id: new Types.ObjectId(id) } },
         this.legacyLookupPipeline('isLiked', [{ $match: { type: LegacyEvents.GameLiked, user } }]),
         this.legacyLookupPipeline('players', [{ $match: { type: LegacyEvents.GamePlayed } }]),
         this.legacyLookupPipeline('likes', [{ $match: { type: LegacyEvents.GameLiked } }]),
@@ -261,6 +261,10 @@ export class GamesService {
 
     if (filters.approved) {
       matchParams['approved'] = filters.approved;
+    }
+
+    if (filters.hidden === true || filters.hidden === false) {
+      matchParams['hidden'] = filters.hidden;
     }
 
     if (filters.owner && filters.owner !== '') {
@@ -343,7 +347,7 @@ export class GamesService {
   ): Promise<GameRecord[]> {
     const games: Array<GameRecord> = [];
     const aggregation = this.gameModel.aggregate<GameAggregationDocument>([
-      { $match: { ...matchParams, hidden: false } },
+      { $match: { ...matchParams } },
       { $sort: { ...sortParams } },
       { $skip: (page - 1) * this.perPage },
       { $limit: this.perPage },

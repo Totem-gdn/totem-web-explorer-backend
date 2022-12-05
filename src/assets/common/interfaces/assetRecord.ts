@@ -11,3 +11,9 @@ export interface AssetRecord {
   games: number;
   lastUsed: string;
 }
+
+export interface AssetMetadata {
+  all: number;
+  rare: number;
+  unique: number;
+}

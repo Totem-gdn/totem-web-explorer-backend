@@ -24,12 +24,17 @@ import { isMongoId } from 'class-validator';
 import { ListGamesFilters } from './interfaces/listGamesFilters';
 import { CreateGameResponse } from './interfaces/createGameResponse';
 import { UpdateGameResponse } from './interfaces/updateGameResponse';
-import { UpdateGameRequest } from './interfaces/updateGameRequest';
 import { GameRecord, SmallGameRecord } from './interfaces/gameRecord';
-import { CreateGameRequestDto } from './dto/games.dto';
+import { CreateGameRequestDTO } from './dto/games.dto';
+import { UpdateGameRequestDTO } from './dto/updateGameRequest.dto';
 import { GamesService } from './games.service';
 import { LegacyService } from '../legacy/legacy.service';
+import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { GameCreateEntity } from './entities/gameCreate.entity';
+import { GameRecordDTO, SmallGameRecordDTO } from './entities/game.entity';
+import { OperationsENUM } from './enums/operations.enum';
 
+@ApiTags('Games')
 @Controller()
 export class GamesController {
   constructor(private readonly gamesService: GamesService, private readonly legacyService: LegacyService) {}
@@ -37,7 +42,12 @@ export class GamesController {
   @Post()
   @UseGuards(new Web3AuthGuard(false))
   @UsePipes(new ValidationPipe({ transform: true }))
-  async create(@CurrentUser() user: string, @Body() createGameDto: CreateGameRequestDto): Promise<CreateGameResponse> {
+  @ApiResponse({
+    status: 200,
+    type: GameCreateEntity,
+  })
+  @ApiOperation({ summary: 'Create Game' })
+  async create(@CurrentUser() user: string, @Body() createGameDto: CreateGameRequestDTO): Promise<CreateGameResponse> {
     createGameDto.owner = user;
     return await this.gamesService.create(createGameDto);
   }
@@ -45,9 +55,14 @@ export class GamesController {
   @Put(':id')
   @UseGuards(new Web3AuthGuard(false))
   @UsePipes(new ValidationPipe({ transform: true }))
+  @ApiResponse({
+    status: 200,
+    type: GameCreateEntity,
+  })
+  @ApiOperation({ summary: 'Update Game' })
   async updateGame(
     @CurrentUser() user: string,
-    @Body() updateGameDto: UpdateGameRequest,
+    @Body() updateGameDTO: UpdateGameRequestDTO,
     @Param('id') id: string,
   ): Promise<UpdateGameResponse> {
     if (!isMongoId(id)) {
@@ -57,17 +72,24 @@ export class GamesController {
     if (!game) {
       throw new NotFoundException();
     }
-    return await this.gamesService.update(game, updateGameDto);
+    return await this.gamesService.update(game, updateGameDTO);
   }
 
   @Get()
   @UseGuards(new Web3AuthGuard(true))
+  @ApiOperation({ summary: 'List of Game' })
+  @ApiResponse({
+    status: 200,
+    type: GameRecordDTO,
+    isArray: true,
+  })
   async find(
     @CurrentUser() user: string,
     @Query('list', new DefaultValuePipe('latest')) list: 'latest' | 'popular' | 'random',
     @Query('search', new DefaultValuePipe('')) search: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('approved', new DefaultValuePipe(true), ParseBoolPipe) approved: boolean,
+    @Query('hidden', new DefaultValuePipe('')) hidden: '' | 'true' | 'false',
     @Query('owner', new DefaultValuePipe('')) owner: string,
   ): Promise<GameRecord[]> {
     if (page < 1) {
@@ -76,8 +98,13 @@ export class GamesController {
     if (list === 'random') {
       return await this.gamesService.random(user);
     } else {
+      let isHidden;
+      if (hidden === 'true' || hidden === 'false') {
+        isHidden = hidden === 'true';
+      }
+
       // approved = approved.toString() !== 'false';
-      const filters: ListGamesFilters = { list, page, search, approved, owner };
+      const filters: ListGamesFilters = { list, page, search, approved, owner, hidden: isHidden };
       if (user) {
         filters.user = user;
       }
@@ -87,6 +114,12 @@ export class GamesController {
 
   @Get('favorites')
   @UseGuards(new Web3AuthGuard(false))
+  @ApiOperation({ summary: 'List of favorites games for user' })
+  @ApiResponse({
+    status: 200,
+    type: GameRecordDTO,
+    isArray: true,
+  })
   async favorites(
     @CurrentUser() user: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
@@ -100,6 +133,12 @@ export class GamesController {
 
   @Get('search')
   @UseGuards(new Web3AuthGuard(true))
+  @ApiOperation({ summary: 'Small list of games for search' })
+  @ApiResponse({
+    status: 200,
+    type: SmallGameRecordDTO,
+    isArray: true,
+  })
   async search(
     @CurrentUser() user: string,
     @Query('name', new DefaultValuePipe('')) name: string,
@@ -109,6 +148,11 @@ export class GamesController {
 
   @Get(':id')
   @UseGuards(new Web3AuthGuard(true))
+  @ApiOperation({ summary: 'Information of specific game' })
+  @ApiResponse({
+    status: 200,
+    type: GameRecordDTO,
+  })
   async findOne(@CurrentUser() user: string, @Param('id') id: string): Promise<GameRecord> {
     if (!isMongoId(id)) {
       throw new BadRequestException('invalid id');
@@ -122,6 +166,15 @@ export class GamesController {
 
   @Patch(':id/:operation')
   @UseGuards(new Web3AuthGuard(true))
+  @ApiOperation({ summary: 'API for update approve/reject/like/dislike/played statuses' })
+  @ApiResponse({
+    status: 200,
+  })
+  @ApiQuery({
+    name: 'operation',
+    required: true,
+    enum: OperationsENUM,
+  })
   async update(
     @CurrentUser() user: string,
     @Param('id') id: string,
@@ -156,6 +209,10 @@ export class GamesController {
   @Delete(':id')
   @UseGuards(new Web3AuthGuard(false))
   @UsePipes(new ValidationPipe({ transform: true }))
+  @ApiOperation({ summary: 'Delete the game' })
+  @ApiResponse({
+    status: 200,
+  })
   async delete(@CurrentUser() user: string, @Param('id') id: string) {
     if (!isMongoId(id)) {
       throw new BadRequestException('invalid id');

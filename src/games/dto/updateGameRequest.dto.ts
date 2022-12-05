@@ -17,7 +17,7 @@ import {
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class CreateGameRequestGeneral {
+export class UpdateGameRequestGeneral {
   @IsString()
   @IsNotEmpty()
   @ApiProperty()
@@ -46,7 +46,7 @@ export class CreateGameRequestGeneral {
   genre: string[];
 }
 
-export class CreateGameRequestDetails {
+export class UpdateGameRequestDetails {
   @IsString()
   @IsNotEmpty()
   @ApiProperty()
@@ -78,7 +78,7 @@ export class CreateGameRequestDetails {
   inputs: string;
 }
 
-export class CreateGameRequestImage {
+export class UpdateGameRequestImage {
   @IsString()
   @IsNotEmpty()
   @ApiProperty()
@@ -94,7 +94,7 @@ export class CreateGameRequestImage {
   contentLength: number;
 }
 
-export class CreateGameRequestDNAFilter {
+export class UpdateGameRequestDNAFilter {
   @IsString()
   @IsNotEmpty()
   @ApiProperty()
@@ -110,51 +110,51 @@ export class CreateGameRequestDNAFilter {
   contentLength: number;
 }
 
-export class CreateGameRequestImages {
+export class UpdateGameRequestImages {
   @ValidateNested()
-  @Type(() => CreateGameRequestImage)
+  @Type(() => UpdateGameRequestImage)
   @ApiProperty()
-  coverImage: CreateGameRequestImage;
+  coverImage: UpdateGameRequestImage;
 
   @ValidateNested()
-  @Type(() => CreateGameRequestImage)
+  @Type(() => UpdateGameRequestImage)
   @ApiProperty()
-  cardThumbnail: CreateGameRequestImage;
+  cardThumbnail: UpdateGameRequestImage;
 
   @ValidateNested()
-  @Type(() => CreateGameRequestImage)
+  @Type(() => UpdateGameRequestImage)
   @ApiProperty()
-  smallThumbnail: CreateGameRequestImage;
+  smallThumbnail: UpdateGameRequestImage;
 
   @IsArray()
   @ArrayNotEmpty()
   @ValidateNested({ each: true })
-  @Type(() => CreateGameRequestImage)
+  @Type(() => UpdateGameRequestImage)
   @ApiProperty()
-  gallery: CreateGameRequestImage[];
+  gallery: UpdateGameRequestImage[];
 }
 
-export class CreateGameRequestDNAFilters {
+export class UpdateGameRequestDNAFilters {
   @IsOptional()
   @ValidateNested()
-  @Type(() => CreateGameRequestDNAFilter)
+  @Type(() => UpdateGameRequestDNAFilter)
   @ApiProperty()
-  avatarFilter?: CreateGameRequestDNAFilter;
+  avatarFilter?: UpdateGameRequestDNAFilter;
 
   @IsOptional()
   @ValidateNested()
-  @Type(() => CreateGameRequestDNAFilter)
+  @Type(() => UpdateGameRequestDNAFilter)
   @ApiProperty()
-  assetFilter?: CreateGameRequestDNAFilter;
+  assetFilter?: UpdateGameRequestDNAFilter;
 
   @IsOptional()
   @ValidateNested()
-  @Type(() => CreateGameRequestDNAFilter)
+  @Type(() => UpdateGameRequestDNAFilter)
   @ApiProperty()
-  gemFilter?: CreateGameRequestDNAFilter;
+  gemFilter?: UpdateGameRequestDNAFilter;
 }
 
-export class CreateGameRequestSocialLink {
+export class UpdateGameRequestSocialLink {
   @IsString()
   @IsNotEmpty()
   @ApiProperty()
@@ -165,7 +165,7 @@ export class CreateGameRequestSocialLink {
   url: string;
 }
 
-export class CreateGameRequestConnections {
+export class UpdateGameRequestConnections {
   @IsUrl()
   @ApiProperty()
   webpage: string;
@@ -177,9 +177,9 @@ export class CreateGameRequestConnections {
 
   @IsOptional()
   @ValidateNested()
-  @Type(() => CreateGameRequestDNAFilters)
+  @Type(() => UpdateGameRequestDNAFilters)
   @ApiProperty()
-  dnaFilters: CreateGameRequestDNAFilters;
+  dnaFilters: UpdateGameRequestDNAFilters;
 
   @IsOptional()
   @IsUrl()
@@ -188,12 +188,12 @@ export class CreateGameRequestConnections {
 
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => CreateGameRequestSocialLink)
+  @Type(() => UpdateGameRequestSocialLink)
   @ApiProperty()
-  socialLinks: CreateGameRequestSocialLink[];
+  socialLinks: UpdateGameRequestSocialLink[];
 }
 
-export class CreateGameRequestContacts {
+export class UpdateGameRequestContacts {
   @IsEmail()
   @ApiProperty()
   email: string;
@@ -204,36 +204,53 @@ export class CreateGameRequestContacts {
   discord: string;
 }
 
-export class CreateGameRequestDTO {
+export class UpdateGameRequestDTO {
   owner: string;
 
-  @IsNotEmptyObject()
+  @IsOptional()
   @ValidateNested()
   @ApiProperty()
-  @Type(() => CreateGameRequestGeneral)
-  general: CreateGameRequestGeneral;
+  @Type(() => UpdateGameRequestGeneral)
+  general: UpdateGameRequestGeneral;
 
-  @IsNotEmptyObject()
+  @IsOptional()
   @ValidateNested()
-  @Type(() => CreateGameRequestDetails)
+  @Type(() => UpdateGameRequestDetails)
   @ApiProperty()
-  details: CreateGameRequestDetails;
+  details: UpdateGameRequestDetails;
 
-  @IsNotEmptyObject()
+  @IsOptional()
   @ValidateNested()
-  @Type(() => CreateGameRequestImages)
+  @Type(() => UpdateGameRequestImages)
   @ApiProperty()
-  images: CreateGameRequestImages;
+  images: UpdateGameRequestImages;
 
-  @IsNotEmptyObject()
+  @IsOptional()
   @ValidateNested()
-  @Type(() => CreateGameRequestConnections)
+  @Type(() => UpdateGameRequestConnections)
   @ApiProperty()
-  connections: CreateGameRequestConnections;
+  connections: UpdateGameRequestConnections;
 
-  @IsNotEmptyObject()
+  @IsOptional()
   @ValidateNested()
-  @Type(() => CreateGameRequestContacts)
+  @Type(() => UpdateGameRequestContacts)
   @ApiProperty()
-  contacts: CreateGameRequestContacts;
+  contacts: UpdateGameRequestContacts;
+
+  @IsOptional()
+  @ApiProperty({
+    example: [
+      'https://static-dev.totem-explorer.com/6364c51be261234ed44481df/afe5f0d9-e4b1-4187-88f0-6e8c66992692-SS_02.png',
+    ],
+  })
+  galleryImagesForDelete?: string[];
+
+  @IsOptional()
+  @Type(() => Array<UpdateGameRequestImage>)
+  @ApiProperty({
+    example: [
+      'https://static-dev.totem-explorer.com/6364c51be261234ed44481df/afe5f0d9-e4b1-4187-88f0-6e8c66992692-SS_02.png',
+    ],
+  })
+  galleryImagesForUpload?: UpdateGameRequestImage[];
 }

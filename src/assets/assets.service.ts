@@ -4,7 +4,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { isMongoId } from 'class-validator';
 import { AssetAggregationDocument } from './types/document';
-import { AssetRecord } from './common/interfaces/assetRecord';
+import { AssetMetadata, AssetRecord } from './common/interfaces/assetRecord';
 import { ListAssetsFilter } from './interfaces/filters';
 import { LegacyService } from '../legacy/legacy.service';
 import { LegacyEvents } from '../legacy/enums/legacy.enums';

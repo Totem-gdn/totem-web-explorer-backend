@@ -20,13 +20,31 @@ import { AssetRecord } from './common/interfaces/assetRecord';
 import { AssetsService } from './assets.service';
 import { LegacyService } from '../legacy/legacy.service';
 import { AssetType } from './types/assets';
+import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { AssetEntity } from './entities/asset.entity';
+import { AssetsTypes } from './enums/assetsTypes.enum';
+import { OwnerShip } from './enums/ownershipTypes.enum';
+import { AssetOperationTypes } from './enums/operationsTypes.enum';
 
+@ApiTags('Assets')
 @Controller()
 export class AssetsController {
   constructor(private readonly service: AssetsService, private readonly legacyService: LegacyService) {}
 
   @Get(':assetType')
   @UseGuards(new Web3AuthGuard(true))
+  @ApiResponse({
+    status: 200,
+    description: 'Assets records list',
+    type: AssetEntity,
+    isArray: true,
+  })
+  @ApiQuery({
+    name: 'assetType',
+    required: true,
+    enum: AssetsTypes,
+  })
+  @ApiOperation({ summary: 'Assets records list' })
   async find(
     @CurrentUser() user: string,
     @Param('assetType') assetType: AssetType,
@@ -54,21 +72,44 @@ export class AssetsController {
     return await this.service.find(assetType, filters);
   }
 
-  @Get('favorites/:type')
+  @Get('favorites/:assetType')
   @UseGuards(new Web3AuthGuard(false))
+  @ApiResponse({
+    status: 200,
+    description: 'Favorites assets records list',
+    type: AssetEntity,
+    isArray: true,
+  })
+  @ApiQuery({
+    name: 'assetType',
+    required: true,
+    enum: AssetsTypes,
+  })
+  @ApiOperation({ summary: 'Favorites assets list' })
   async getFavorites(
     @CurrentUser() user: string,
-    @Param('type') type: AssetType,
+    @Param('assetType') assetType: AssetType,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
   ) {
     if (page < 1) {
       throw new BadRequestException('invalid page number');
     }
-    return await this.service.getFavorites(type, user, page);
+    return await this.service.getFavorites(assetType, user, page);
   }
 
   @Get(':assetType/:id')
   @UseGuards(new Web3AuthGuard(true))
+  @ApiResponse({
+    status: 200,
+    description: 'Asset entity',
+    type: AssetEntity,
+  })
+  @ApiQuery({
+    name: 'assetType',
+    required: true,
+    enum: AssetsTypes,
+  })
+  @ApiOperation({ summary: 'Get asset entity by id' })
   async findOne(
     @CurrentUser() user: string,
     @Param('assetType') assetType: AssetType,
@@ -85,6 +126,21 @@ export class AssetsController {
   }
 
   @Get(':assetType/:id/:operation')
+  @ApiResponse({
+    status: 200,
+    description: 'Legacy or ownership history',
+  })
+  @ApiQuery({
+    name: 'assetType',
+    required: true,
+    enum: AssetsTypes,
+  })
+  @ApiQuery({
+    name: 'operation',
+    required: true,
+    enum: OwnerShip,
+  })
+  @ApiOperation({ summary: 'Get asset ownership history or legacy history' })
   @UseGuards(new Web3AuthGuard(true))
   async get(
     @CurrentUser() user: string,
@@ -102,6 +158,20 @@ export class AssetsController {
 
   @Patch(':assetType/:id/:operation/:gameId?')
   @UseGuards(new Web3AuthGuard(false))
+  @ApiResponse({
+    status: 200,
+  })
+  @ApiQuery({
+    name: 'assetType',
+    required: true,
+    enum: AssetsTypes,
+  })
+  @ApiQuery({
+    name: 'operation',
+    required: true,
+    enum: AssetOperationTypes,
+  })
+  @ApiOperation({ summary: 'update asset' })
   async update(
     @CurrentUser() user: string,
     @Param('assetType') assetType: AssetType,
@@ -112,12 +182,6 @@ export class AssetsController {
   ): Promise<void> {
     if (!isMongoId(id)) {
       throw new BadRequestException('invalid id');
-    }
-    switch (operation) {
-      case 'like':
-        return await this.legacyService.likeAsset(assetType, user, id);
-      case 'dislike':
-        return await this.legacyService.dislikeAsset(assetType, user, id);
     }
     // game specific operations
     if (!isMongoId(gameId)) {
