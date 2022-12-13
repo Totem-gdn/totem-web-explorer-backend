@@ -41,12 +41,6 @@ spec:
               value: 0xfC5654489b23379ebE98BaF37ae7017130B45086
             - name: ASSETS_GEM_CONTRACT
               value: 0x0e2a085063e15FEce084801C6806F3aE7eaDfBf5
-            - name: AVATAR_LEGACY_CONTRACT
-              value: 0x532369b69CbeE196B835A78Da409d502EA4C6fAc
-            - name: ASSET_LEGACY_CONTRACT
-              value: 0xC4c7778e5E5A38da81d71FE0cDcEF87122E3f98A
-            - name: GEM_LEGACY_CONTRACT
-              value: 0x742D564af3FE12ab0a797E52C13B302366D4e04A
           envFrom:
             - secretRef:
                 name: web-explorer-backend
