@@ -183,6 +183,15 @@ export class AssetsController {
     if (!isMongoId(id)) {
       throw new BadRequestException('invalid id');
     }
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+    switch (operation) {
+      case 'like':
+        return await this.legacyService.likeAsset(assetType, user, id);
+      case 'dislike':
+        return await this.legacyService.dislikeAsset(assetType, user, id);
+    }
     // game specific operations
     if (!isMongoId(gameId)) {
       throw new BadRequestException('invalid game id');

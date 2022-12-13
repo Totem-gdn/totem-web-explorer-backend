@@ -5,7 +5,8 @@ import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { BigNumber, constants, Contract, Event, providers } from 'ethers';
 import * as abi from './contract-abi.json';
-import { AssetEvent, AssetPayload, AssetQueue } from '../config/queues/assets';
+import * as assetsLegacyABI from './assets-legacy-abi.json';
+import { AssetEvent, AssetPayload, AssetQueue, LegacyPayload, LegacyQueue } from '../config/queues/assets';
 import { DefaultJobOptions } from '../config/queues/defaults';
 import { AssetType } from '../assets/types/assets';
 
@@ -14,7 +15,9 @@ export class ExplorerService {
   private readonly logger = new Logger(ExplorerService.name);
   private readonly provider: providers.JsonRpcProvider;
   private readonly contracts: Record<AssetType, Contract>;
+  private readonly legacyContracts: Record<AssetType, Contract>;
   private readonly queues: Record<AssetType, Queue<AssetPayload>>;
+  private readonly legacyQueues: Record<AssetType, Queue<LegacyPayload>>;
   private readonly storageKeys: Record<AssetType, string> = {
     avatars: `provider::avatar::blockNumber`,
     items: `provider::item::blockNumber`,
@@ -35,11 +38,22 @@ export class ExplorerService {
     private readonly itemsQueue: Queue<AssetPayload>,
     @InjectQueue(AssetQueue.Gems)
     private readonly gemsQueue: Queue<AssetPayload>,
+    @InjectQueue(LegacyQueue.Avatars)
+    private readonly avatarsLegacyQueue: Queue<LegacyPayload>,
+    @InjectQueue(LegacyQueue.Items)
+    private readonly itemsLegacyQueue: Queue<LegacyPayload>,
+    @InjectQueue(LegacyQueue.Gems)
+    private readonly gemsLegacyQueue: Queue<LegacyPayload>,
   ) {
     this.queues = {
       avatars: this.avatarsQueue,
       items: this.itemsQueue,
       gems: this.gemsQueue,
+    };
+    this.legacyQueues = {
+      avatars: this.avatarsLegacyQueue,
+      items: this.itemsLegacyQueue,
+      gems: this.gemsLegacyQueue,
     };
     this.provider = new providers.JsonRpcProvider(config.get<string>('provider.rpc'));
     this.contracts = {
@@ -47,12 +61,29 @@ export class ExplorerService {
       items: new Contract(this.config.get<string>('provider.assets.item'), abi, this.provider),
       gems: new Contract(this.config.get<string>('provider.assets.gem'), abi, this.provider),
     };
+    this.legacyContracts = {
+      avatars: new Contract(this.config.get<string>('provider.legacy.avatar'), assetsLegacyABI, this.provider),
+      items: new Contract(this.config.get<string>('provider.legacy.item'), assetsLegacyABI, this.provider),
+      gems: new Contract(this.config.get<string>('provider.legacy.gem'), assetsLegacyABI, this.provider),
+    };
     // FIXME: deployBlock can be found only manually from explorers
     // Example: https://mumbai.polygonscan.com/token/0xEE7ff88E92F2207dBC19d89C1C9eD3F385513b35
     // use Alchemy or Infura as better solution to receive previous contract events
     void this.initContract('avatars');
     void this.initContract('items');
     void this.initContract('gems');
+    void this.initAssetsLegacyContract('avatars');
+    void this.initAssetsLegacyContract('items');
+    void this.initAssetsLegacyContract('gems');
+  }
+
+  private async initAssetsLegacyContract(assetType: AssetType) {
+    this.legacyContracts[assetType].on(
+      this.legacyContracts[assetType].filters.AssetLegacyRecord(),
+      (player: string, assetId: BigNumber, gameId: BigNumber, recordId: BigNumber) => {
+        void this.addLegacyToQueue(assetType, assetId);
+      },
+    );
   }
 
   async getAssetDNA(assetType: AssetType, tokenId: string): Promise<string> {
@@ -94,6 +125,17 @@ export class ExplorerService {
     }
     this.logger.log(`[${assetType}] fetching of previous events completed`);
     this.logger.log(`[${assetType}] current block ${currentBlock}`);
+  }
+
+  private async addLegacyToQueue(assetType: AssetType, tokenId: BigNumber) {
+    const balanceResult = await this.legacyContracts[assetType].balanceOf(tokenId);
+    const balance = parseInt(balanceResult._hex, 16);
+
+    await this.legacyQueues[assetType].add('asset-legacy-update', {
+      assetType,
+      tokenId: (tokenId as BigNumber).toString(),
+      legacyEventsAmount: balance,
+    });
   }
 
   private async addEventToQueue(assetType: AssetType, from: string, to: string, tokenId: BigNumber, event: Event) {

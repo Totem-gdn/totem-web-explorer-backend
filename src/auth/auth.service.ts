@@ -71,7 +71,7 @@ export class AuthService {
       this.getAssetsMetadataForProfile('gems', user),
     ]);
 
-    return this.toProfileRecord({ ...profile, items, avatars, gems });
+    return this.toProfileRecord({ ...profile.toJSON(), items, avatars, gems });
   }
 
   private toProfileRecord(profile) {

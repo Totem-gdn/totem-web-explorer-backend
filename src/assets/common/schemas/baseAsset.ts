@@ -14,6 +14,9 @@ export class BaseAsset {
   @Prop({ type: SchemaTypes.Number, required: true, default: () => 0 })
   views: number;
 
+  @Prop({ type: SchemaTypes.Number, default: () => 0 })
+  legacyEventsAmount: number;
+
   // @Prop({ type: SchemaTypes.String, required: true })
   // dna: string;
 }

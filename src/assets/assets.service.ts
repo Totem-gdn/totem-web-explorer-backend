@@ -105,7 +105,8 @@ export class AssetsService {
     }
     const sortParams: Record<string, any> = {};
     if (filters.list === 'popular') {
-      sortParams.views = -1;
+      // sortParams.views = -1;
+      sortParams.legacyEventsAmount = -1;
     } else {
       sortParams.createdAt = -1;
     }
