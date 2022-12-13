@@ -6,6 +6,12 @@ export enum AssetQueue {
   Gems = 'gems',
 }
 
+export enum LegacyQueue {
+  Avatars = 'avatars-legacy',
+  Items = 'items-legacy',
+  Gems = 'gems-legacy',
+}
+
 export enum AssetEvent {
   Create = 'create-asset',
   Transfer = 'transfer-asset',
@@ -17,4 +23,10 @@ export type AssetPayload = {
   to: string;
   tokenId: string;
   transactionHash: string;
+};
+
+export type LegacyPayload = {
+  assetType: AssetType;
+  tokenId: string;
+  legacyEventsAmount: number;
 };

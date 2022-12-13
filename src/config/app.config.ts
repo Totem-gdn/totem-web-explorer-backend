@@ -22,5 +22,11 @@ export default () => ({
       item: process.env.ASSETS_ITEM_CONTRACT,
       gem: process.env.ASSETS_GEM_CONTRACT,
     },
+    legacy: {
+      avatar: process.env.AVATAR_LEGACY_CONTRACT,
+      item: process.env.ASSET_LEGACY_CONTRACT,
+      gem: process.env.GEM_LEGACY_CONTRACT,
+      game: '',
+    },
   },
 });
