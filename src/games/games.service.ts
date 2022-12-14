@@ -334,7 +334,7 @@ export class GamesService {
   async favorites(user: string, page: number): Promise<GameRecord[]> {
     const favorites = await this.legacyService.getFavoritesIDs('gameLiked', user, page, this.perPage);
 
-    const result = await this.find({ ids: favorites, list: 'latest', page: 1, user });
+    const result = await this.find({ ids: favorites.ids, list: 'latest', page: 1, user });
 
     return result;
   }
