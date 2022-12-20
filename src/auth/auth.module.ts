@@ -7,6 +7,7 @@ import { AuthService } from './auth.service';
 import { Avatar, AvatarSchema } from 'src/assets/schemas/avatars';
 import { Item, ItemSchema } from 'src/assets/schemas/items';
 import { Gem, GemSchema } from 'src/assets/schemas/gems';
+import { LegacyRecord, LegacyRecordSchema } from 'src/legacy/legacy.schema';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { Gem, GemSchema } from 'src/assets/schemas/gems';
       { name: Avatar.name, schema: AvatarSchema },
       { name: Item.name, schema: ItemSchema },
       { name: Gem.name, schema: GemSchema },
+      { name: LegacyRecord.name, schema: LegacyRecordSchema },
     ]),
   ],
   controllers: [AuthController],
