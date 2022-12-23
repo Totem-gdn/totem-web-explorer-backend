@@ -179,6 +179,7 @@ export class GamesService {
     }
 
     delete payload.owner;
+    delete payload.weight;
     // delete payload.hidden;
     // Finish files part
     gameDB.set({ ...payload });
@@ -387,6 +388,11 @@ export class GamesService {
       },
       connections: {
         assetRenderer: game.connections.assetRenderer,
+        dnaFilters: {
+          avatarFilter: await this.getStaticUrl(gameId, game.connections.dnaFilters.avatarFilter),
+          assetFilter: await this.getStaticUrl(gameId, game.connections.dnaFilters.assetFilter),
+          gemFilter: await this.getStaticUrl(gameId, game.connections.dnaFilters.gemFilter),
+        },
       },
     };
   }

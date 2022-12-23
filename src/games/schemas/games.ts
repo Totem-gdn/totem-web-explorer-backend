@@ -179,6 +179,15 @@ export class Game {
 
   @Prop({ type: SchemaTypes.Boolean, required: true, default: () => true })
   hidden: boolean;
+
+  @Prop({ type: SchemaTypes.String })
+  txHash: string;
+
+  @Prop({ type: SchemaTypes.String })
+  gameIdInContract: string;
+
+  @Prop({ type: SchemaTypes.Number, default: () => 0 })
+  weight: number;
 }
 
 export type GameDocument = Game & Document & DocumentTimestamps;

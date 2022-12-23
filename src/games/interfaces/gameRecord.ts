@@ -59,5 +59,10 @@ export interface SmallGameRecord {
   };
   connections: {
     assetRenderer: string;
+    dnaFilters: {
+      avatarFilter?: string;
+      assetFilter?: string;
+      gemFilter?: string;
+    };
   };
 }
