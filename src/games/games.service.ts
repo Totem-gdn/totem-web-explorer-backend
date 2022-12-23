@@ -389,9 +389,18 @@ export class GamesService {
       connections: {
         assetRenderer: game.connections.assetRenderer,
         dnaFilters: {
-          avatarFilter: await this.getStaticUrl(gameId, game.connections.dnaFilters.avatarFilter),
-          assetFilter: await this.getStaticUrl(gameId, game.connections.dnaFilters.assetFilter),
-          gemFilter: await this.getStaticUrl(gameId, game.connections.dnaFilters.gemFilter),
+          avatarFilter:
+            game.connections.dnaFilters && game.connections.dnaFilters.avatarFilter
+              ? await this.getStaticUrl(gameId, game.connections.dnaFilters.avatarFilter)
+              : '',
+          assetFilter:
+            game.connections.dnaFilters && game.connections.dnaFilters.assetFilter
+              ? await this.getStaticUrl(gameId, game.connections.dnaFilters.assetFilter)
+              : '',
+          gemFilter:
+            game.connections.dnaFilters && game.connections.dnaFilters.gemFilter
+              ? await this.getStaticUrl(gameId, game.connections.dnaFilters.gemFilter)
+              : '',
         },
       },
     };
