@@ -30,3 +30,22 @@ export type LegacyPayload = {
   tokenId: string;
   legacyEventsAmount: number;
 };
+
+export enum GameDirectoryEvent {
+  Create = 'create-game-directory',
+  Update = 'update-game-directory',
+}
+
+export type GameDirectoryPayload = {
+  txHash: string;
+  recordId: string;
+  owner: string;
+  general: {
+    name: string;
+    author: string;
+  };
+  connections: {
+    assetRenderer: string;
+    webpage: string;
+  };
+};

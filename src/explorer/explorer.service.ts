@@ -6,7 +6,16 @@ import { Queue } from 'bull';
 import { BigNumber, constants, Contract, Event, providers } from 'ethers';
 import * as abi from './contract-abi.json';
 import * as assetsLegacyABI from './assets-legacy-abi.json';
-import { AssetEvent, AssetPayload, AssetQueue, LegacyPayload, LegacyQueue } from '../config/queues/assets';
+import * as gameDirectoryABI from './totem-games-directory.json';
+import {
+  AssetEvent,
+  AssetPayload,
+  AssetQueue,
+  GameDirectoryEvent,
+  GameDirectoryPayload,
+  LegacyPayload,
+  LegacyQueue,
+} from '../config/queues/assets';
 import { DefaultJobOptions } from '../config/queues/defaults';
 import { AssetType } from '../assets/types/assets';
 
@@ -18,6 +27,7 @@ export class ExplorerService {
   private readonly legacyContracts: Record<AssetType, Contract>;
   private readonly queues: Record<AssetType, Queue<AssetPayload>>;
   private readonly legacyQueues: Record<AssetType, Queue<LegacyPayload>>;
+  private readonly gameDirectoryContract: Contract;
   private readonly storageKeys: Record<AssetType, string> = {
     avatars: `provider::avatar::blockNumber`,
     items: `provider::item::blockNumber`,
@@ -44,6 +54,8 @@ export class ExplorerService {
     private readonly itemsLegacyQueue: Queue<LegacyPayload>,
     @InjectQueue(LegacyQueue.Gems)
     private readonly gemsLegacyQueue: Queue<LegacyPayload>,
+    @InjectQueue('game-directory-queue')
+    private readonly gameDirectoryQueue: Queue<GameDirectoryPayload>,
   ) {
     this.queues = {
       avatars: this.avatarsQueue,
@@ -66,6 +78,11 @@ export class ExplorerService {
       items: new Contract(this.config.get<string>('provider.legacy.item'), assetsLegacyABI, this.provider),
       gems: new Contract(this.config.get<string>('provider.legacy.gem'), assetsLegacyABI, this.provider),
     };
+    this.gameDirectoryContract = new Contract(
+      this.config.get<string>('provider.gameDirectory.contract'),
+      gameDirectoryABI,
+      this.provider,
+    );
     // FIXME: deployBlock can be found only manually from explorers
     // Example: https://mumbai.polygonscan.com/token/0xEE7ff88E92F2207dBC19d89C1C9eD3F385513b35
     // use Alchemy or Infura as better solution to receive previous contract events
@@ -75,6 +92,63 @@ export class ExplorerService {
     void this.initAssetsLegacyContract('avatars');
     void this.initAssetsLegacyContract('items');
     void this.initAssetsLegacyContract('gems');
+    void this.initGameContract();
+  }
+
+  private async initGameContract() {
+    this.gameDirectoryContract.on(
+      this.gameDirectoryContract.filters.CreateGame(),
+      async (owner: string, recordIdHEX, event: Event) => {
+        const recordId = parseInt(recordIdHEX._hex, 16).toString();
+        const txHash = event.transactionHash;
+
+        const data = await this.gameDirectoryContract.recordByIndex(recordIdHEX);
+        const game = data['game'];
+
+        const updateData = {
+          txHash,
+          recordId,
+          owner: owner,
+          general: {
+            name: game['name'],
+            author: game['author'],
+          },
+          connections: {
+            assetRenderer: game['renderer'],
+            webpage: game['website'],
+          },
+        };
+
+        await this.gameDirectoryQueue.add(GameDirectoryEvent.Create, updateData, { delay: 2000 });
+      },
+    );
+
+    this.gameDirectoryContract.on(
+      this.gameDirectoryContract.filters.UpdateGame(),
+      async (owner: string, recordIdHEX, event: Event) => {
+        const recordId = parseInt(recordIdHEX._hex, 16).toString();
+        const txHash = event.transactionHash;
+
+        const data = await this.gameDirectoryContract.recordByIndex(recordIdHEX);
+        const game = data['game'];
+
+        const updateData = {
+          txHash,
+          recordId,
+          owner: owner,
+          general: {
+            name: game['name'],
+            author: game['author'],
+          },
+          connections: {
+            assetRenderer: game['renderer'],
+            webpage: game['website'],
+          },
+        };
+
+        await this.gameDirectoryQueue.add(GameDirectoryEvent.Update, updateData);
+      },
+    );
   }
 
   private async initAssetsLegacyContract(assetType: AssetType) {

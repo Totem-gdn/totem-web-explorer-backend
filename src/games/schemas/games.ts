@@ -184,7 +184,7 @@ export class Game {
   txHash: string;
 
   @Prop({ type: SchemaTypes.String })
-  gameIdInContract: string;
+  recordId: string;
 
   @Prop({ type: SchemaTypes.Number, default: () => 0 })
   weight: number;

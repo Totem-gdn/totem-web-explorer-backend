@@ -1,14 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { InjectQueue, Process, Processor } from '@nestjs/bull';
 import { Job, Queue } from 'bull';
 import { LegacyPayload, LegacyQueue } from '../config/queues/assets';
-import { LegacyService } from '../legacy/legacy.service';
-import { ExplorerService } from '../explorer/explorer.service';
 import { Avatar, AvatarDocument } from './schemas/avatars';
-import { AssetsOwnershipHistory, AssetsOwnershipHistoryDocument } from './schemas/assetsOwnershipHistory';
 import { Item, ItemDocument } from './schemas/items';
 import { Gem, GemDocument } from './schemas/gems';
 

@@ -1,6 +1,7 @@
 import { join } from 'path';
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { HttpService } from '@nestjs/axios';
 import { DeleteObjectsCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { v4 as uuidv4 } from 'uuid';
@@ -16,22 +17,31 @@ import { UpdateGameRequest } from './interfaces/updateGameRequest';
 import { CreateGameResponse } from './interfaces/createGameResponse';
 import { UpdateGameResponse } from './interfaces/updateGameResponse';
 import { LegacyService } from '../legacy/legacy.service';
+import { gameDataForContract } from './interfaces/gameDataForContract';
+import { catchError, lastValueFrom, map } from 'rxjs';
 
 @Injectable()
 export class GamesService {
   private readonly s3Client: S3Client;
   private readonly bucket: string;
   private readonly staticEndpoint: URL;
+  private readonly bucketCore: string;
+  private readonly staticEndpointCore: URL;
   private readonly perPage: number = 10;
+  private readonly gameDirectoryEndpoint: URL;
 
   constructor(
     private readonly configService: ConfigService,
     private readonly legacyService: LegacyService,
+    private httpService: HttpService,
     @InjectModel(Game.name) private readonly gameModel: Model<GameDocument>,
   ) {
     this.s3Client = new S3Client({});
     this.bucket = this.configService.get<string>('aws.s3.bucket');
     this.staticEndpoint = new URL(this.configService.get<string>('aws.s3.endpoint'));
+    this.bucketCore = this.configService.get<string>('aws.s3.bucketCore');
+    this.staticEndpointCore = new URL(this.configService.get<string>('aws.s3.endpointCore'));
+    this.gameDirectoryEndpoint = new URL(this.configService.get<string>('provider.gameDirectory.endpoint'));
   }
 
   async create(game: CreateGameRequest): Promise<CreateGameResponse> {
@@ -57,27 +67,66 @@ export class GamesService {
 
     delete game.hidden;
 
+    const isExist = await this.gameModel.findOne({ 'general.name': game.general.name });
+
+    if (isExist && isExist._id) {
+      throw new BadRequestException('Game already exist');
+    }
+
     const newGame = await this.gameModel.create(game);
+
+    const dataForContract: gameDataForContract = {
+      owner: game.owner,
+      name: game.general.name,
+      author: game.general.author,
+      renderer: game.connections.assetRenderer ? game.connections.assetRenderer : '',
+      avatarFilter:
+        game.connections.dnaFilters &&
+        game.connections.dnaFilters.avatarFilter &&
+        game.connections.dnaFilters.avatarFilter.filename
+          ? await this.getStaticUrl(newGame.id, game.connections.dnaFilters.avatarFilter, this.staticEndpointCore)
+          : '',
+      itemFilter:
+        game.connections.dnaFilters &&
+        game.connections.dnaFilters.assetFilter &&
+        game.connections.dnaFilters.assetFilter.filename
+          ? await this.getStaticUrl(newGame.id, game.connections.dnaFilters.assetFilter, this.staticEndpointCore)
+          : '',
+      gemFilter:
+        game.connections.dnaFilters &&
+        game.connections.dnaFilters.gemFilter &&
+        game.connections.dnaFilters.gemFilter.filename
+          ? await this.getStaticUrl(newGame.id, game.connections.dnaFilters.gemFilter, this.staticEndpointCore)
+          : '',
+      website: game.connections.webpage,
+    };
+
+    const txHash = await this.createGameInContract(dataForContract);
+
+    newGame.set({ txHash });
+
+    await newGame.save();
+
     return {
       id: newGame.id,
       connections: {
         dnaFilters: {
           avatarFilter:
             game.connections.dnaFilters?.avatarFilter &&
-            (await this.getPutSignedUrl(newGame.id, game.connections.dnaFilters.avatarFilter)),
+            (await this.getPutSignedUrl(newGame.id, game.connections.dnaFilters.avatarFilter, this.bucketCore)),
           assetFilter:
             game.connections.dnaFilters?.assetFilter &&
-            (await this.getPutSignedUrl(newGame.id, game.connections.dnaFilters.assetFilter)),
+            (await this.getPutSignedUrl(newGame.id, game.connections.dnaFilters.assetFilter, this.bucketCore)),
           gemFilter:
             game.connections.dnaFilters?.gemFilter &&
-            (await this.getPutSignedUrl(newGame.id, game.connections.dnaFilters.gemFilter)),
+            (await this.getPutSignedUrl(newGame.id, game.connections.dnaFilters.gemFilter, this.bucketCore)),
         },
       },
       uploadImageURLs: {
-        coverImage: await this.getPutSignedUrl(newGame.id, game.images.coverImage),
-        cardThumbnail: await this.getPutSignedUrl(newGame.id, game.images.cardThumbnail),
-        smallThumbnail: await this.getPutSignedUrl(newGame.id, game.images.smallThumbnail),
-        imagesGallery: await this.getPutSignedUrls(newGame.id, game.images.gallery),
+        coverImage: await this.getPutSignedUrl(newGame.id, game.images.coverImage, this.bucket),
+        cardThumbnail: await this.getPutSignedUrl(newGame.id, game.images.cardThumbnail, this.bucket),
+        smallThumbnail: await this.getPutSignedUrl(newGame.id, game.images.smallThumbnail, this.bucket),
+        imagesGallery: await this.getPutSignedUrls(newGame.id, game.images.gallery, this.bucket),
       },
     };
   }
@@ -91,6 +140,7 @@ export class GamesService {
 
     // files part
     const filesToDelete = [];
+    const coreFilesToDelete = [];
     if (payload.connections?.dnaFilters) {
       response.connections = { dnaFilters: {} };
       const dnaFilters = payload.connections.dnaFilters;
@@ -100,7 +150,7 @@ export class GamesService {
           game.connections.dnaFilters[dnaFiltersKey] &&
           game.connections.dnaFilters[dnaFiltersKey].filename
         ) {
-          filesToDelete.push({ Key: join(game.id, game.connections.dnaFilters[dnaFiltersKey].filename) });
+          coreFilesToDelete.push({ Key: join(game.id, game.connections.dnaFilters[dnaFiltersKey].filename) });
         }
 
         if (payload.connections.dnaFilters[dnaFiltersKey] !== null) {
@@ -110,6 +160,7 @@ export class GamesService {
           response.connections.dnaFilters[dnaFiltersKey] = await this.getPutSignedUrl(
             game.id,
             payload.connections.dnaFilters[dnaFiltersKey],
+            this.bucketCore,
           );
         }
         const filters = { ...game.connections.dnaFilters, ...payload.connections.dnaFilters };
@@ -131,7 +182,7 @@ export class GamesService {
           filesToDelete.push({ Key: join(game.id, game.images[imageKey].filename) });
         }
         payload.images[imageKey].filename = `${uuidv4()}-${payload.images[imageKey].filename}`;
-        response.uploadImageURLs[imageKey] = await this.getPutSignedUrl(game.id, payload.images[imageKey]);
+        response.uploadImageURLs[imageKey] = await this.getPutSignedUrl(game.id, payload.images[imageKey], this.bucket);
       }
 
       if (_gallery) {
@@ -149,7 +200,7 @@ export class GamesService {
           }
 
           payload.images.gallery.push(item);
-          response.uploadImageURLs.imagesGallery.push(await this.getPutSignedUrl(game.id, item));
+          response.uploadImageURLs.imagesGallery.push(await this.getPutSignedUrl(game.id, item, this.bucket));
         }
       }
     }
@@ -176,6 +227,47 @@ export class GamesService {
           },
         }),
       );
+    }
+
+    if (coreFilesToDelete.length) {
+      await this.s3Client.send(
+        new DeleteObjectsCommand({
+          Bucket: this.bucketCore,
+          Delete: {
+            Objects: coreFilesToDelete,
+          },
+        }),
+      );
+    }
+
+    const dataForContract: gameDataForContract = {
+      owner: game.owner,
+      name: game.general.name,
+      author: game.general.author,
+      renderer: game.connections.assetRenderer ? game.connections.assetRenderer : '',
+      avatarFilter:
+        game.connections.dnaFilters &&
+        game.connections.dnaFilters.avatarFilter &&
+        game.connections.dnaFilters.avatarFilter.filename
+          ? await this.getStaticUrl(game.id, game.connections.dnaFilters.avatarFilter, this.staticEndpointCore)
+          : '',
+      itemFilter:
+        game.connections.dnaFilters &&
+        game.connections.dnaFilters.assetFilter &&
+        game.connections.dnaFilters.assetFilter.filename
+          ? await this.getStaticUrl(game.id, game.connections.dnaFilters.assetFilter, this.staticEndpointCore)
+          : '',
+      gemFilter:
+        game.connections.dnaFilters &&
+        game.connections.dnaFilters.gemFilter &&
+        game.connections.dnaFilters.gemFilter.filename
+          ? await this.getStaticUrl(game.id, game.connections.dnaFilters.gemFilter, this.staticEndpointCore)
+          : '',
+      website: game.connections.webpage,
+    };
+
+    if (game.recordId && game.recordId !== '') {
+      await this.updateGameInContract(dataForContract, game.recordId);
     }
 
     delete payload.owner;
@@ -222,8 +314,8 @@ export class GamesService {
   }
 
   async findOneByIdAndOwner(id: string, owner: string) {
-    // return await this.gameModel.findOne({ _id: new Types.ObjectId(id), owner }).exec();
-    return await this.gameModel.findOne({ _id: new Types.ObjectId(id) }).exec();
+    return await this.gameModel.findOne({ _id: new Types.ObjectId(id), owner }).exec();
+    // return await this.gameModel.findOne({ _id: new Types.ObjectId(id) }).exec();
   }
 
   async random(user: string): Promise<GameRecord[]> {
@@ -276,7 +368,7 @@ export class GamesService {
     if (filters.list === 'popular') {
       sortParams.views = -1;
     } else {
-      sortParams.createdAt = -1;
+      sortParams.weight = -1;
     }
 
     if (filters.ids) {
@@ -300,9 +392,10 @@ export class GamesService {
 
   async delete(game: GameDocument) {
     const filesToDelete = [];
+    const coreFilesToDelete = [];
     for (const filterKey in game.connections.dnaFilters) {
       if (game.connections.dnaFilters[filterKey] && game.connections.dnaFilters[filterKey].filename) {
-        filesToDelete.push({ Key: join(game.id, game.connections.dnaFilters[filterKey].filename) });
+        coreFilesToDelete.push({ Key: join(game.id, game.connections.dnaFilters[filterKey].filename) });
       }
     }
     for (const imageKey in game.images) {
@@ -324,6 +417,15 @@ export class GamesService {
       }),
     );
 
+    await this.s3Client.send(
+      new DeleteObjectsCommand({
+        Bucket: this.bucketCore,
+        Delete: {
+          Objects: coreFilesToDelete,
+        },
+      }),
+    );
+
     const deleteDBResult = await this.gameModel.deleteOne({ _id: game._id });
 
     return {
@@ -338,6 +440,38 @@ export class GamesService {
     const result = await this.find({ ids: favorites.ids, list: 'latest', page: 1, user });
 
     return result;
+  }
+
+  private async createGameInContract(data: gameDataForContract): Promise<string> {
+    try {
+      const url = new URL(this.gameDirectoryEndpoint);
+      url.pathname = '/games-directory';
+      const request = this.httpService
+        .post(url.toString(), data)
+        .pipe(map((res) => res.data?.txHash))
+        .pipe(
+          catchError(() => {
+            throw new ForbiddenException('API not available');
+          }),
+        );
+      return await lastValueFrom(request);
+    } catch (e) {
+      console.log(`Create game in contract error: ${e}`);
+    }
+  }
+
+  private async updateGameInContract(data: gameDataForContract, id: string): Promise<string> {
+    const url = new URL(this.gameDirectoryEndpoint);
+    url.pathname = `/games-directory/${id}`;
+    const request = this.httpService
+      .patch(url.toString(), data)
+      .pipe(map((res) => res.data?.txHash))
+      .pipe(
+        catchError(() => {
+          throw new ForbiddenException('API not available');
+        }),
+      );
+    return await lastValueFrom(request);
   }
 
   private async aggregateGames(
@@ -384,22 +518,22 @@ export class GamesService {
         genre: game.general.genre,
       },
       images: {
-        smallThumbnail: await this.getStaticUrl(gameId, game.images.smallThumbnail),
+        smallThumbnail: await this.getStaticUrl(gameId, game.images.smallThumbnail, this.staticEndpoint),
       },
       connections: {
         assetRenderer: game.connections.assetRenderer,
         dnaFilters: {
           avatarFilter:
             game.connections.dnaFilters && game.connections.dnaFilters.avatarFilter
-              ? await this.getStaticUrl(gameId, game.connections.dnaFilters.avatarFilter)
+              ? await this.getStaticUrl(gameId, game.connections.dnaFilters.avatarFilter, this.staticEndpointCore)
               : '',
           assetFilter:
             game.connections.dnaFilters && game.connections.dnaFilters.assetFilter
-              ? await this.getStaticUrl(gameId, game.connections.dnaFilters.assetFilter)
+              ? await this.getStaticUrl(gameId, game.connections.dnaFilters.assetFilter, this.staticEndpointCore)
               : '',
           gemFilter:
             game.connections.dnaFilters && game.connections.dnaFilters.gemFilter
-              ? await this.getStaticUrl(gameId, game.connections.dnaFilters.gemFilter)
+              ? await this.getStaticUrl(gameId, game.connections.dnaFilters.gemFilter, this.staticEndpointCore)
               : '',
         },
       },
@@ -447,10 +581,10 @@ export class GamesService {
         inputs: game.details.inputs,
       },
       images: {
-        coverImage: await this.getStaticUrl(gameId, game.images.coverImage),
-        cardThumbnail: await this.getStaticUrl(gameId, game.images.cardThumbnail),
-        smallThumbnail: await this.getStaticUrl(gameId, game.images.smallThumbnail),
-        gallery: await this.getStaticUrls(gameId, game.images.gallery),
+        coverImage: await this.getStaticUrl(gameId, game.images.coverImage, this.staticEndpoint),
+        cardThumbnail: await this.getStaticUrl(gameId, game.images.cardThumbnail, this.staticEndpoint),
+        smallThumbnail: await this.getStaticUrl(gameId, game.images.smallThumbnail, this.staticEndpoint),
+        gallery: await this.getStaticUrls(gameId, game.images.gallery, this.staticEndpoint),
       },
       connections: {
         webpage: game.connections.webpage,
@@ -458,13 +592,13 @@ export class GamesService {
         dnaFilters: {
           avatarFilter:
             game.connections.dnaFilters?.avatarFilter &&
-            (await this.getStaticUrl(gameId, game.connections.dnaFilters.avatarFilter)),
+            (await this.getStaticUrl(gameId, game.connections.dnaFilters.avatarFilter, this.staticEndpointCore)),
           assetFilter:
             game.connections.dnaFilters?.assetFilter &&
-            (await this.getStaticUrl(gameId, game.connections.dnaFilters.assetFilter)),
+            (await this.getStaticUrl(gameId, game.connections.dnaFilters.assetFilter, this.staticEndpointCore)),
           gemFilter:
             game.connections.dnaFilters?.gemFilter &&
-            (await this.getStaticUrl(gameId, game.connections.dnaFilters.gemFilter)),
+            (await this.getStaticUrl(gameId, game.connections.dnaFilters.gemFilter, this.staticEndpointCore)),
         },
         promoVideo: game.connections.promoVideo,
         socialLinks: game.connections.socialLinks,
@@ -476,11 +610,15 @@ export class GamesService {
     };
   }
 
-  private async getPutSignedUrl(gameId: string, { filename, mimeType, contentLength }: GameImage): Promise<string> {
+  private async getPutSignedUrl(
+    gameId: string,
+    { filename, mimeType, contentLength }: GameImage,
+    bucket: string,
+  ): Promise<string> {
     return getSignedUrl(
       this.s3Client,
       new PutObjectCommand({
-        Bucket: this.bucket,
+        Bucket: bucket,
         Key: join(gameId, filename),
         ContentType: mimeType,
         ContentLength: contentLength,
@@ -489,24 +627,24 @@ export class GamesService {
     );
   }
 
-  private async getPutSignedUrls(gameId: string, gameImages: GameImage[]): Promise<string[]> {
+  private async getPutSignedUrls(gameId: string, gameImages: GameImage[], bucket: string): Promise<string[]> {
     const images = [];
     for await (const image of gameImages) {
-      images.push(await this.getPutSignedUrl(gameId, image));
+      images.push(await this.getPutSignedUrl(gameId, image, bucket));
     }
     return images;
   }
 
-  private async getStaticUrl(gameId: string, { filename }: GameImage): Promise<string> {
-    const url = new URL(this.staticEndpoint);
+  private async getStaticUrl(gameId: string, { filename }: GameImage, endpoint: URL): Promise<string> {
+    const url = new URL(endpoint);
     url.pathname = join(gameId, filename);
     return url.toString();
   }
 
-  private async getStaticUrls(gameId: string, gameImages: GameImage[]): Promise<string[]> {
+  private async getStaticUrls(gameId: string, gameImages: GameImage[], endpoint: URL): Promise<string[]> {
     const images = [];
     for await (const image of gameImages) {
-      images.push(await this.getStaticUrl(gameId, image));
+      images.push(await this.getStaticUrl(gameId, image, endpoint));
     }
     return images;
   }
