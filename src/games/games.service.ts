@@ -103,11 +103,11 @@ export class GamesService {
       website: game.connections.webpage,
     };
 
-    // const txHash = await this.createGameInContract(dataForContract);
+    const txHash = await this.createGameInContract(dataForContract);
 
-    // newGame.set({ txHash });
+    newGame.set({ txHash });
 
-    // await newGame.save();
+    await newGame.save();
 
     return {
       id: newGame.id,
