@@ -370,7 +370,7 @@ export class GamesService {
     if (filters.list === 'popular') {
       sortParams.views = -1;
     } else {
-      sortParams.weight = -1;
+      sortParams.weight = 1;
     }
 
     if (filters.ids) {
