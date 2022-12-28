@@ -103,11 +103,11 @@ export class GamesService {
       website: game.connections.webpage,
     };
 
-    const txHash = await this.createGameInContract(dataForContract);
+    // const txHash = await this.createGameInContract(dataForContract);
 
-    newGame.set({ txHash });
+    // newGame.set({ txHash });
 
-    await newGame.save();
+    // await newGame.save();
 
     return {
       id: newGame.id,
@@ -317,8 +317,8 @@ export class GamesService {
   }
 
   async findOneByIdAndOwner(id: string, owner: string) {
-    return await this.gameModel.findOne({ _id: new Types.ObjectId(id), owner }).exec();
-    // return await this.gameModel.findOne({ _id: new Types.ObjectId(id) }).exec();
+    // return await this.gameModel.findOne({ _id: new Types.ObjectId(id), owner }).exec();
+    return await this.gameModel.findOne({ _id: new Types.ObjectId(id) }).exec();
   }
 
   async random(user: string): Promise<GameRecord[]> {
