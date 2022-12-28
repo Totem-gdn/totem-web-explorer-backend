@@ -42,7 +42,7 @@ export class GamesService {
     this.bucketCore = this.configService.get<string>('aws.s3.bucketCore');
     this.staticEndpointCore = new URL(this.configService.get<string>('aws.s3.endpointCore'));
     this.gameDirectoryEndpoint = new URL(this.configService.get<string>('provider.gameDirectory.endpoint'));
-    this.s3Client = new S3Client({});
+    this.s3Client = new S3Client({ endpoint: this.staticEndpoint.toString() });
     this.s3GDNClient = new S3Client({ endpoint: this.staticEndpointCore.toString() });
   }
 
@@ -103,17 +103,17 @@ export class GamesService {
       website: game.connections.webpage,
     };
 
-    try {
-      const txHash = await this.createGameInContract(dataForContract);
+    // try {
+    //   const txHash = await this.createGameInContract(dataForContract);
 
-      if (txHash) {
-        newGame.set({ txHash });
+    //   if (txHash) {
+    //     newGame.set({ txHash });
 
-        await newGame.save();
-      }
-    } catch (e) {
-      console.log('CREATE GAME IN CONTRACT ERROR');
-    }
+    //     await newGame.save();
+    //   }
+    // } catch (e) {
+    //   console.log('CREATE GAME IN CONTRACT ERROR');
+    // }
 
     return {
       id: newGame.id,
@@ -280,7 +280,7 @@ export class GamesService {
       try {
         await this.updateGameInContract(dataForContract, game.recordId);
       } catch (e) {
-        console.log('UPDATE CONTRACT ERROR');
+        console.log('UPDATE GAME IN CONTRACT ERROR');
       }
     }
 
