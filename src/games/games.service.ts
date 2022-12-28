@@ -270,7 +270,7 @@ export class GamesService {
     };
 
     if (game.recordId && game.recordId !== '') {
-      await this.updateGameInContract(dataForContract, game.recordId);
+      // await this.updateGameInContract(dataForContract, game.recordId);
     }
 
     delete payload.owner;
