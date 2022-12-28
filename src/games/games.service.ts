@@ -42,7 +42,7 @@ export class GamesService {
     this.bucketCore = this.configService.get<string>('aws.s3.bucketCore');
     this.staticEndpointCore = new URL(this.configService.get<string>('aws.s3.endpointCore'));
     this.gameDirectoryEndpoint = new URL(this.configService.get<string>('provider.gameDirectory.endpoint'));
-    this.s3Client = new S3Client({ endpoint: this.staticEndpoint.toString() });
+    this.s3Client = new S3Client({});
     this.s3GDNClient = new S3Client({ endpoint: this.staticEndpointCore.toString() });
   }
 
@@ -86,19 +86,19 @@ export class GamesService {
         game.connections.dnaFilters &&
         game.connections.dnaFilters.avatarFilter &&
         game.connections.dnaFilters.avatarFilter.filename
-          ? await this.getStaticUrl(newGame.id, game.connections.dnaFilters.avatarFilter, this.staticEndpoint)
+          ? await this.getStaticUrl(newGame.id, game.connections.dnaFilters.avatarFilter, this.staticEndpointCore)
           : '',
       itemFilter:
         game.connections.dnaFilters &&
         game.connections.dnaFilters.assetFilter &&
         game.connections.dnaFilters.assetFilter.filename
-          ? await this.getStaticUrl(newGame.id, game.connections.dnaFilters.assetFilter, this.staticEndpoint)
+          ? await this.getStaticUrl(newGame.id, game.connections.dnaFilters.assetFilter, this.staticEndpointCore)
           : '',
       gemFilter:
         game.connections.dnaFilters &&
         game.connections.dnaFilters.gemFilter &&
         game.connections.dnaFilters.gemFilter.filename
-          ? await this.getStaticUrl(newGame.id, game.connections.dnaFilters.gemFilter, this.staticEndpoint)
+          ? await this.getStaticUrl(newGame.id, game.connections.dnaFilters.gemFilter, this.staticEndpointCore)
           : '',
       website: game.connections.webpage,
     };
@@ -258,19 +258,19 @@ export class GamesService {
         game.connections.dnaFilters &&
         game.connections.dnaFilters.avatarFilter &&
         game.connections.dnaFilters.avatarFilter.filename
-          ? await this.getStaticUrl(game.id, game.connections.dnaFilters.avatarFilter, this.staticEndpoint)
+          ? await this.getStaticUrl(game.id, game.connections.dnaFilters.avatarFilter, this.staticEndpointCore)
           : '',
       itemFilter:
         game.connections.dnaFilters &&
         game.connections.dnaFilters.assetFilter &&
         game.connections.dnaFilters.assetFilter.filename
-          ? await this.getStaticUrl(game.id, game.connections.dnaFilters.assetFilter, this.staticEndpoint)
+          ? await this.getStaticUrl(game.id, game.connections.dnaFilters.assetFilter, this.staticEndpointCore)
           : '',
       gemFilter:
         game.connections.dnaFilters &&
         game.connections.dnaFilters.gemFilter &&
         game.connections.dnaFilters.gemFilter.filename
-          ? await this.getStaticUrl(game.id, game.connections.dnaFilters.gemFilter, this.staticEndpoint)
+          ? await this.getStaticUrl(game.id, game.connections.dnaFilters.gemFilter, this.staticEndpointCore)
           : '',
       website: game.connections.webpage,
     };
@@ -538,15 +538,15 @@ export class GamesService {
         dnaFilters: {
           avatarFilter:
             game.connections.dnaFilters && game.connections.dnaFilters.avatarFilter
-              ? await this.getStaticUrl(gameId, game.connections.dnaFilters.avatarFilter, this.staticEndpoint)
+              ? await this.getStaticUrl(gameId, game.connections.dnaFilters.avatarFilter, this.staticEndpointCore)
               : '',
           assetFilter:
             game.connections.dnaFilters && game.connections.dnaFilters.assetFilter
-              ? await this.getStaticUrl(gameId, game.connections.dnaFilters.assetFilter, this.staticEndpoint)
+              ? await this.getStaticUrl(gameId, game.connections.dnaFilters.assetFilter, this.staticEndpointCore)
               : '',
           gemFilter:
             game.connections.dnaFilters && game.connections.dnaFilters.gemFilter
-              ? await this.getStaticUrl(gameId, game.connections.dnaFilters.gemFilter, this.staticEndpoint)
+              ? await this.getStaticUrl(gameId, game.connections.dnaFilters.gemFilter, this.staticEndpointCore)
               : '',
         },
       },
@@ -605,13 +605,13 @@ export class GamesService {
         dnaFilters: {
           avatarFilter:
             game.connections.dnaFilters?.avatarFilter &&
-            (await this.getStaticUrl(gameId, game.connections.dnaFilters.avatarFilter, this.staticEndpoint)),
+            (await this.getStaticUrl(gameId, game.connections.dnaFilters.avatarFilter, this.staticEndpointCore)),
           assetFilter:
             game.connections.dnaFilters?.assetFilter &&
-            (await this.getStaticUrl(gameId, game.connections.dnaFilters.assetFilter, this.staticEndpoint)),
+            (await this.getStaticUrl(gameId, game.connections.dnaFilters.assetFilter, this.staticEndpointCore)),
           gemFilter:
             game.connections.dnaFilters?.gemFilter &&
-            (await this.getStaticUrl(gameId, game.connections.dnaFilters.gemFilter, this.staticEndpoint)),
+            (await this.getStaticUrl(gameId, game.connections.dnaFilters.gemFilter, this.staticEndpointCore)),
         },
         promoVideo: game.connections.promoVideo,
         socialLinks: game.connections.socialLinks,
