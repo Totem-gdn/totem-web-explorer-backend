@@ -42,7 +42,7 @@ export class GamesService {
     this.bucketCore = this.configService.get<string>('aws.s3.bucketCore');
     this.staticEndpointCore = new URL(this.configService.get<string>('aws.s3.endpointCore'));
     this.gameDirectoryEndpoint = new URL(this.configService.get<string>('provider.gameDirectory.endpoint'));
-    this.s3Client = new S3Client({ endpoint: this.staticEndpoint.toString() });
+    this.s3Client = new S3Client({});
     this.s3GDNClient = new S3Client({ endpoint: this.staticEndpointCore.toString() });
   }
 
@@ -103,11 +103,11 @@ export class GamesService {
       website: game.connections.webpage,
     };
 
-    const txHash = await this.createGameInContract(dataForContract);
+    // const txHash = await this.createGameInContract(dataForContract);
 
-    newGame.set({ txHash });
+    // newGame.set({ txHash });
 
-    await newGame.save();
+    // await newGame.save();
 
     return {
       id: newGame.id,
@@ -618,7 +618,8 @@ export class GamesService {
     bucket: string,
   ): Promise<string> {
     return getSignedUrl(
-      bucket === 'explorer' ? this.s3Client : this.s3GDNClient,
+      // bucket === 'explorer' ? this.s3Client : this.s3GDNClient,
+      this.s3Client,
       new PutObjectCommand({
         Bucket: this.bucket,
         Key: join(gameId, filename),
