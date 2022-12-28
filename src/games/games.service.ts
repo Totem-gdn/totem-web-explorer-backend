@@ -103,11 +103,17 @@ export class GamesService {
       website: game.connections.webpage,
     };
 
-    // const txHash = await this.createGameInContract(dataForContract);
+    try {
+      const txHash = await this.createGameInContract(dataForContract);
 
-    // newGame.set({ txHash });
+      if (txHash) {
+        newGame.set({ txHash });
 
-    // await newGame.save();
+        await newGame.save();
+      }
+    } catch (e) {
+      console.log('CREATE GAME IN CONTRACT ERROR');
+    }
 
     return {
       id: newGame.id,
@@ -270,7 +276,12 @@ export class GamesService {
     };
 
     if (game.recordId && game.recordId !== '') {
-      // await this.updateGameInContract(dataForContract, game.recordId);
+      console.log('!!!!!!!', game.recordId);
+      try {
+        await this.updateGameInContract(dataForContract, game.recordId);
+      } catch (e) {
+        console.log('UPDATE CONTRACT ERROR');
+      }
     }
 
     delete payload.owner;
@@ -447,21 +458,18 @@ export class GamesService {
   }
 
   private async createGameInContract(data: gameDataForContract): Promise<string> {
-    try {
-      const url = new URL(this.gameDirectoryEndpoint);
-      url.pathname = '/games-directory';
-      const request = this.httpService
-        .post(url.toString(), data)
-        .pipe(map((res) => res.data?.txHash))
-        .pipe(
-          catchError(() => {
-            throw new ForbiddenException('API not available');
-          }),
-        );
-      return await lastValueFrom(request);
-    } catch (e) {
-      console.log(`Create game in contract error: ${e}`);
-    }
+    const url = new URL(this.gameDirectoryEndpoint);
+    url.pathname = '/games-directory';
+    const request = this.httpService
+      .post(url.toString(), data)
+      .pipe(map((res) => res.data?.txHash))
+      .pipe(
+        catchError((e) => {
+          console.log(`Create game in contract error: ${e.response?.data}`);
+          throw new ForbiddenException('API not available');
+        }),
+      );
+    return await lastValueFrom(request);
   }
 
   private async updateGameInContract(data: gameDataForContract, id: string): Promise<string> {
@@ -471,7 +479,8 @@ export class GamesService {
       .patch(url.toString(), data)
       .pipe(map((res) => res.data?.txHash))
       .pipe(
-        catchError(() => {
+        catchError((e) => {
+          console.log(e.response?.data);
           throw new ForbiddenException('API not available');
         }),
       );
