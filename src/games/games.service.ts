@@ -23,9 +23,10 @@ import { catchError, lastValueFrom, map } from 'rxjs';
 @Injectable()
 export class GamesService {
   private readonly s3Client: S3Client;
+  private readonly s3GDNClient: S3Client;
   private readonly bucket: string;
-  private readonly staticEndpoint: URL;
   private readonly bucketCore: string;
+  private readonly staticEndpoint: URL;
   private readonly staticEndpointCore: URL;
   private readonly perPage: number = 10;
   private readonly gameDirectoryEndpoint: URL;
@@ -36,12 +37,13 @@ export class GamesService {
     private httpService: HttpService,
     @InjectModel(Game.name) private readonly gameModel: Model<GameDocument>,
   ) {
-    this.s3Client = new S3Client({});
     this.bucket = this.configService.get<string>('aws.s3.bucket');
     this.staticEndpoint = new URL(this.configService.get<string>('aws.s3.endpoint'));
     this.bucketCore = this.configService.get<string>('aws.s3.bucketCore');
     this.staticEndpointCore = new URL(this.configService.get<string>('aws.s3.endpointCore'));
     this.gameDirectoryEndpoint = new URL(this.configService.get<string>('provider.gameDirectory.endpoint'));
+    this.s3Client = new S3Client({ endpoint: this.staticEndpoint.toString() });
+    this.s3GDNClient = new S3Client({ endpoint: this.staticEndpointCore.toString() });
   }
 
   async create(game: CreateGameRequest): Promise<CreateGameResponse> {
@@ -113,20 +115,20 @@ export class GamesService {
         dnaFilters: {
           avatarFilter:
             game.connections.dnaFilters?.avatarFilter &&
-            (await this.getPutSignedUrl(newGame.id, game.connections.dnaFilters.avatarFilter, this.bucketCore)),
+            (await this.getPutSignedUrl(newGame.id, game.connections.dnaFilters.avatarFilter, 'core')),
           assetFilter:
             game.connections.dnaFilters?.assetFilter &&
-            (await this.getPutSignedUrl(newGame.id, game.connections.dnaFilters.assetFilter, this.bucketCore)),
+            (await this.getPutSignedUrl(newGame.id, game.connections.dnaFilters.assetFilter, 'core')),
           gemFilter:
             game.connections.dnaFilters?.gemFilter &&
-            (await this.getPutSignedUrl(newGame.id, game.connections.dnaFilters.gemFilter, this.bucketCore)),
+            (await this.getPutSignedUrl(newGame.id, game.connections.dnaFilters.gemFilter, 'core')),
         },
       },
       uploadImageURLs: {
-        coverImage: await this.getPutSignedUrl(newGame.id, game.images.coverImage, this.bucket),
-        cardThumbnail: await this.getPutSignedUrl(newGame.id, game.images.cardThumbnail, this.bucket),
-        smallThumbnail: await this.getPutSignedUrl(newGame.id, game.images.smallThumbnail, this.bucket),
-        imagesGallery: await this.getPutSignedUrls(newGame.id, game.images.gallery, this.bucket),
+        coverImage: await this.getPutSignedUrl(newGame.id, game.images.coverImage, 'explorer'),
+        cardThumbnail: await this.getPutSignedUrl(newGame.id, game.images.cardThumbnail, 'explorer'),
+        smallThumbnail: await this.getPutSignedUrl(newGame.id, game.images.smallThumbnail, 'explorer'),
+        imagesGallery: await this.getPutSignedUrls(newGame.id, game.images.gallery, 'explorer'),
       },
     };
   }
@@ -160,7 +162,7 @@ export class GamesService {
           response.connections.dnaFilters[dnaFiltersKey] = await this.getPutSignedUrl(
             game.id,
             payload.connections.dnaFilters[dnaFiltersKey],
-            this.bucketCore,
+            'core',
           );
         }
         const filters = { ...game.connections.dnaFilters, ...payload.connections.dnaFilters };
@@ -182,7 +184,7 @@ export class GamesService {
           filesToDelete.push({ Key: join(game.id, game.images[imageKey].filename) });
         }
         payload.images[imageKey].filename = `${uuidv4()}-${payload.images[imageKey].filename}`;
-        response.uploadImageURLs[imageKey] = await this.getPutSignedUrl(game.id, payload.images[imageKey], this.bucket);
+        response.uploadImageURLs[imageKey] = await this.getPutSignedUrl(game.id, payload.images[imageKey], 'explorer');
       }
 
       if (_gallery) {
@@ -200,7 +202,7 @@ export class GamesService {
           }
 
           payload.images.gallery.push(item);
-          response.uploadImageURLs.imagesGallery.push(await this.getPutSignedUrl(game.id, item, this.bucket));
+          response.uploadImageURLs.imagesGallery.push(await this.getPutSignedUrl(game.id, item, 'explorer'));
         }
       }
     }
@@ -616,9 +618,9 @@ export class GamesService {
     bucket: string,
   ): Promise<string> {
     return getSignedUrl(
-      this.s3Client,
+      bucket === 'explorer' ? this.s3Client : this.s3GDNClient,
       new PutObjectCommand({
-        Bucket: bucket,
+        Bucket: this.bucket,
         Key: join(gameId, filename),
         ContentType: mimeType,
         ContentLength: contentLength,
