@@ -86,19 +86,19 @@ export class GamesService {
         game.connections.dnaFilters &&
         game.connections.dnaFilters.avatarFilter &&
         game.connections.dnaFilters.avatarFilter.filename
-          ? await this.getStaticUrl(newGame.id, game.connections.dnaFilters.avatarFilter, this.staticEndpointCore)
+          ? await this.getStaticUrl(newGame.id, game.connections.dnaFilters.avatarFilter, this.staticEndpoint)
           : '',
       itemFilter:
         game.connections.dnaFilters &&
         game.connections.dnaFilters.assetFilter &&
         game.connections.dnaFilters.assetFilter.filename
-          ? await this.getStaticUrl(newGame.id, game.connections.dnaFilters.assetFilter, this.staticEndpointCore)
+          ? await this.getStaticUrl(newGame.id, game.connections.dnaFilters.assetFilter, this.staticEndpoint)
           : '',
       gemFilter:
         game.connections.dnaFilters &&
         game.connections.dnaFilters.gemFilter &&
         game.connections.dnaFilters.gemFilter.filename
-          ? await this.getStaticUrl(newGame.id, game.connections.dnaFilters.gemFilter, this.staticEndpointCore)
+          ? await this.getStaticUrl(newGame.id, game.connections.dnaFilters.gemFilter, this.staticEndpoint)
           : '',
       website: game.connections.webpage,
     };
@@ -234,7 +234,8 @@ export class GamesService {
     if (coreFilesToDelete.length) {
       await this.s3Client.send(
         new DeleteObjectsCommand({
-          Bucket: this.bucketCore,
+          Bucket: this.bucket,
+          // Bucket: this.bucketCore,
           Delete: {
             Objects: coreFilesToDelete,
           },
@@ -251,19 +252,19 @@ export class GamesService {
         game.connections.dnaFilters &&
         game.connections.dnaFilters.avatarFilter &&
         game.connections.dnaFilters.avatarFilter.filename
-          ? await this.getStaticUrl(game.id, game.connections.dnaFilters.avatarFilter, this.staticEndpointCore)
+          ? await this.getStaticUrl(game.id, game.connections.dnaFilters.avatarFilter, this.staticEndpoint)
           : '',
       itemFilter:
         game.connections.dnaFilters &&
         game.connections.dnaFilters.assetFilter &&
         game.connections.dnaFilters.assetFilter.filename
-          ? await this.getStaticUrl(game.id, game.connections.dnaFilters.assetFilter, this.staticEndpointCore)
+          ? await this.getStaticUrl(game.id, game.connections.dnaFilters.assetFilter, this.staticEndpoint)
           : '',
       gemFilter:
         game.connections.dnaFilters &&
         game.connections.dnaFilters.gemFilter &&
         game.connections.dnaFilters.gemFilter.filename
-          ? await this.getStaticUrl(game.id, game.connections.dnaFilters.gemFilter, this.staticEndpointCore)
+          ? await this.getStaticUrl(game.id, game.connections.dnaFilters.gemFilter, this.staticEndpoint)
           : '',
       website: game.connections.webpage,
     };
@@ -421,7 +422,8 @@ export class GamesService {
 
     await this.s3Client.send(
       new DeleteObjectsCommand({
-        Bucket: this.bucketCore,
+        // Bucket: this.bucketCore,
+        Bucket: this.bucket,
         Delete: {
           Objects: coreFilesToDelete,
         },
@@ -527,15 +529,15 @@ export class GamesService {
         dnaFilters: {
           avatarFilter:
             game.connections.dnaFilters && game.connections.dnaFilters.avatarFilter
-              ? await this.getStaticUrl(gameId, game.connections.dnaFilters.avatarFilter, this.staticEndpointCore)
+              ? await this.getStaticUrl(gameId, game.connections.dnaFilters.avatarFilter, this.staticEndpoint)
               : '',
           assetFilter:
             game.connections.dnaFilters && game.connections.dnaFilters.assetFilter
-              ? await this.getStaticUrl(gameId, game.connections.dnaFilters.assetFilter, this.staticEndpointCore)
+              ? await this.getStaticUrl(gameId, game.connections.dnaFilters.assetFilter, this.staticEndpoint)
               : '',
           gemFilter:
             game.connections.dnaFilters && game.connections.dnaFilters.gemFilter
-              ? await this.getStaticUrl(gameId, game.connections.dnaFilters.gemFilter, this.staticEndpointCore)
+              ? await this.getStaticUrl(gameId, game.connections.dnaFilters.gemFilter, this.staticEndpoint)
               : '',
         },
       },
@@ -594,13 +596,13 @@ export class GamesService {
         dnaFilters: {
           avatarFilter:
             game.connections.dnaFilters?.avatarFilter &&
-            (await this.getStaticUrl(gameId, game.connections.dnaFilters.avatarFilter, this.staticEndpointCore)),
+            (await this.getStaticUrl(gameId, game.connections.dnaFilters.avatarFilter, this.staticEndpoint)),
           assetFilter:
             game.connections.dnaFilters?.assetFilter &&
-            (await this.getStaticUrl(gameId, game.connections.dnaFilters.assetFilter, this.staticEndpointCore)),
+            (await this.getStaticUrl(gameId, game.connections.dnaFilters.assetFilter, this.staticEndpoint)),
           gemFilter:
             game.connections.dnaFilters?.gemFilter &&
-            (await this.getStaticUrl(gameId, game.connections.dnaFilters.gemFilter, this.staticEndpointCore)),
+            (await this.getStaticUrl(gameId, game.connections.dnaFilters.gemFilter, this.staticEndpoint)),
         },
         promoVideo: game.connections.promoVideo,
         socialLinks: game.connections.socialLinks,
