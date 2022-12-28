@@ -40,7 +40,8 @@ export class GamesService {
     this.bucket = this.configService.get<string>('aws.s3.bucket');
     this.staticEndpoint = new URL(this.configService.get<string>('aws.s3.endpoint'));
     this.bucketCore = this.configService.get<string>('aws.s3.bucketCore');
-    this.staticEndpointCore = new URL(this.configService.get<string>('aws.s3.endpointCore'));
+    // this.staticEndpointCore = new URL(this.configService.get<string>('aws.s3.endpointCore'));
+    this.staticEndpointCore = new URL(this.configService.get<string>('aws.s3.endpoint'));
     this.gameDirectoryEndpoint = new URL(this.configService.get<string>('provider.gameDirectory.endpoint'));
     this.s3Client = new S3Client({});
     this.s3GDNClient = new S3Client({ endpoint: this.staticEndpointCore.toString() });
