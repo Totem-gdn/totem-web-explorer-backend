@@ -394,10 +394,12 @@ export class GamesService {
 
   async search(name: string): Promise<SmallGameRecord[]> {
     const games: SmallGameRecord[] = [];
-    const results: GameDocument[] = await this.gameModel.find({
-      'general.name': { $in: [new RegExp(name, 'gi')] },
-      approved: true,
-    });
+    const results: GameDocument[] = await this.gameModel
+      .find({
+        'general.name': { $in: [new RegExp(name, 'gi')] },
+        approved: true,
+      })
+      .sort({ weight: -1 });
 
     for (const game of results) {
       games.push(await this.toSearchGameRecord(game));
