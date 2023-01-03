@@ -8,6 +8,7 @@ export class Web3AuthGuard implements CanActivate {
   static UserKey = 'user';
   static XHeaders = {
     PubKey: 'x-app-pubkey',
+    PubAddress: 'x-app-address',
   };
 
   private readonly logger = new Logger(Web3AuthGuard.name);
@@ -38,7 +39,10 @@ export class Web3AuthGuard implements CanActivate {
       const jwtPayload = jose.decodeJwt(idToken);
       const JWKS = jose.createRemoteJWKSet(jwtPayload.issuer ? this.Web3AuthJWKSetUrl : this.OpenLoginJWKSetUrl);
       const jwtDecode = await jose.jwtVerify(idToken, JWKS, { algorithms: ['ES256'] });
-      const appPubKey = authHeader[2] || (request.headers[Web3AuthGuard.XHeaders.PubKey] as string);
+      const appPubKey =
+        authHeader[2] ||
+        (request.headers[Web3AuthGuard.XHeaders.PubKey] as string) ||
+        (request.headers[Web3AuthGuard.XHeaders.PubAddress] as string);
       if (!appPubKey) {
         return false;
       }
