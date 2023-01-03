@@ -5,4 +5,5 @@ export interface ListAssetsFilter {
   user?: string;
   search?: string;
   ids?: string[];
+  owner?: string;
 }

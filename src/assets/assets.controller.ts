@@ -53,6 +53,7 @@ export class AssetsController {
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('gameId', new DefaultValuePipe('')) gameId: string,
     @Query('search', new DefaultValuePipe('')) search: string,
+    @Query('owner', new DefaultValuePipe('')) owner: string,
   ): Promise<AssetResponse> {
     if (page < 1) {
       throw new BadRequestException('invalid page number');
@@ -69,6 +70,9 @@ export class AssetsController {
     }
     if (search) {
       filters.search = search;
+    }
+    if (owner) {
+      filters.owner = owner;
     }
     return await this.service.find(assetType, filters);
   }
