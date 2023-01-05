@@ -11,12 +11,13 @@ import {
   Query,
   UnauthorizedException,
   UseGuards,
+  Response,
 } from '@nestjs/common';
 import { Web3AuthGuard } from '../auth/guards/web3auth.guard';
 import { CurrentUser } from '../auth/decorators/currentUser';
 import { isMongoId, isNumberString } from 'class-validator';
 import { ListAssetsFilter } from './interfaces/filters';
-import { AssetRecord } from './common/interfaces/assetRecord';
+import { AssetRecord, AssetResponse } from './common/interfaces/assetRecord';
 import { AssetsService } from './assets.service';
 import { LegacyService } from '../legacy/legacy.service';
 import { AssetType } from './types/assets';
@@ -52,7 +53,8 @@ export class AssetsController {
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('gameId', new DefaultValuePipe('')) gameId: string,
     @Query('search', new DefaultValuePipe('')) search: string,
-  ): Promise<AssetRecord[]> {
+    @Query('owner', new DefaultValuePipe('')) owner: string,
+  ): Promise<AssetResponse> {
     if (page < 1) {
       throw new BadRequestException('invalid page number');
     }
@@ -68,6 +70,9 @@ export class AssetsController {
     }
     if (search) {
       filters.search = search;
+    }
+    if (owner) {
+      filters.owner = owner;
     }
     return await this.service.find(assetType, filters);
   }
@@ -94,7 +99,10 @@ export class AssetsController {
     if (page < 1) {
       throw new BadRequestException('invalid page number');
     }
-    return await this.service.getFavorites(assetType, user, page);
+
+    const result = await this.service.getFavorites(assetType, user, page);
+
+    return result;
   }
 
   @Get(':assetType/:id')

@@ -13,6 +13,7 @@ import { AssetQueue, LegacyQueue } from '../config/queues/assets';
     BullModule.registerQueue({ name: LegacyQueue.Avatars }),
     BullModule.registerQueue({ name: LegacyQueue.Items }),
     BullModule.registerQueue({ name: LegacyQueue.Gems }),
+    BullModule.registerQueue({ name: 'game-directory-queue' }),
   ],
   providers: [ExplorerService],
   exports: [ExplorerService],

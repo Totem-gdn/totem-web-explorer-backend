@@ -13,6 +13,8 @@ export default () => ({
     s3: {
       endpoint: process.env.AWS_S3_ENDPOINT,
       bucket: process.env.AWS_S3_BUCKET,
+      endpointCore: process.env.AWS_CORE_S3_ENDPOINT,
+      bucketCore: process.env.AWS_CORE_S3_BUCKET,
     },
   },
   provider: {
@@ -27,6 +29,10 @@ export default () => ({
       item: process.env.ASSET_LEGACY_CONTRACT,
       gem: process.env.GEM_LEGACY_CONTRACT,
       game: '',
+    },
+    gameDirectory: {
+      endpoint: process.env.GAME_DIRECTORY_ENDPOINT,
+      contract: process.env.GAME_DIRECTORY_CONTRACT,
     },
   },
 });

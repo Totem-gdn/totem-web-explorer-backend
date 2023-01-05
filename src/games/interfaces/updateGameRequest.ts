@@ -39,4 +39,5 @@ export interface UpdateGameRequest {
   };
   galleryImagesForDelete?: string[];
   galleryImagesForUpload?: GameImage[];
+  weight?: number;
 }

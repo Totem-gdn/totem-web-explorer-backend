@@ -12,6 +12,15 @@ export interface AssetRecord {
   lastUsed: string;
 }
 
+export interface AssetResponse {
+  data: AssetRecord[];
+  meta: {
+    total: number;
+    page: number;
+    perPage: number;
+  };
+}
+
 export interface AssetMetadata {
   all: number;
   rare: number;

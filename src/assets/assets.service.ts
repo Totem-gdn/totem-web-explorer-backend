@@ -4,7 +4,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { isMongoId } from 'class-validator';
 import { AssetAggregationDocument } from './types/document';
-import { AssetMetadata, AssetRecord } from './common/interfaces/assetRecord';
+import { AssetMetadata, AssetRecord, AssetResponse } from './common/interfaces/assetRecord';
 import { ListAssetsFilter } from './interfaces/filters';
 import { LegacyService } from '../legacy/legacy.service';
 import { LegacyEvents } from '../legacy/enums/legacy.enums';
@@ -89,7 +89,7 @@ export class AssetsService {
     return this.toRecord(asset);
   }
 
-  async find(assetType: AssetType, filters: ListAssetsFilter): Promise<AssetRecord[]> {
+  async find(assetType: AssetType, filters: ListAssetsFilter): Promise<AssetResponse> {
     const matchParams: Record<string, any> = {};
     if (filters.search) {
       matchParams.tokenId = { $in: [new RegExp(filters.search, 'gi')] };
@@ -97,8 +97,8 @@ export class AssetsService {
     if (filters.gameId) {
       matchParams.gameId = filters.gameId;
     }
-    if (filters.list === 'my') {
-      matchParams.owner = filters.user;
+    if (filters.owner && filters.owner !== '') {
+      matchParams.owner = filters.owner;
     }
     if (filters.ids) {
       matchParams['_id'] = { $in: filters.ids };
@@ -111,6 +111,7 @@ export class AssetsService {
       sortParams.createdAt = -1;
     }
     const assets: AssetRecord[] = [];
+    const itemsCount = await this.assetsModels[assetType].countDocuments({ ...matchParams });
     const aggregation = this.assetsModels[assetType].aggregate<AssetAggregationDocument>([
       { $match: { ...matchParams } },
       { $sort: { ...sortParams } },
@@ -128,11 +129,22 @@ export class AssetsService {
           lastUsed: '$lastUsed.createdAt',
         },
       },
+      // {
+      //   $facet: {
+      //     data: [{ $skip: (filters.page - 1) * this.perPage }, { $limit: this.perPage }],
+      //     meta: [
+      //       {
+      //         $count: 'count',
+      //       },
+      //     ],
+      //   },
+      // },
     ]);
     for (const asset of await aggregation.exec()) {
+      // console.log(asset);
       assets.push(await this.toRecord(asset));
     }
-    return assets;
+    return { data: assets, meta: { total: itemsCount, page: filters.page, perPage: this.perPage } };
   }
 
   private isLikedLookupPipeline(assetType: AssetType, user: string) {
@@ -247,7 +259,7 @@ export class AssetsService {
     return history;
   }
 
-  async getFavorites(assetType: AssetType, user: string, page: number): Promise<AssetRecord[]> {
+  async getFavorites(assetType: AssetType, user: string, page: number): Promise<AssetResponse> {
     let type;
     switch (assetType) {
       case 'avatars':
@@ -260,10 +272,11 @@ export class AssetsService {
         type = 'gemLiked';
         break;
     }
-    const favoritesIDs = await this.legacyService.getFavoritesIDs(type, user, page, this.perPage);
+    const favorites = await this.legacyService.getFavoritesIDs(type, user, page, this.perPage);
 
-    const result = await this.find(assetType, { ids: favoritesIDs, list: 'latest', page: 1, user });
+    const result = await this.find(assetType, { ids: favorites.ids, list: 'latest', page: 1, user });
 
+    result.meta.total = favorites.count;
     return result;
   }
 }

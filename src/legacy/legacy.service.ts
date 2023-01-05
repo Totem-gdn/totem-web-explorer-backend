@@ -80,6 +80,8 @@ export class LegacyService {
     page: number,
     perPage: number,
   ) {
+    const count = await this.legacyRecordModel.countDocuments({ type, user });
+
     const favorites = await this.legacyRecordModel
       .find({ type, user }, { gameId: 1, assetId: 1 })
       .skip((page - 1) * perPage)
@@ -89,6 +91,6 @@ export class LegacyService {
       return f.assetId ? f.assetId : f.gameId;
     });
 
-    return ids;
+    return { count, ids };
   }
 }
