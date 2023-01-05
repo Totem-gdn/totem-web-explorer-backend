@@ -97,12 +97,8 @@ export class AssetsService {
     if (filters.gameId) {
       matchParams.gameId = filters.gameId;
     }
-    if (filters.list === 'my') {
-      if (filters.owner && filters.owner !== '') {
-        matchParams.owner = filters.owner;
-      } else {
-        matchParams.owner = filters.user;
-      }
+    if (filters.owner && filters.owner !== '') {
+      matchParams.owner = filters.owner;
     }
     if (filters.ids) {
       matchParams['_id'] = { $in: filters.ids };
