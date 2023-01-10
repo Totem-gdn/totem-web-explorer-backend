@@ -24,7 +24,7 @@ import { isMongoId } from 'class-validator';
 import { ListGamesFilters } from './interfaces/listGamesFilters';
 import { CreateGameResponse } from './interfaces/createGameResponse';
 import { UpdateGameResponse } from './interfaces/updateGameResponse';
-import { GameRecord, SmallGameRecord } from './interfaces/gameRecord';
+import { GameRecord, GameResponse, SmallGameRecord } from './interfaces/gameRecord';
 import { CreateGameRequestDTO } from './dto/games.dto';
 import { UpdateGameRequestDTO } from './dto/updateGameRequest.dto';
 import { GamesService } from './games.service';
@@ -91,7 +91,7 @@ export class GamesController {
     @Query('approved', new DefaultValuePipe(true), ParseBoolPipe) approved: boolean,
     @Query('hidden', new DefaultValuePipe('')) hidden: '' | 'true' | 'false',
     @Query('owner', new DefaultValuePipe('')) owner: string,
-  ): Promise<GameRecord[]> {
+  ): Promise<GameResponse> {
     if (page < 1) {
       throw new BadRequestException('invalid page number');
     }
@@ -123,7 +123,7 @@ export class GamesController {
   async favorites(
     @CurrentUser() user: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
-  ): Promise<GameRecord[]> {
+  ): Promise<GameResponse> {
     if (page < 1) {
       throw new BadRequestException('invalid page number');
     }

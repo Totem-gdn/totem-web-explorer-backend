@@ -11,7 +11,7 @@ import { ConfigService } from '@nestjs/config';
 import { ListGamesFilters } from './interfaces/listGamesFilters';
 import { LegacyEvents } from '../legacy/enums/legacy.enums';
 import { GameImage } from './interfaces/gameImage';
-import { GameRecord, SmallGameRecord } from './interfaces/gameRecord';
+import { GameRecord, GameResponse, SmallGameRecord } from './interfaces/gameRecord';
 import { CreateGameRequest } from './interfaces/createGameRequest';
 import { UpdateGameRequest } from './interfaces/updateGameRequest';
 import { CreateGameResponse } from './interfaces/createGameResponse';
@@ -333,7 +333,7 @@ export class GamesService {
     return await this.gameModel.findOne({ _id: new Types.ObjectId(id) }).exec();
   }
 
-  async random(user: string): Promise<GameRecord[]> {
+  async random(user: string): Promise<GameResponse> {
     const games: GameRecord[] = [];
     const query = this.gameModel.aggregate<GameAggregationDocument>([
       { $match: { approved: true, hidden: false } },
@@ -358,10 +358,11 @@ export class GamesService {
     for (const game of await query.exec()) {
       games.push(await this.toGameRecord(game));
     }
-    return games;
+    const total = await this.gameModel.countDocuments({ $match: { approved: true, hidden: false } });
+    return { data: games, meta: { total, page: 1, perPage: 10 } };
   }
 
-  async find(filters: ListGamesFilters): Promise<GameRecord[]> {
+  async find(filters: ListGamesFilters): Promise<GameResponse> {
     const matchParams: Record<string, any> = {};
     if (filters.search) {
       matchParams['general.name'] = { $in: [new RegExp(filters.search, 'gi')] };
@@ -452,10 +453,16 @@ export class GamesService {
     };
   }
 
-  async favorites(user: string, page: number): Promise<GameRecord[]> {
+  async favorites(user: string, page: number): Promise<GameResponse> {
     const favorites = await this.legacyService.getFavoritesIDs('gameLiked', user, page, this.perPage);
 
     const result = await this.find({ ids: favorites.ids, list: 'latest', page: 1, user });
+
+    result.meta = {
+      total: favorites.count,
+      perPage: this.perPage,
+      page,
+    };
 
     return result;
   }
@@ -495,7 +502,7 @@ export class GamesService {
     sortParams: Record<string, any>,
     page: number,
     user = '',
-  ): Promise<GameRecord[]> {
+  ): Promise<GameResponse> {
     const games: Array<GameRecord> = [];
     const aggregation = this.gameModel.aggregate<GameAggregationDocument>([
       { $match: { ...matchParams } },
@@ -519,10 +526,11 @@ export class GamesService {
         },
       },
     ]);
+    const total = await this.gameModel.countDocuments({ $match: { ...matchParams } });
     for (const game of await aggregation.exec()) {
       games.push(await this.toGameRecord(game));
     }
-    return games;
+    return { data: games, meta: { total, perPage: this.perPage, page: page } };
   }
 
   private async toSearchGameRecord(game: GameDocument): Promise<SmallGameRecord> {
