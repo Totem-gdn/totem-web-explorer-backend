@@ -24,7 +24,7 @@ ingress:
   annotations:
     kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-2:667950714614:certificate/aa68bfac-fe5d-4b63-972e-91aa3e12a669
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80},[{"HTTPS": 443}]'
     alb.ingress.kubernetes.io/scheme: internet-facing
   hosts:
     - host: test-dev-web-explorer-backend.totem-explorer.com
@@ -54,7 +54,7 @@ autoscaling:
 tolerations:
   - key: "dedicated"
     operator: "Equal"
-    value: "third"
+    value: "core"
     effect: "NoSchedule"
 
 env:
