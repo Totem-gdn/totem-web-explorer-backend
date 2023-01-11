@@ -358,7 +358,7 @@ export class GamesService {
     for (const game of await query.exec()) {
       games.push(await this.toGameRecord(game));
     }
-    const total = await this.gameModel.countDocuments({ $match: { approved: true, hidden: false } });
+    const total = await this.gameModel.countDocuments({ approved: true, hidden: false });
     return { data: games, meta: { total, page: 1, perPage: 10 } };
   }
 
@@ -526,7 +526,7 @@ export class GamesService {
         },
       },
     ]);
-    const total = await this.gameModel.countDocuments({ $match: { ...matchParams } });
+    const total = await this.gameModel.countDocuments({ approved: true, ...matchParams });
     for (const game of await aggregation.exec()) {
       games.push(await this.toGameRecord(game));
     }
