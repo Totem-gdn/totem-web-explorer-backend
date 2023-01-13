@@ -98,16 +98,12 @@ export class ExplorerService {
   private async initGameContract() {
     this.gameDirectoryContract.on(
       this.gameDirectoryContract.filters.CreateGame(),
-      async (owner: string, recordIdHEX, event: Event) => {
-        const recordId = parseInt(recordIdHEX._hex, 16).toString();
-        const txHash = event.transactionHash;
-
-        const data = await this.gameDirectoryContract.recordByIndex(recordIdHEX);
+      async (gameAddress: string, owner: string, event: Event) => {
+        const data = await this.gameDirectoryContract.gameByAddress(gameAddress);
         const game = data['game'];
 
         const updateData = {
-          txHash,
-          recordId,
+          gameAddress: gameAddress,
           owner: owner,
           general: {
             name: game['name'],
@@ -125,16 +121,15 @@ export class ExplorerService {
 
     this.gameDirectoryContract.on(
       this.gameDirectoryContract.filters.UpdateGame(),
-      async (owner: string, recordIdHEX, event: Event) => {
-        const recordId = parseInt(recordIdHEX._hex, 16).toString();
-        const txHash = event.transactionHash;
+      async (gameAddress: string, owner: string, event: Event) => {
+        // const recordId = parseInt(recordIdHEX._hex, 16).toString();
+        // const txHash = event.transactionHash;
 
-        const data = await this.gameDirectoryContract.recordByIndex(recordIdHEX);
+        const data = await this.gameDirectoryContract.gameByAddress(gameAddress);
         const game = data['game'];
 
         const updateData = {
-          txHash,
-          recordId,
+          gameAddress: gameAddress,
           owner: owner,
           general: {
             name: game['name'],

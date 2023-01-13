@@ -70,6 +70,18 @@ export class GamesService {
 
     delete game.hidden;
 
+    game.gameAddress = game.owner;
+
+    try {
+      const isExistInContract = await this.checkGameInContract(game.gameAddress);
+
+      if (isExistInContract) {
+        throw new BadRequestException('Game in contract already exist');
+      }
+    } catch (e) {
+      throw new BadRequestException('Game in contract already exist');
+    }
+
     const isExist = await this.gameModel.findOne({ 'general.name': game.general.name });
 
     if (isExist && isExist._id) {
@@ -79,7 +91,8 @@ export class GamesService {
     const newGame = await this.gameModel.create(game);
 
     const dataForContract: gameDataForContract = {
-      owner: game.owner,
+      gameAddress: game.owner,
+      ownerAddress: game.owner,
       name: game.general.name,
       author: game.general.author,
       renderer: game.connections.assetRenderer ? game.connections.assetRenderer : '',
@@ -104,17 +117,17 @@ export class GamesService {
       website: game.connections.webpage,
     };
 
-    // try {
-    //   const txHash = await this.createGameInContract(dataForContract);
+    try {
+      await this.createGameInContract(dataForContract);
 
-    //   if (txHash) {
-    //     newGame.set({ txHash });
+      // if (txHash) {
+      //   newGame.set({ txHash });
 
-    //     await newGame.save();
-    //   }
-    // } catch (e) {
-    //   console.log('CREATE GAME IN CONTRACT ERROR');
-    // }
+      //   await newGame.save();
+      // }
+    } catch (e) {
+      throw new BadRequestException('Game in contract already exist');
+    }
 
     return {
       id: newGame.id,
@@ -251,7 +264,8 @@ export class GamesService {
     }
 
     const dataForContract: gameDataForContract = {
-      owner: game.owner,
+      gameAddress: game.owner,
+      ownerAddress: game.owner,
       name: game.general.name,
       author: game.general.author,
       renderer: game.connections.assetRenderer ? game.connections.assetRenderer : '',
@@ -276,12 +290,11 @@ export class GamesService {
       website: game.connections.webpage,
     };
 
-    if (game.recordId && game.recordId !== '') {
-      console.log('!!!!!!!', game.recordId);
+    if (game.gameAddress && game.gameAddress !== '') {
       try {
-        await this.updateGameInContract(dataForContract, game.recordId);
+        await this.updateGameInContract(dataForContract, game.gameAddress);
       } catch (e) {
-        console.log('UPDATE GAME IN CONTRACT ERROR');
+        throw new BadRequestException('Updating game in contract failed');
       }
     }
 
@@ -472,25 +485,41 @@ export class GamesService {
     url.pathname = '/games-directory';
     const request = this.httpService
       .post(url.toString(), data)
-      .pipe(map((res) => res.data?.txHash))
+      .pipe(map((res) => res.data))
       .pipe(
         catchError((e) => {
-          console.log(`Create game in contract error: ${e.response?.data}`);
-          throw new ForbiddenException('API not available');
+          throw new ForbiddenException('TOTEM CORE API not available');
         }),
       );
     return await lastValueFrom(request);
   }
 
-  private async updateGameInContract(data: gameDataForContract, id: string): Promise<string> {
+  private async updateGameInContract(data: gameDataForContract, address: string): Promise<string> {
     const url = new URL(this.gameDirectoryEndpoint);
-    url.pathname = `/games-directory/${id}`;
+    url.pathname = `/games-directory/${address}`;
     const request = this.httpService
       .patch(url.toString(), data)
       .pipe(map((res) => res.data?.txHash))
       .pipe(
         catchError((e) => {
-          console.log(e.response?.data);
+          throw new ForbiddenException('TOTEM CORE API not available');
+        }),
+      );
+    return await lastValueFrom(request);
+  }
+
+  private async checkGameInContract(address: string): Promise<boolean> {
+    const url = new URL(this.gameDirectoryEndpoint);
+    url.pathname = `/games-directory/${address}`;
+    const request = this.httpService
+      .get(url.toString())
+      .pipe(
+        map((res) => {
+          return res.data?.gameAddress ? true : false;
+        }),
+      )
+      .pipe(
+        catchError((e) => {
           throw new ForbiddenException('API not available');
         }),
       );

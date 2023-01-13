@@ -37,8 +37,7 @@ export enum GameDirectoryEvent {
 }
 
 export type GameDirectoryPayload = {
-  txHash: string;
-  recordId: string;
+  gameAddress: string;
   owner: string;
   general: {
     name: string;

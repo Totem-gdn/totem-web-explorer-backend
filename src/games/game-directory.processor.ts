@@ -15,7 +15,7 @@ export class GameDirectoryProcessor {
 
   @Process(GameDirectoryEvent.Create)
   private async gameCreate(job: Job<GameDirectoryPayload>) {
-    const game = await this.gameModel.findOne({ txHash: job.data.txHash }).exec();
+    const game = await this.gameModel.findOne({ gameAddress: job.data.gameAddress }).exec();
 
     if (game) {
       game.set({ ...job.data });
@@ -26,7 +26,7 @@ export class GameDirectoryProcessor {
 
   @Process(GameDirectoryEvent.Update)
   private async gameUpdate(job: Job<GameDirectoryPayload>) {
-    const game = await this.gameModel.findOne({ recordId: job.data.recordId }).exec();
+    const game = await this.gameModel.findOne({ gameAddress: job.data.gameAddress }).exec();
 
     if (game) {
       game.set({ ...job.data });

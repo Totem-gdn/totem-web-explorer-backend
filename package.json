@@ -43,6 +43,7 @@
     "rimraf": "^3.0.2",
     "rxjs": "^7.2.0",
     "swagger-ui-express": "^4.6.0",
+    "totem-common-files": "git+https://github.com/Totem-gdn/totem-common-files.git",
     "uuid": "^9.0.0"
   },
   "devDependencies": {
