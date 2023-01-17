@@ -35,4 +35,11 @@ export default () => ({
       contract: process.env.GAME_DIRECTORY_CONTRACT,
     },
   },
+  liqpay: {
+    private: process.env.LIQPAY_PRIVATE_KEY,
+    public: process.env.LIQPAY_PUB_KEY,
+    gem: process.env.GEM_PRICE,
+    item: process.env.ITEM_PRICE,
+    avatar: process.env.AVATAR_PRICE,
+  },
 });

@@ -12,6 +12,7 @@ import {
   UnauthorizedException,
   UseGuards,
   Response,
+  Post,
 } from '@nestjs/common';
 import { Web3AuthGuard } from '../auth/guards/web3auth.guard';
 import { CurrentUser } from '../auth/decorators/currentUser';
@@ -31,6 +32,12 @@ import { AssetOperationTypes } from './enums/operationsTypes.enum';
 @Controller()
 export class AssetsController {
   constructor(private readonly service: AssetsService, private readonly legacyService: LegacyService) {}
+
+  @Post(':assetType')
+  @UseGuards(new Web3AuthGuard(true))
+  async createAsset(@CurrentUser() user: string, @Param('assetType') assetType: AssetType) {
+    return await this.service.createAsset(assetType, user);
+  }
 
   @Get(':assetType')
   @UseGuards(new Web3AuthGuard(true))

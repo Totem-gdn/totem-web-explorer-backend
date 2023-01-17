@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { HttpModule } from '@nestjs/axios';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { BullModule } from '@nestjs/bull';
@@ -23,6 +24,7 @@ import { AvatarsLegacyProcessor, GemsLegacyProcessor, ItemsLegacyProcessor } fro
 @Module({
   imports: [
     ConfigModule,
+    HttpModule,
     LegacyModule,
     BullModule.registerQueue({ name: AssetQueue.Avatars }),
     BullModule.registerQueue({ name: AssetQueue.Items }),

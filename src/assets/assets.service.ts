@@ -1,5 +1,5 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { HttpService } from '@nestjs/axios';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { isMongoId } from 'class-validator';
@@ -18,6 +18,9 @@ import { Gem, GemDocument } from './schemas/gems';
 import { GemLike, GemLikeDocument } from './schemas/gemLikes';
 import { AssetType } from './types/assets';
 import { AssetsOwnershipHistory, AssetsOwnershipHistoryDocument } from './schemas/assetsOwnershipHistory';
+import { ConfigService } from '@nestjs/config';
+import * as crypto from 'crypto';
+import { catchError, lastValueFrom, map } from 'rxjs';
 
 @Injectable()
 export class AssetsService {
@@ -34,11 +37,15 @@ export class AssetsService {
     items: LegacyEvents.ItemUsed,
     gems: LegacyEvents.GemUsed,
   };
+  private readonly liqpayPublicKey: string;
+  private readonly liqpayPrivateKey: string;
+  private readonly prices = {};
 
   constructor(
     private readonly config: ConfigService,
     private readonly legacyService: LegacyService,
     private readonly explorerService: ExplorerService,
+    private httpService: HttpService,
     @InjectModel(Avatar.name) private readonly avatarModel: Model<AvatarDocument>,
     @InjectModel(AvatarLike.name) private readonly avatarLikeModel: Model<AvatarLikeDocument>,
     @InjectModel(Item.name) private readonly itemModel: Model<ItemDocument>,
@@ -57,6 +64,13 @@ export class AssetsService {
       avatars: avatarLikeModel,
       items: itemLikeModel,
       gems: gemLikeModel,
+    };
+    this.liqpayPublicKey = this.config.get<string>('liqpay.public');
+    this.liqpayPrivateKey = this.config.get<string>('liqpay.private');
+    this.prices = {
+      gem: this.config.get<string>('liqpay.gem'),
+      item: this.config.get<string>('liqpay.item'),
+      avatar: this.config.get<string>('liqpay.avatar'),
     };
   }
 
@@ -278,5 +292,44 @@ export class AssetsService {
 
     result.meta.total = favorites.count;
     return result;
+  }
+
+  async createAsset(assetType: AssetType, user: string) {
+    const url = await this.generateLiqpayPaymentLink(assetType, user);
+    console.log(url);
+  }
+
+  private async generateLiqpayPaymentLink(assetType: AssetType, user: string) {
+    const json = {
+      public_key: this.liqpayPublicKey,
+      version: '3',
+      action: 'payment_prepare',
+      action_payment: 'pay',
+      amount: this.prices[assetType].toString(),
+      currency: 'USD',
+      description: 'test',
+      order_id: new Date().getTime().toString(),
+    };
+
+    const data = Buffer.from(JSON.stringify(json)).toString('base64');
+
+    const sign_string = `${this.liqpayPrivateKey}${data}${this.liqpayPrivateKey}`;
+    const signature = crypto.createHash('sha1').update(sign_string).digest('base64');
+
+    try {
+      const body = { data, signature };
+      const request = this.httpService
+        .post(`https://www.liqpay.ua/api/request`, body, {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        })
+        .pipe(map((res: any) => res.data));
+      const result = await lastValueFrom(request);
+
+      return result.result === 'ok' ? result.url_checkout : 'liqpay error';
+    } catch (e) {
+      console.log(e);
+    }
   }
 }

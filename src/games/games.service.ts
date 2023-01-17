@@ -72,15 +72,15 @@ export class GamesService {
 
     game.gameAddress = game.owner;
 
-    try {
-      const isExistInContract = await this.checkGameInContract(game.gameAddress);
+    // try {
+    //   const isExistInContract = await this.checkGameInContract(game.gameAddress);
 
-      if (isExistInContract) {
-        throw new BadRequestException('Game in contract already exist');
-      }
-    } catch (e) {
-      throw new BadRequestException('Game in contract already exist');
-    }
+    //   if (isExistInContract) {
+    //     throw new BadRequestException('Game in contract already exist');
+    //   }
+    // } catch (e) {
+    //   throw new BadRequestException('Core service error');
+    // }
 
     const isExist = await this.gameModel.findOne({ 'general.name': game.general.name });
 

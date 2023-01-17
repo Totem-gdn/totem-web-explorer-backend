@@ -13,6 +13,7 @@ import { AppRouterModule } from './router.module';
 import { ExplorerModule } from './explorer/explorer.module';
 import { BlocksModule } from './blocks/blocks.module';
 import { MessagesModule } from './messages/messages.module';
+import { PingModule } from './ping/ping.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { MessagesModule } from './messages/messages.module';
     BlocksModule,
     MessagesModule,
     AppRouterModule,
+    PingModule,
   ],
 })
 export class AppModule {}
