@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { BlocksModule } from './blocks/blocks.module';
 import { MessagesModule } from './messages/messages.module';
 import { PingModule } from './ping/ping.module';
+import { PaymentModule } from './payment/payment.module';
 
 @Module({
   imports: [
@@ -33,6 +34,10 @@ import { PingModule } from './ping/ping.module';
       {
         path: 'ping',
         module: PingModule,
+      },
+      {
+        path: 'payment',
+        module: PaymentModule,
       },
     ]),
   ],
