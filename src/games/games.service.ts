@@ -28,7 +28,7 @@ export class GamesService {
   private readonly bucketCore: string;
   private readonly staticEndpoint: URL;
   private readonly staticEndpointCore: URL;
-  private readonly perPage: number = 10;
+  private readonly perPage: number = 21;
   private readonly gameDirectoryEndpoint: URL;
 
   constructor(
