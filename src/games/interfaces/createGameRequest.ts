@@ -37,4 +37,5 @@ export interface CreateGameRequest {
     email: string;
     discord: string;
   };
+  gameAddress?: string;
 }

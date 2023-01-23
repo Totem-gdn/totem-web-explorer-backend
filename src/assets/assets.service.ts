@@ -1,5 +1,4 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { isMongoId } from 'class-validator';
@@ -18,6 +17,9 @@ import { Gem, GemDocument } from './schemas/gems';
 import { GemLike, GemLikeDocument } from './schemas/gemLikes';
 import { AssetType } from './types/assets';
 import { AssetsOwnershipHistory, AssetsOwnershipHistoryDocument } from './schemas/assetsOwnershipHistory';
+import { ConfigService } from '@nestjs/config';
+import { PaymentService } from '../payment/payment.service';
+import { LiqpayOrderDocument } from 'src/payment/schemas/liqpayOrders';
 
 @Injectable()
 export class AssetsService {
@@ -34,11 +36,13 @@ export class AssetsService {
     items: LegacyEvents.ItemUsed,
     gems: LegacyEvents.GemUsed,
   };
+  private readonly paymentMethod;
 
   constructor(
     private readonly config: ConfigService,
     private readonly legacyService: LegacyService,
     private readonly explorerService: ExplorerService,
+    private readonly paymentService: PaymentService,
     @InjectModel(Avatar.name) private readonly avatarModel: Model<AvatarDocument>,
     @InjectModel(AvatarLike.name) private readonly avatarLikeModel: Model<AvatarLikeDocument>,
     @InjectModel(Item.name) private readonly itemModel: Model<ItemDocument>,
@@ -58,6 +62,7 @@ export class AssetsService {
       items: itemLikeModel,
       gems: gemLikeModel,
     };
+    this.paymentMethod = this.config.get('payment.paymentMethod');
   }
 
   async findOne(assetType: AssetType, id: string, user = ''): Promise<AssetRecord> {
@@ -278,5 +283,22 @@ export class AssetsService {
 
     result.meta.total = favorites.count;
     return result;
+  }
+
+  async createAsset(assetType: AssetType, user: string) {
+    const price = await this.paymentService.getAssetPrice(assetType);
+
+    const order: any = await this.paymentService.createPaymentOrder(assetType, user, price);
+
+    let url;
+    if (this.paymentMethod.toLowerCase() === 'stripe') {
+      const priceId = await this.paymentService.getStripePriceID(assetType, price);
+
+      url = await this.paymentService.generateStripePaymentLink(priceId, order._id.toString());
+    } else {
+      url = await this.paymentService.generateLiqpayPaymentLink(price, order._id.toString());
+    }
+
+    return { url, order: order._id };
   }
 }

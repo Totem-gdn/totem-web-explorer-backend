@@ -48,6 +48,15 @@ export interface GameRecord {
   };
 }
 
+export interface GameResponse {
+  data: GameRecord[];
+  meta: {
+    total: number;
+    page: number;
+    perPage: number;
+  };
+}
+
 export interface SmallGameRecord {
   id: string;
   general: {
@@ -64,5 +73,14 @@ export interface SmallGameRecord {
       assetFilter?: string;
       gemFilter?: string;
     };
+  };
+}
+
+export interface SmallGameResponse {
+  data: SmallGameRecord[];
+  meta: {
+    total: number;
+    page: number;
+    perPage: number;
   };
 }

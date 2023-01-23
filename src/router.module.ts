@@ -5,6 +5,8 @@ import { AssetsModule } from './assets/assets.module';
 import { AuthModule } from './auth/auth.module';
 import { BlocksModule } from './blocks/blocks.module';
 import { MessagesModule } from './messages/messages.module';
+import { PingModule } from './ping/ping.module';
+import { PaymentModule } from './payment/payment.module';
 
 @Module({
   imports: [
@@ -28,6 +30,14 @@ import { MessagesModule } from './messages/messages.module';
       {
         path: 'messages',
         module: MessagesModule,
+      },
+      {
+        path: 'ping',
+        module: PingModule,
+      },
+      {
+        path: 'payment',
+        module: PaymentModule,
       },
     ]),
   ],

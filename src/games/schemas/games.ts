@@ -4,7 +4,7 @@ import { DocumentTimestamps } from '../../assets/types/document';
 
 @Schema({ _id: false })
 class GeneralInformation {
-  @Prop({ type: SchemaTypes.String, required: true, unique: true, index: true })
+  @Prop({ type: SchemaTypes.String, required: true, index: true })
   name: string;
 
   @Prop({ type: SchemaTypes.String, required: true, index: true })
@@ -183,11 +183,11 @@ export class Game {
   @Prop({ type: SchemaTypes.String })
   txHash: string;
 
-  @Prop({ type: SchemaTypes.String })
-  recordId: string;
-
   @Prop({ type: SchemaTypes.Number, default: () => 0 })
   weight: number;
+
+  @Prop({ type: SchemaTypes.String, required: true, unique: true, index: true })
+  gameAddress: string;
 }
 
 export type GameDocument = Game & Document & DocumentTimestamps;

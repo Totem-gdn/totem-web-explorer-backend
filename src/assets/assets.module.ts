@@ -19,11 +19,13 @@ import { AvatarsProcessor } from './avatars.processor';
 import { ItemsProcessor } from './items.processor';
 import { GemsProcessor } from './gems.processor';
 import { AvatarsLegacyProcessor, GemsLegacyProcessor, ItemsLegacyProcessor } from './legacy.processor';
+import { PaymentModule } from '../payment/payment.module';
 
 @Module({
   imports: [
     ConfigModule,
     LegacyModule,
+    PaymentModule,
     BullModule.registerQueue({ name: AssetQueue.Avatars }),
     BullModule.registerQueue({ name: AssetQueue.Items }),
     BullModule.registerQueue({ name: AssetQueue.Gems }),
