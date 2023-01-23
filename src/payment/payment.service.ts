@@ -112,9 +112,39 @@ export class PaymentService {
   }
 
   async stripeWebhook(event) {
-    // console.log(event);
-    const paymentLink = await this.stripe.paymentLinks.retrieve(event.data.object.id);
-    // console.log(paymentLink);
+    const orderId = await this.getStripeOrderID(event);
+
+    if (orderId) {
+      const order = await this.orderModel.findById(orderId);
+
+      if (event.type === 'checkout.session.completed') {
+        this.stripe.paymentLinks.update(event.data?.object?.payment_link, { active: false });
+        if (event.data?.object?.payment_status === 'paid') {
+          this.updateOrderStatus(PaymentStatuses.PROCESSING, order);
+          this.createAssetAPICall(order);
+        } else {
+          this.updateOrderStatus(PaymentStatuses.CANCELLED, order);
+        }
+      }
+    }
+  }
+
+  async updateOrderStatus(status, order) {
+    order.set({ status: status });
+
+    await order.save();
+  }
+
+  async createAssetAPICall(order) {
+    console.log('CALL CORE API');
+  }
+
+  async getStripeOrderID(event: any) {
+    if (event.data?.object?.metadata?.orderId) {
+      return event.data.object.metadata.orderId;
+    } else {
+      return null;
+    }
   }
 
   async getStripePriceID(assetType: AssetType, totemPrice: string) {

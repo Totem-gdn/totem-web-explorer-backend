@@ -34,7 +34,7 @@ export class AssetsController {
   constructor(private readonly service: AssetsService, private readonly legacyService: LegacyService) {}
 
   @Post(':assetType')
-  @UseGuards(new Web3AuthGuard(true))
+  @UseGuards(new Web3AuthGuard(false))
   async createAsset(@CurrentUser() user: string, @Param('assetType') assetType: AssetType) {
     return await this.service.createAsset(assetType, user);
   }
