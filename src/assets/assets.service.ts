@@ -116,7 +116,10 @@ export class AssetsService {
       sortParams.createdAt = -1;
     }
     const assets: AssetRecord[] = [];
-    const itemsCount = await this.assetsModels[assetType].countDocuments({ ...matchParams });
+    let itemsCount = 0;
+    if (this.assetsModels[assetType]) {
+      itemsCount = await this.assetsModels[assetType].countDocuments({ ...matchParams });
+    }
     const aggregation = this.assetsModels[assetType].aggregate<AssetAggregationDocument>([
       { $match: { ...matchParams } },
       { $sort: { ...sortParams } },
