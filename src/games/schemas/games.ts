@@ -186,7 +186,7 @@ export class Game {
   @Prop({ type: SchemaTypes.Number, default: () => 0 })
   weight: number;
 
-  @Prop({ type: SchemaTypes.String, required: true, unique: true, index: true })
+  @Prop({ type: SchemaTypes.String, unique: true })
   gameAddress: string;
 }
 

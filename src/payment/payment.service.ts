@@ -155,7 +155,7 @@ export class PaymentService {
     if (!product) {
       product = await this.stripe.products.create({
         name: assetType,
-        default_price_data: { unit_amount: parseInt(price) * 100, currency: 'usd' },
+        default_price_data: { unit_amount: parseInt(totemPrice) * 100, currency: 'usd' },
         expand: ['default_price'],
       });
     }
