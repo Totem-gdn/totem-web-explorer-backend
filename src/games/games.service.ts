@@ -290,13 +290,13 @@ export class GamesService {
       website: game.connections.webpage,
     };
 
-    if (game.gameAddress && game.gameAddress !== '') {
-      try {
-        await this.updateGameInContract(dataForContract, game.gameAddress);
-      } catch (e) {
-        throw new BadRequestException('Updating game in contract failed');
-      }
-    }
+    // if (game.gameAddress && game.gameAddress !== '') {
+    //   try {
+    //     await this.updateGameInContract(dataForContract, game.gameAddress);
+    //   } catch (e) {
+    //     throw new BadRequestException('Updating game in contract failed');
+    //   }
+    // }
 
     delete payload.owner;
     delete payload.weight;
