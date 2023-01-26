@@ -260,7 +260,6 @@ export class GamesService {
     }
 
     const dataForContract: gameDataForContract = {
-      gameAddress: game.owner,
       ownerAddress: game.owner,
       name: game.general.name,
       author: game.general.author,
@@ -284,6 +283,7 @@ export class GamesService {
           ? await this.getStaticUrl(game.id, game.connections.dnaFilters.gemFilter, this.staticEndpointCore)
           : '',
       website: game.connections.webpage,
+      status: 2,
     };
 
     if (game.gameAddress && game.gameAddress !== '') {
