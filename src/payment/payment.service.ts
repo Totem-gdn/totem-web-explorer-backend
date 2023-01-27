@@ -196,7 +196,7 @@ export class PaymentService {
       after_completion: {
         type: 'redirect',
         redirect: {
-          url: `${this.config.get<string>('payment.stripe.successURL')}&$type=${assetType}`,
+          url: `${this.config.get<string>('payment.stripe.successURL')}&type=${assetType}`,
         },
       },
     };
