@@ -72,15 +72,11 @@ export class GamesService {
 
     game.gameAddress = game.owner;
 
-    // try {
-    //   const isExistInContract = await this.checkGameInContract(game.gameAddress);
+    const isExistInContract = await this.checkGameInContract(game.gameAddress);
 
-    //   if (isExistInContract) {
-    //     throw new BadRequestException('Game in contract already exist');
-    //   }
-    // } catch (e) {
-    //   throw new BadRequestException('Core service error');
-    // }
+    if (isExistInContract) {
+      throw new BadRequestException('Game in contract already exist');
+    }
 
     const isExist = await this.gameModel.findOne({ 'general.name': game.general.name });
 
@@ -264,7 +260,6 @@ export class GamesService {
     }
 
     const dataForContract: gameDataForContract = {
-      gameAddress: game.owner,
       ownerAddress: game.owner,
       name: game.general.name,
       author: game.general.author,
@@ -288,15 +283,16 @@ export class GamesService {
           ? await this.getStaticUrl(game.id, game.connections.dnaFilters.gemFilter, this.staticEndpointCore)
           : '',
       website: game.connections.webpage,
+      status: 2,
     };
 
-    // if (game.gameAddress && game.gameAddress !== '') {
-    //   try {
-    //     await this.updateGameInContract(dataForContract, game.gameAddress);
-    //   } catch (e) {
-    //     throw new BadRequestException('Updating game in contract failed');
-    //   }
-    // }
+    if (game.gameAddress && game.gameAddress !== '') {
+      try {
+        await this.updateGameInContract(dataForContract, game.gameAddress);
+      } catch (e) {
+        throw new BadRequestException('Updating game in contract failed');
+      }
+    }
 
     delete payload.owner;
     delete payload.weight;
@@ -509,21 +505,25 @@ export class GamesService {
   }
 
   private async checkGameInContract(address: string): Promise<boolean> {
-    const url = new URL(this.gameDirectoryEndpoint);
-    url.pathname = `/games-directory/${address}`;
-    const request = this.httpService
-      .get(url.toString())
-      .pipe(
-        map((res) => {
-          return res.data?.gameAddress ? true : false;
-        }),
-      )
-      .pipe(
-        catchError((e) => {
-          throw new ForbiddenException('API not available');
-        }),
-      );
-    return await lastValueFrom(request);
+    try {
+      const url = new URL(this.gameDirectoryEndpoint);
+      url.pathname = `/games-directory/${address}`;
+      const request = this.httpService
+        .get(url.toString())
+        .pipe(
+          map((res) => {
+            return res.data?.gameAddress ? true : false;
+          }),
+        )
+        .pipe(
+          catchError((e) => {
+            throw new ForbiddenException('API not available');
+          }),
+        );
+      return await lastValueFrom(request);
+    } catch (e) {
+      return false;
+    }
   }
 
   private async aggregateGames(
@@ -610,6 +610,7 @@ export class GamesService {
 
     return {
       id: gameId,
+      gameAddress: game.gameAddress,
       owner: game.owner,
       views: game.views,
       isLiked: game.isLiked,

@@ -1,5 +1,6 @@
 export interface gameDataForContract {
-  gameAddress: string;
+  status?: number;
+  gameAddress?: string;
   ownerAddress: string;
   name: string;
   author: string;

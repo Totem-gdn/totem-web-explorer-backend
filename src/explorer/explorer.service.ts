@@ -100,7 +100,8 @@ export class ExplorerService {
       this.gameDirectoryContract.filters.CreateGame(),
       async (gameAddress: string, owner: string, event: Event) => {
         const data = await this.gameDirectoryContract.gameByAddress(gameAddress);
-        const game = data['game'];
+        // const game = data['game'];
+        const game = data;
 
         const updateData = {
           gameAddress: gameAddress,
@@ -126,7 +127,8 @@ export class ExplorerService {
         // const txHash = event.transactionHash;
 
         const data = await this.gameDirectoryContract.gameByAddress(gameAddress);
-        const game = data['game'];
+        // const game = data['game'];
+        const game = data;
 
         const updateData = {
           gameAddress: gameAddress,
