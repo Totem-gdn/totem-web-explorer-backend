@@ -297,7 +297,7 @@ export class AssetsService {
     if (this.paymentMethod.toLowerCase() === 'stripe') {
       const priceId = await this.paymentService.getStripePriceID(assetType, price);
 
-      url = await this.paymentService.generateStripePaymentLink(priceId, order._id.toString());
+      url = await this.paymentService.generateStripePaymentLink(priceId, order._id.toString(), assetType);
     } else {
       url = await this.paymentService.generateLiqpayPaymentLink(price, order._id.toString());
     }

@@ -182,7 +182,7 @@ export class PaymentService {
     return price.id;
   }
 
-  async generateStripePaymentLink(priceId: string, orderId: string) {
+  async generateStripePaymentLink(priceId: string, orderId: string, assetType: AssetType) {
     const body = {
       metadata: {
         orderId,
@@ -193,6 +193,12 @@ export class PaymentService {
           quantity: 1,
         },
       ],
+      after_completion: {
+        type: 'redirect',
+        redirect: {
+          url: `https://totem-explorer.com?payment_result=success&$type=${assetType}`,
+        },
+      },
     };
 
     const paymentLink = await this.stripe.paymentLinks.create(body);
