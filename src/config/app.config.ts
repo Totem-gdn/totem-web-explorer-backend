@@ -44,6 +44,7 @@ export default () => ({
     stripe: {
       private: process.env.STRIPE_PRIVATE_KEY,
       public: process.env.STRIPE_PUB_KEY,
+      successURL: process.env.STRIPE_PAYMENT_SUCCESS_URL,
     },
     paymentMethod: process.env.PAYMENT_METHOD,
     gem: process.env.GEM_DEFAULT_PRICE,
