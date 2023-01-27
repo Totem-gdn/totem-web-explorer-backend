@@ -610,6 +610,7 @@ export class GamesService {
 
     return {
       id: gameId,
+      gameAddress: game.gameAddress,
       owner: game.owner,
       views: game.views,
       isLiked: game.isLiked,

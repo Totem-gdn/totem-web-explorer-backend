@@ -1,6 +1,7 @@
 import { SocialLink } from './socialLink';
 
 export interface GameRecord {
+  gameAddress: string;
   id: string;
   owner: string;
   views: number;
