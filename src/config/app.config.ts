@@ -52,4 +52,7 @@ export default () => ({
     avatar: process.env.AVATAR_DEFAULT_PRICE,
     endpoint: process.env.PAYMENT_ENDPOINT,
   },
+  publisher: {
+    apiKey: process.env.PUBLISHER_API_KEY,
+  },
 });
