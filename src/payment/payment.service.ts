@@ -6,7 +6,7 @@ import { catchError, lastValueFrom, map } from 'rxjs';
 import { AssetType } from '../assets/types/assets';
 import { PaymentStatuses } from './enums/paymentStatuses.enum';
 import { InjectModel } from '@nestjs/mongoose';
-import { LiqpayOrder, LiqpayOrderDocument } from './schemas/liqpayOrders';
+import { Order, OrderDocument } from './schemas/orders';
 import { Model } from 'mongoose';
 const Stripe = require('stripe');
 // import * as Stripe from 'stripe';
@@ -21,7 +21,7 @@ export class PaymentService {
   constructor(
     private readonly config: ConfigService,
     private httpService: HttpService,
-    @InjectModel(LiqpayOrder.name) private readonly orderModel: Model<LiqpayOrderDocument>,
+    @InjectModel(Order.name) private readonly orderModel: Model<OrderDocument>,
   ) {
     this.liqpay = {
       private: this.config.get<string>('payment.liqpay.private'),
@@ -138,9 +138,12 @@ export class PaymentService {
   async processOrder(orderID) {
     const order = await this.orderModel.findById(orderID);
 
-    await this.createPaymentKey(order.assetType);
+    // await this.createPaymentKey(order.assetType);
 
-    await this.claimAsset(order.assetType, order.owner);
+    const { txHash } = await this.claimAsset(order.assetType, order.owner);
+
+    order.set({ txHash, status: PaymentStatuses.COMPLETED });
+    await order.save();
   }
 
   async getStripeOrderID(event: any) {
@@ -214,11 +217,11 @@ export class PaymentService {
     try {
       const url = `${this.config.get<string>(
         'provider.gameDirectory.endpoint',
-      )}/payment-keys/${assetType}?apiKey=${this.config.get<string>('publisher.apiKey')}`;
+      )}/payment-keys/${assetType}?apiKey=${this.config.get<string>('provider.gameDirectory.apiKey')}`;
       await lastValueFrom(
         this.httpService
           .post(url, {
-            amount: 1,
+            amount: 10,
           })
           .pipe(map((res: any) => res.data))
           .pipe(
@@ -236,9 +239,9 @@ export class PaymentService {
     try {
       const url = `${this.config.get<string>(
         'provider.gameDirectory.endpoint',
-      )}/payment-keys/${assetType}/claim?apiKey=${this.config.get<string>('publisher.apiKey')}`;
+      )}/payment-keys/${assetType}/claim?apiKey=${this.config.get<string>('provider.gameDirectory.apiKey')}`;
 
-      await lastValueFrom(
+      return await lastValueFrom(
         this.httpService
           .post(url, {
             playerAddress: user,

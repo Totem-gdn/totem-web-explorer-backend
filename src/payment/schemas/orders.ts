@@ -4,11 +4,11 @@ import { DocumentTimestamps } from '../../assets/types/document';
 
 @Schema({
   autoCreate: true,
-  collection: 'liqpayOrders',
+  collection: 'orders',
   id: true,
   timestamps: { createdAt: true, updatedAt: true },
 })
-export class LiqpayOrder {
+export class Order {
   @Prop({ type: SchemaTypes.String, required: true, index: true })
   owner: string;
 
@@ -20,8 +20,11 @@ export class LiqpayOrder {
 
   @Prop({ type: SchemaTypes.String, required: true })
   price: string;
+
+  @Prop({ type: SchemaTypes.String })
+  txHash: string;
 }
 
-export type LiqpayOrderDocument = LiqpayOrder & Document & DocumentTimestamps;
+export type OrderDocument = Order & Document & DocumentTimestamps;
 
-export const LiqpayOrderSchema = SchemaFactory.createForClass(LiqpayOrder);
+export const OrderSchema = SchemaFactory.createForClass(Order);

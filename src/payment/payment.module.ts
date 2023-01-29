@@ -3,15 +3,11 @@ import { HttpModule } from '@nestjs/axios';
 import { ConfigModule } from '@nestjs/config';
 import { PaymentService } from './payment.service';
 import { MongooseModule } from '@nestjs/mongoose';
-import { LiqpayOrder, LiqpayOrderSchema } from './schemas/liqpayOrders';
+import { Order, OrderSchema } from './schemas/orders';
 import { PaymentController } from './payment.controller';
 
 @Module({
-  imports: [
-    HttpModule,
-    ConfigModule,
-    MongooseModule.forFeature([{ name: LiqpayOrder.name, schema: LiqpayOrderSchema }]),
-  ],
+  imports: [HttpModule, ConfigModule, MongooseModule.forFeature([{ name: Order.name, schema: OrderSchema }])],
   controllers: [PaymentController],
   providers: [PaymentService],
   exports: [PaymentService],

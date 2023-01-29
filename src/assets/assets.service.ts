@@ -19,7 +19,6 @@ import { AssetType } from './types/assets';
 import { AssetsOwnershipHistory, AssetsOwnershipHistoryDocument } from './schemas/assetsOwnershipHistory';
 import { ConfigService } from '@nestjs/config';
 import { PaymentService } from '../payment/payment.service';
-import { LiqpayOrderDocument } from 'src/payment/schemas/liqpayOrders';
 
 @Injectable()
 export class AssetsService {
