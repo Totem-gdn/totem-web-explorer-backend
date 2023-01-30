@@ -8,6 +8,7 @@ import { PaymentStatuses } from './enums/paymentStatuses.enum';
 import { InjectModel } from '@nestjs/mongoose';
 import { Order, OrderDocument } from './schemas/orders';
 import { Model } from 'mongoose';
+import { webcrypto } from 'node:crypto';
 const Stripe = require('stripe');
 // import * as Stripe from 'stripe';
 
@@ -90,12 +91,13 @@ export class PaymentService {
     }
   }
 
-  async createPaymentOrder(assetType: AssetType, owner: string, price: string) {
+  async createPaymentOrder(assetType: AssetType, owner: string, price: string, paymentSystem: string) {
     const data = {
       owner,
       assetType,
       status: PaymentStatuses.NEW,
       price,
+      paymentSystem,
     };
 
     const order = await this.orderModel.create(data);
@@ -256,6 +258,71 @@ export class PaymentService {
       );
     } catch (e) {
       throw new BadRequestException(`Core API response: ${e.response.message}`);
+    }
+  }
+
+  async createWithpaperLink(assetType: string, user: string, price: string, order: any) {
+    let length = 0;
+    if (assetType === 'avatar') {
+      length = 32;
+    } else if (assetType === 'item') {
+      length = 16;
+    } else {
+      length = 8;
+    }
+    const tokenURIBuffer = webcrypto.getRandomValues(new Uint32Array(length));
+    const uri = Buffer.from(tokenURIBuffer.buffer).toString('hex');
+
+    try {
+      const body = {
+        expiresInMinutes: 15,
+        limitPerTransaction: 1,
+        redirectAfterPayment: false,
+        sendEmailOnCreation: false,
+        requireVerifiedEmail: false,
+        quantity: 1,
+        metadata: {},
+        mintMethod: {
+          name: 'mint',
+          args: {
+            to: user,
+            uri,
+          },
+          payment: {
+            value: '0.001',
+            currency: 'USDC',
+          },
+        },
+        feeBearer: 'BUYER',
+        hideNativeMint: true,
+        hidePaperWallet: true,
+        hideExternalWallet: true,
+        hidePayWithCard: false,
+        hidePayWithCrypto: false,
+        hidePayWithIdeal: true,
+        sendEmailOnTransferSucceeded: false,
+        usePaperKey: false,
+        contractId: this.config.get<string>('payment.withpaper.contractId'),
+        title: `Totem Asset: ${assetType}`,
+        walletAddress: this.config.get<string>('payment.withpaper.walletAddress'),
+      };
+      const result = await lastValueFrom(
+        this.httpService
+          .post('https://withpaper.com/api/2022-08-12/checkout-link-intent', body, {
+            headers: {
+              Authorization: `Bearer ${this.config.get<string>('payment.withpaper.authToken')}`,
+            },
+          })
+          .pipe(map((res: any) => res.data))
+          .pipe(
+            catchError((e) => {
+              throw new BadRequestException(e.response.data.error);
+            }),
+          ),
+      );
+      return result.checkoutLinkIntentUrl;
+    } catch (e) {
+      throw new BadRequestException(e.response.message);
     }
   }
 }

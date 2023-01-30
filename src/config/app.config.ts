@@ -47,6 +47,11 @@ export default () => ({
       public: process.env.STRIPE_PUB_KEY,
       successURL: process.env.STRIPE_PAYMENT_SUCCESS_URL,
     },
+    withpaper: {
+      contractId: process.env.WITHPAPER_CONTRACT_ID,
+      walletAddress: process.env.WITHPAPER_WALLET_ADDRESS,
+      authToken: process.env.WITHPAPER_AUTH_TOKEN,
+    },
     paymentMethod: process.env.PAYMENT_METHOD,
     gem: process.env.GEM_DEFAULT_PRICE,
     item: process.env.ITEM_DEFAULT_PRICE,
