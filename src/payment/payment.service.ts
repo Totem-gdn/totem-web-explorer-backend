@@ -189,7 +189,8 @@ export class PaymentService {
     return price.id;
   }
 
-  async generateStripePaymentLink(priceId: string, orderId: string, assetType: AssetType) {
+  async generateStripePaymentLink(priceId: string, orderId: string, assetType: AssetType, payload) {
+    const url = payload.successUrl ? payload.successUrl : `${this.config.get<string>('payment.stripe.successURL')}`;
     const body = {
       metadata: {
         orderId,
@@ -203,7 +204,7 @@ export class PaymentService {
       after_completion: {
         type: 'redirect',
         redirect: {
-          url: `${this.config.get<string>('payment.stripe.successURL')}&type=${assetType}`,
+          url: `${url}&type=${assetType}`,
         },
       },
     };
