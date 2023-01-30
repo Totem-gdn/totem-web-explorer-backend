@@ -198,6 +198,7 @@ export class PaymentService {
 
     const search_params = url.searchParams;
     search_params.set('type', assetType);
+    search_params.set('payment_result', 'success');
     url.search = search_params.toString();
 
     const body = {
