@@ -290,7 +290,7 @@ export class AssetsService {
   async createAsset(assetType: AssetType, user: string, body) {
     const price = await this.paymentService.getAssetPrice(assetType);
 
-    const order: any = await this.paymentService.createPaymentOrder(assetType, user, price);
+    const order: any = await this.paymentService.createPaymentOrder(assetType, user, price, 'Stripe');
 
     let url;
     if (this.paymentMethod.toLowerCase() === 'stripe') {

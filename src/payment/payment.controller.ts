@@ -1,5 +1,8 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { AssetType } from 'src/assets/types/assets';
+import { CurrentUser } from 'src/auth/decorators/currentUser';
+import { Web3AuthGuard } from 'src/auth/guards/web3auth.guard';
 import { PaymentService } from './payment.service';
 
 @ApiTags('Payments')
@@ -31,5 +34,17 @@ export class PaymentController {
   async stripe(@Body() body): Promise<boolean> {
     this.service.stripeWebhook(body);
     return true;
+  }
+
+  @Post('withpaper/:assetType')
+  @UseGuards(new Web3AuthGuard(false))
+  async withpaper(@CurrentUser() user: string, @Param('assetType') assetType: AssetType) {
+    const price = await this.service.getAssetPrice(assetType);
+
+    const order: any = await this.service.createPaymentOrder(assetType, user, price, 'Withpaper');
+
+    const url = await this.service.createWithpaperLink(assetType, user, price, order);
+
+    return { url, order: order._id };
   }
 }
