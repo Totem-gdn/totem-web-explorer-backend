@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
@@ -6,7 +6,7 @@ import { catchError, lastValueFrom, map } from 'rxjs';
 import { AssetType } from '../assets/types/assets';
 import { PaymentStatuses } from './enums/paymentStatuses.enum';
 import { InjectModel } from '@nestjs/mongoose';
-import { LiqpayOrder, LiqpayOrderDocument } from './schemas/liqpayOrders';
+import { Order, OrderDocument } from './schemas/orders';
 import { Model } from 'mongoose';
 const Stripe = require('stripe');
 // import * as Stripe from 'stripe';
@@ -21,7 +21,7 @@ export class PaymentService {
   constructor(
     private readonly config: ConfigService,
     private httpService: HttpService,
-    @InjectModel(LiqpayOrder.name) private readonly orderModel: Model<LiqpayOrderDocument>,
+    @InjectModel(Order.name) private readonly orderModel: Model<OrderDocument>,
   ) {
     this.liqpay = {
       private: this.config.get<string>('payment.liqpay.private'),
@@ -120,8 +120,8 @@ export class PaymentService {
       if (event.type === 'checkout.session.completed') {
         this.stripe.paymentLinks.update(event.data?.object?.payment_link, { active: false });
         if (event.data?.object?.payment_status === 'paid') {
-          this.updateOrderStatus(PaymentStatuses.PROCESSING, order);
-          this.createAssetAPICall(order);
+          await this.updateOrderStatus(PaymentStatuses.PROCESSING, order);
+          await this.processOrder(order);
         } else {
           this.updateOrderStatus(PaymentStatuses.CANCELLED, order);
         }
@@ -135,8 +135,15 @@ export class PaymentService {
     await order.save();
   }
 
-  async createAssetAPICall(order) {
-    console.log('CALL CORE API');
+  async processOrder(orderID) {
+    const order = await this.orderModel.findById(orderID);
+
+    // await this.createPaymentKey(order.assetType);
+
+    const { txHash } = await this.claimAsset(order.assetType, order.owner);
+
+    order.set({ txHash, status: PaymentStatuses.COMPLETED });
+    await order.save();
   }
 
   async getStripeOrderID(event: any) {
@@ -182,7 +189,8 @@ export class PaymentService {
     return price.id;
   }
 
-  async generateStripePaymentLink(priceId: string, orderId: string, assetType: AssetType) {
+  async generateStripePaymentLink(priceId: string, orderId: string, assetType: AssetType, payload) {
+    const url = payload.successUrl ? payload.successUrl : `${this.config.get<string>('payment.stripe.successURL')}`;
     const body = {
       metadata: {
         orderId,
@@ -196,7 +204,7 @@ export class PaymentService {
       after_completion: {
         type: 'redirect',
         redirect: {
-          url: `${this.config.get<string>('payment.stripe.successURL')}&type=${assetType}`,
+          url: `${url}&type=${assetType}`,
         },
       },
     };
@@ -204,5 +212,50 @@ export class PaymentService {
     const paymentLink = await this.stripe.paymentLinks.create(body);
 
     return paymentLink.url;
+  }
+
+  async createPaymentKey(assetType) {
+    try {
+      const url = `${this.config.get<string>(
+        'provider.gameDirectory.endpoint',
+      )}/payment-keys/${assetType}?apiKey=${this.config.get<string>('provider.gameDirectory.apiKey')}`;
+      await lastValueFrom(
+        this.httpService
+          .post(url, {
+            amount: 10,
+          })
+          .pipe(map((res: any) => res.data))
+          .pipe(
+            catchError((e) => {
+              throw new InternalServerErrorException(e.response.data.message);
+            }),
+          ),
+      );
+    } catch (e) {
+      throw new BadRequestException(`Core API response: ${e.response.message}`);
+    }
+  }
+
+  async claimAsset(assetType, user: string) {
+    try {
+      const url = `${this.config.get<string>(
+        'provider.gameDirectory.endpoint',
+      )}/payment-keys/${assetType}/claim?apiKey=${this.config.get<string>('provider.gameDirectory.apiKey')}`;
+
+      return await lastValueFrom(
+        this.httpService
+          .post(url, {
+            playerAddress: user,
+          })
+          .pipe(map((res: any) => res.data))
+          .pipe(
+            catchError((e) => {
+              throw new InternalServerErrorException(e.response.data.message);
+            }),
+          ),
+      );
+    } catch (e) {
+      throw new BadRequestException(`Core API response: ${e.response.message}`);
+    }
   }
 }

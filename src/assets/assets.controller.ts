@@ -35,8 +35,8 @@ export class AssetsController {
 
   @Post(':assetType')
   @UseGuards(new Web3AuthGuard(false))
-  async createAsset(@CurrentUser() user: string, @Param('assetType') assetType: AssetType) {
-    return await this.service.createAsset(assetType, user);
+  async createAsset(@CurrentUser() user: string, @Param('assetType') assetType: AssetType, @Body() body) {
+    return await this.service.createAsset(assetType, user, body);
   }
 
   @Get(':assetType')

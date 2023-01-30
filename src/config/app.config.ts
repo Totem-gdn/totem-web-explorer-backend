@@ -33,6 +33,7 @@ export default () => ({
     gameDirectory: {
       endpoint: process.env.GAME_DIRECTORY_ENDPOINT,
       contract: process.env.GAME_DIRECTORY_CONTRACT,
+      apiKey: process.env.TOTEM_GAME_DIRECTORY_PUBLISHER_API_KEY,
     },
   },
   payment: {

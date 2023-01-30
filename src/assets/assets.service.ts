@@ -19,7 +19,6 @@ import { AssetType } from './types/assets';
 import { AssetsOwnershipHistory, AssetsOwnershipHistoryDocument } from './schemas/assetsOwnershipHistory';
 import { ConfigService } from '@nestjs/config';
 import { PaymentService } from '../payment/payment.service';
-import { LiqpayOrderDocument } from 'src/payment/schemas/liqpayOrders';
 
 @Injectable()
 export class AssetsService {
@@ -288,7 +287,7 @@ export class AssetsService {
     return result;
   }
 
-  async createAsset(assetType: AssetType, user: string) {
+  async createAsset(assetType: AssetType, user: string, body) {
     const price = await this.paymentService.getAssetPrice(assetType);
 
     const order: any = await this.paymentService.createPaymentOrder(assetType, user, price);
@@ -297,7 +296,7 @@ export class AssetsService {
     if (this.paymentMethod.toLowerCase() === 'stripe') {
       const priceId = await this.paymentService.getStripePriceID(assetType, price);
 
-      url = await this.paymentService.generateStripePaymentLink(priceId, order._id.toString(), assetType);
+      url = await this.paymentService.generateStripePaymentLink(priceId, order._id.toString(), assetType, body);
     } else {
       url = await this.paymentService.generateLiqpayPaymentLink(price, order._id.toString());
     }
