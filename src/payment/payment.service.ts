@@ -285,19 +285,21 @@ export class PaymentService {
       const body = {
         expiresInMinutes: 15,
         limitPerTransaction: 1,
-        redirectAfterPayment: false,
+        redirectAfterPayment: true,
         sendEmailOnCreation: false,
         requireVerifiedEmail: false,
         quantity: 1,
-        metadata: {},
+        metadata: {
+          orderId: order._id,
+        },
         mintMethod: {
           name: 'mint',
           args: {
-            to: user,
+            to: '$WALLET',
             uri,
           },
           payment: {
-            value: '0.001',
+            value: '0.001 * $QUANTITY',
             currency: 'USDC',
           },
         },
@@ -311,9 +313,11 @@ export class PaymentService {
         sendEmailOnTransferSucceeded: false,
         usePaperKey: false,
         contractId: this.config.get<string>('payment.withpaper.contractId'),
-        title: `Totem Asset: ${assetType}`,
-        walletAddress: this.config.get<string>('payment.withpaper.walletAddress'),
+        title: `Totem Asset`,
+        walletAddress: user,
+        successCallbackUrl: 'https://totem-explorer.com?payment_result=success',
       };
+      console.log(body);
       const result = await lastValueFrom(
         this.httpService
           .post('https://withpaper.com/api/2022-08-12/checkout-link-intent', body, {
