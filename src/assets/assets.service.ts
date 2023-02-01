@@ -22,7 +22,7 @@ import { PaymentService } from '../payment/payment.service';
 
 @Injectable()
 export class AssetsService {
-  private readonly perPage: number = 10;
+  private readonly perPage: number = 50;
   private readonly assetsModels: Record<AssetType, Model<AvatarDocument | ItemDocument | GemDocument>>;
   private readonly assetLikesModels: Record<AssetType, Model<AvatarLikeDocument | ItemLikeDocument | GemLikeDocument>>;
   private readonly assetLikesTypes: Record<AssetType, LegacyLikedType> = {

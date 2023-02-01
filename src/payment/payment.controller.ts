@@ -47,4 +47,12 @@ export class PaymentController {
 
     return { url, order: order._id };
   }
+
+  @Post('webhook/withpaper')
+  @UseGuards(new Web3AuthGuard(true))
+  async paperWebhook(@Body() body) {
+    // console.log(body);
+    // console.log(body.result?.claimedTokens?.tokens);
+    return 'ok';
+  }
 }

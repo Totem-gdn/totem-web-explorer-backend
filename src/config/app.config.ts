@@ -49,7 +49,6 @@ export default () => ({
     },
     withpaper: {
       contractId: process.env.WITHPAPER_CONTRACT_ID,
-      walletAddress: process.env.WITHPAPER_WALLET_ADDRESS,
       authToken: process.env.WITHPAPER_AUTH_TOKEN,
     },
     paymentMethod: process.env.PAYMENT_METHOD,
