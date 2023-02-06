@@ -22,7 +22,7 @@ import { AssetRecord, AssetResponse } from './common/interfaces/assetRecord';
 import { AssetsService } from './assets.service';
 import { LegacyService } from '../legacy/legacy.service';
 import { AssetType } from './types/assets';
-import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AssetEntity } from './entities/asset.entity';
 import { AssetsTypes } from './enums/assetsTypes.enum';
 import { OwnerShip } from './enums/ownershipTypes.enum';
@@ -32,12 +32,6 @@ import { AssetOperationTypes } from './enums/operationsTypes.enum';
 @Controller()
 export class AssetsController {
   constructor(private readonly service: AssetsService, private readonly legacyService: LegacyService) {}
-
-  @Post(':assetType')
-  @UseGuards(new Web3AuthGuard(false))
-  async createAsset(@CurrentUser() user: string, @Param('assetType') assetType: AssetType, @Body() body) {
-    return await this.service.createAsset(assetType, user, body);
-  }
 
   @Get(':assetType')
   @UseGuards(new Web3AuthGuard(true))

@@ -37,11 +37,6 @@ export default () => ({
     },
   },
   payment: {
-    liqpay: {
-      private: process.env.LIQPAY_PRIVATE_KEY,
-      public: process.env.LIQPAY_PUB_KEY,
-      endpoint: process.env.LIQPAY_ENDPOINT,
-    },
     stripe: {
       private: process.env.STRIPE_PRIVATE_KEY,
       public: process.env.STRIPE_PUB_KEY,

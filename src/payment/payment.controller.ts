@@ -1,58 +1,63 @@
 import { Body, Controller, Param, Post, UseGuards } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AssetType } from 'src/assets/types/assets';
 import { CurrentUser } from 'src/auth/decorators/currentUser';
 import { Web3AuthGuard } from 'src/auth/guards/web3auth.guard';
 import { PaymentService } from './payment.service';
+import { PaymentLinkResponse } from './types/PaymentLinkResponse';
+import { PaymentSystem } from './types/PaymentSystem';
 
 @ApiTags('Payments')
 @Controller()
 export class PaymentController {
   constructor(private readonly service: PaymentService) {}
 
-  @Post('liqpay')
-  @ApiResponse({
-    status: 200,
-    description: 'Boolean variable',
-    type: Boolean,
-    isArray: true,
-  })
-  @ApiOperation({ summary: 'Liqpay webhook endpoint' })
-  async liqpay(@Body() body): Promise<boolean> {
-    this.service.liqpayWebhook(body);
-    return true;
-  }
-
-  @Post('stripe')
-  @ApiResponse({
-    status: 200,
-    description: 'Boolean variable',
-    type: Boolean,
-    isArray: true,
-  })
-  @ApiOperation({ summary: 'Stripe webhook endpoint' })
-  async stripe(@Body() body): Promise<boolean> {
-    this.service.stripeWebhook(body);
-    return true;
-  }
-
-  @Post('withpaper/:assetType')
+  @Post('link/:paymentSystem/:assetType')
   @UseGuards(new Web3AuthGuard(false))
-  async withpaper(@CurrentUser() user: string, @Param('assetType') assetType: AssetType) {
-    const price = await this.service.getAssetPrice(assetType);
+  @ApiParam({ name: 'assetType', enum: ['avatar', 'item', 'gem'] })
+  @ApiParam({ name: 'paymentSystem', enum: ['stripe', 'withpaper'] })
+  @ApiResponse({
+    status: 200,
+    description: 'API returns oder id and url for payment',
+    type: PaymentLinkResponse,
+  })
+  @ApiOperation({ summary: 'API for create an order and payment link for asset' })
+  async createLink(
+    @CurrentUser() user: string,
+    @Param('assetType') assetType: AssetType,
+    @Param('paymentSystem') paymentSystem: PaymentSystem,
+    @Body() body,
+  ) {
+    if (paymentSystem == 'stripe' || paymentSystem === 'withpaper') {
+      const price = await this.service.getAssetPrice(assetType);
+      const order: any = await this.service.createPaymentOrder(assetType, user, price, paymentSystem);
 
-    const order: any = await this.service.createPaymentOrder(assetType, user, price, 'Withpaper');
-
-    const url = await this.service.createWithpaperLink(assetType, user, price, order);
-
-    return { url, order: order._id };
+      let url;
+      if (paymentSystem === 'stripe') {
+        url = await this.service.generateStripePaymentLink(price, order._id.toString(), assetType, body);
+      } else {
+        url = await this.service.generateWithpaperLink(assetType, user, price, order._id, body);
+      }
+      return { order: order._id, url };
+    } else {
+      return 'This payment system not supported';
+    }
   }
 
-  @Post('webhook/withpaper')
+  @Post('webhook/:paymentSystem')
   @UseGuards(new Web3AuthGuard(true))
-  async paperWebhook(@Body() body) {
-    // console.log(body);
-    // console.log(body.result?.claimedTokens?.tokens);
-    return 'ok';
+  @ApiResponse({
+    status: 200,
+    description: 'API returns oder id and url for payment',
+    type: Boolean,
+  })
+  @ApiOperation({ summary: 'API for process webhooks' })
+  async webhook(@Param('paymentSystem') paymentSystem: PaymentSystem, @Body() body): Promise<boolean> {
+    if (paymentSystem === 'stripe') {
+      this.service.stripeWebhook(body);
+    } else if (paymentSystem === 'withpaper') {
+      this.service.withpaperWebhook(body);
+    }
+    return true;
   }
 }
