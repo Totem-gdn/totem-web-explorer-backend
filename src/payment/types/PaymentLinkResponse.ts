@@ -5,5 +5,5 @@ export class PaymentLinkResponse {
   url: string;
 
   @ApiProperty()
-  order: string;
+  order_id: string;
 }

@@ -1,5 +1,5 @@
 import { Body, Controller, Param, Post, UseGuards } from '@nestjs/common';
-import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiHeader, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AssetType } from 'src/assets/types/assets';
 import { CurrentUser } from 'src/auth/decorators/currentUser';
 import { Web3AuthGuard } from 'src/auth/guards/web3auth.guard';
@@ -16,12 +16,25 @@ export class PaymentController {
   @UseGuards(new Web3AuthGuard(false))
   @ApiParam({ name: 'assetType', enum: ['avatar', 'item', 'gem'] })
   @ApiParam({ name: 'paymentSystem', enum: ['stripe', 'withpaper'] })
+  @ApiHeader({ name: 'Authorization', required: true, description: 'Authorization token' })
   @ApiResponse({
     status: 200,
     description: 'API returns oder id and url for payment',
     type: PaymentLinkResponse,
   })
-  @ApiOperation({ summary: 'API for create an order and payment link for asset' })
+  @ApiOperation({ summary: 'API for creating an order and a payment link for buying an asset' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        successUrl: {
+          type: 'string',
+          description:
+            'if the parameter is present - its value will be used as a link to navigate after successful payment, if the parameter is missing - the link will be taken from the environment variables',
+        },
+      },
+    },
+  })
   async createLink(
     @CurrentUser() user: string,
     @Param('assetType') assetType: AssetType,
@@ -38,7 +51,7 @@ export class PaymentController {
       } else {
         url = await this.service.generateWithpaperLink(assetType, user, price, order._id, body);
       }
-      return { order: order._id, url };
+      return { order_id: order._id, url };
     } else {
       return 'This payment system not supported';
     }
