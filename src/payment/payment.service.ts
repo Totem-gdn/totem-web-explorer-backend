@@ -15,7 +15,6 @@ const Stripe = require('stripe');
 @Injectable()
 export class PaymentService {
   private readonly paymentServiceEndpoint: URL;
-  private readonly liqpay: any = {};
   private readonly stripe: any;
   private readonly defaultPrices = {};
 
@@ -24,11 +23,6 @@ export class PaymentService {
     private httpService: HttpService,
     @InjectModel(Order.name) private readonly orderModel: Model<OrderDocument>,
   ) {
-    this.liqpay = {
-      private: this.config.get<string>('payment.liqpay.private'),
-      public: this.config.get<string>('payment.liqpay.public'),
-      endpoint: this.config.get<string>('payment.liqpay.endpoint'),
-    };
     this.defaultPrices = {
       gem: this.config.get<string>('payment.gem'),
       item: this.config.get<string>('payment.item'),
@@ -60,37 +54,6 @@ export class PaymentService {
     }
   }
 
-  async generateLiqpayPaymentLink(price: string, orderId: string) {
-    const json = {
-      public_key: this.liqpay.public,
-      version: '3',
-      action: 'payment_prepare',
-      action_payment: 'pay',
-      amount: price,
-      currency: 'USD',
-      description: 'test',
-      order_id: orderId,
-      server_url: 'https://ea51-45-128-191-180.ngrok.io/payment/liqpay',
-    };
-    const data = Buffer.from(JSON.stringify(json)).toString('base64');
-    const sign_string = `${this.liqpay.private}${data}${this.liqpay.private}`;
-    const signature = crypto.createHash('sha1').update(sign_string).digest('base64');
-    try {
-      const body = { data, signature };
-      const request = this.httpService
-        .post(`${this.liqpay.endpoint}/api/request`, body, {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-        })
-        .pipe(map((res: any) => res.data));
-      const result = await lastValueFrom(request);
-      return result.result === 'ok' ? result.url_checkout : 'liqpay error';
-    } catch (e) {
-      console.log(e);
-    }
-  }
-
   async createPaymentOrder(assetType: AssetType, owner: string, price: string, paymentSystem: string) {
     const data = {
       owner,
@@ -103,14 +66,6 @@ export class PaymentService {
     const order = await this.orderModel.create(data);
 
     return order.toJSON();
-  }
-
-  async liqpayWebhook(body) {
-    const decoded: any = JSON.parse(atob(body.data));
-    // console.log(decoded);
-    // console.log(
-    //   `Liqpay webhook. Action: ${decoded.action}, Status: ${decoded.status}, Order id: ${decoded.order_id}, Amount: ${decoded.amount}, Currency: ${decoded.currency}`,
-    // );
   }
 
   async stripeWebhook(event) {
@@ -139,8 +94,6 @@ export class PaymentService {
 
   async processOrder(orderID) {
     const order = await this.orderModel.findById(orderID);
-
-    // await this.createPaymentKey(order.assetType);
 
     const { txHash } = await this.claimAsset(order.assetType, order.owner);
 
@@ -191,7 +144,8 @@ export class PaymentService {
     return price.id;
   }
 
-  async generateStripePaymentLink(priceId: string, orderId: string, assetType: AssetType, payload) {
+  async generateStripePaymentLink(price: string, orderId: string, assetType: AssetType, payload) {
+    const priceId = await this.getStripePriceID(assetType, price);
     const url = payload.successUrl
       ? new URL(payload.successUrl)
       : new URL(`${this.config.get<string>('payment.stripe.successURL')}`);
@@ -224,28 +178,6 @@ export class PaymentService {
     return paymentLink.url;
   }
 
-  async createPaymentKey(assetType) {
-    try {
-      const url = `${this.config.get<string>(
-        'provider.gameDirectory.endpoint',
-      )}/payment-keys/${assetType}?apiKey=${this.config.get<string>('provider.gameDirectory.apiKey')}`;
-      await lastValueFrom(
-        this.httpService
-          .post(url, {
-            amount: 10,
-          })
-          .pipe(map((res: any) => res.data))
-          .pipe(
-            catchError((e) => {
-              throw new InternalServerErrorException(e.response.data.message);
-            }),
-          ),
-      );
-    } catch (e) {
-      throw new BadRequestException(`Core API response: ${e.response.message}`);
-    }
-  }
-
   async claimAsset(assetType, user: string) {
     try {
       const url = `${this.config.get<string>(
@@ -269,7 +201,16 @@ export class PaymentService {
     }
   }
 
-  async createWithpaperLink(assetType: string, user: string, price: string, order: any) {
+  async generateWithpaperLink(assetType: string, user: string, price: string, orderId: string, payload: any) {
+    const url = payload.successUrl
+      ? new URL(payload.successUrl)
+      : new URL(`${this.config.get<string>('payment.stripe.successURL')}`);
+
+    const search_params = url.searchParams;
+    search_params.set('type', assetType);
+    search_params.set('payment_result', 'success');
+    url.search = search_params.toString();
+
     let length = 0;
     if (assetType === 'avatar') {
       length = 32;
@@ -290,7 +231,7 @@ export class PaymentService {
         requireVerifiedEmail: false,
         quantity: 1,
         metadata: {
-          orderId: order._id,
+          orderId: orderId,
         },
         mintMethod: {
           name: 'mint',
@@ -308,16 +249,16 @@ export class PaymentService {
         hidePaperWallet: true,
         hideExternalWallet: true,
         hidePayWithCard: false,
-        hidePayWithCrypto: false,
+        hidePayWithCrypto: true,
         hidePayWithIdeal: true,
         sendEmailOnTransferSucceeded: false,
         usePaperKey: false,
         contractId: this.config.get<string>('payment.withpaper.contractId'),
         title: `Totem Asset`,
         walletAddress: user,
-        successCallbackUrl: 'https://totem-explorer.com?payment_result=success',
+        successCallbackUrl: url,
       };
-      console.log(body);
+
       const result = await lastValueFrom(
         this.httpService
           .post('https://withpaper.com/api/2022-08-12/checkout-link-intent', body, {
@@ -335,6 +276,24 @@ export class PaymentService {
       return result.checkoutLinkIntentUrl;
     } catch (e) {
       throw new BadRequestException(e.response.message);
+    }
+  }
+
+  async withpaperWebhook(body) {
+    const orderId = body.result.metadata.orderId;
+
+    if (orderId) {
+      const order = await this.orderModel.findById(orderId);
+      if (order) {
+        if (body.event === 'payment:succeeded') {
+          this.updateOrderStatus(PaymentStatuses.PROCESSING, order);
+        }
+        if (body.event === 'transfer:succeeded') {
+          order.set({ txHash: body.result.transactionHash, status: PaymentStatuses.COMPLETED });
+
+          await order.save();
+        }
+      }
     }
   }
 }

@@ -286,21 +286,4 @@ export class AssetsService {
     result.meta.total = favorites.count;
     return result;
   }
-
-  async createAsset(assetType: AssetType, user: string, body) {
-    const price = await this.paymentService.getAssetPrice(assetType);
-
-    const order: any = await this.paymentService.createPaymentOrder(assetType, user, price, 'Stripe');
-
-    let url;
-    if (this.paymentMethod.toLowerCase() === 'stripe') {
-      const priceId = await this.paymentService.getStripePriceID(assetType, price);
-
-      url = await this.paymentService.generateStripePaymentLink(priceId, order._id.toString(), assetType, body);
-    } else {
-      url = await this.paymentService.generateLiqpayPaymentLink(price, order._id.toString());
-    }
-
-    return { url, order: order._id };
-  }
 }

@@ -23,6 +23,9 @@ export class Order {
 
   @Prop({ type: SchemaTypes.String })
   txHash: string;
+
+  @Prop({ type: SchemaTypes.String })
+  paymentSystem: string;
 }
 
 export type OrderDocument = Order & Document & DocumentTimestamps;
