@@ -58,7 +58,7 @@ autoscaling:
 tolerations:
   - key: "dedicated"
     operator: "Equal"
-    value: "third-2"
+    value: "third"
     effect: "NoSchedule"
 
 env:
