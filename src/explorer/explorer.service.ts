@@ -34,9 +34,9 @@ export class ExplorerService {
     gems: `provider::gem::blockNumber`,
   };
   private readonly deployBlockNumber: Record<AssetType, string> = {
-    avatars: '0x1a683fc',
-    items: '0x1a6c2ae',
-    gems: '0x1a6c357',
+    avatars: '0x1E5A890',
+    items: '0x1E5A890',
+    gems: '0x1E5A890',
   };
 
   constructor(
