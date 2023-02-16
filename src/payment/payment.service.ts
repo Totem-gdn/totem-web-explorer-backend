@@ -185,7 +185,7 @@ export class PaymentService {
       return await lastValueFrom(
         this.httpService
           .post(url, {
-            playerAddress: user,
+            ownerAddress: user,
           })
           .pipe(map((res: any) => res.data))
           .pipe(
