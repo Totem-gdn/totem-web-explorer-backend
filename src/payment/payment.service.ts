@@ -180,9 +180,7 @@ export class PaymentService {
 
   async claimAsset(assetType, user: string) {
     try {
-      const url = `${this.config.get<string>(
-        'provider.gameDirectory.endpoint',
-      )}/payment-keys/${assetType}/claim?apiKey=${this.config.get<string>('provider.gameDirectory.apiKey')}`;
+      const url = `${this.config.get<string>('provider.gameDirectory.endpoint')}/assets/${assetType}/claim`;
 
       return await lastValueFrom(
         this.httpService
