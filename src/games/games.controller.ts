@@ -18,6 +18,7 @@ import {
   ValidationPipe,
   ParseBoolPipe,
 } from '@nestjs/common';
+import { constants, utils } from 'ethers';
 import { Web3AuthGuard } from '../auth/guards/web3auth.guard';
 import { CurrentUser } from '../auth/decorators/currentUser';
 import { isMongoId } from 'class-validator';
@@ -52,7 +53,7 @@ export class GamesController {
     return await this.gamesService.create(createGameDto);
   }
 
-  @Put(':id')
+  @Put(':address')
   @UseGuards(new Web3AuthGuard(false))
   @UsePipes(new ValidationPipe({ transform: true }))
   @ApiResponse({
@@ -63,12 +64,9 @@ export class GamesController {
   async updateGame(
     @CurrentUser() user: string,
     @Body() updateGameDTO: UpdateGameRequestDTO,
-    @Param('id') id: string,
+    @Param('address') address: string,
   ): Promise<UpdateGameResponse> {
-    if (!isMongoId(id)) {
-      throw new BadRequestException('invalid id');
-    }
-    const game = await this.gamesService.findOneByIdAndOwner(id, user);
+    const game = await this.gamesService.findOneByAddressAndOwner(address, user);
     if (!game) {
       throw new NotFoundException();
     }
@@ -146,25 +144,25 @@ export class GamesController {
     return await this.gamesService.search(name);
   }
 
-  @Get(':id')
+  @Get(':address')
   @UseGuards(new Web3AuthGuard(true))
   @ApiOperation({ summary: 'Information of specific game' })
   @ApiResponse({
     status: 200,
     type: GameRecordDTO,
   })
-  async findOne(@CurrentUser() user: string, @Param('id') id: string): Promise<GameRecord> {
-    if (!isMongoId(id)) {
-      throw new BadRequestException('invalid id');
+  async findOne(@CurrentUser() user: string, @Param('address') address: string): Promise<GameRecord> {
+    if (!utils.isAddress(address) || address === constants.AddressZero) {
+      throw new BadRequestException('invalid game address');
     }
-    const game = await this.gamesService.findOne(id, user);
+    const game = await this.gamesService.findOne(address, user);
     if (!game) {
       throw new NotFoundException();
     }
     return game;
   }
 
-  @Patch(':id/:operation')
+  @Patch(':address/:operation')
   @UseGuards(new Web3AuthGuard(true))
   @ApiOperation({ summary: 'API for update approve/reject/like/dislike/played statuses' })
   @ApiResponse({
@@ -177,18 +175,22 @@ export class GamesController {
   })
   async update(
     @CurrentUser() user: string,
-    @Param('id') id: string,
+    @Param('address') address: string,
     @Param('operation') operation: string,
   ): Promise<void> {
-    if (!isMongoId(id)) {
-      throw new BadRequestException('invalid id');
+    if (!utils.isAddress(address) || address === constants.AddressZero) {
+      throw new BadRequestException('invalid game address');
+    }
+    const gameId = await this.gamesService.getGameIdByAddress(address);
+    if (!gameId) {
+      throw new NotFoundException();
     }
     // no-authorization operations
     switch (operation) {
       case 'approve':
-        return await this.gamesService.changeApprovance(id, true);
+        return await this.gamesService.changeApprovance(address, true);
       case 'reject':
-        return await this.gamesService.changeApprovance(id, false);
+        return await this.gamesService.changeApprovance(address, false);
     }
     // authorization needed operations
     if (!user) {
@@ -196,28 +198,28 @@ export class GamesController {
     }
     switch (operation) {
       case 'like':
-        return await this.legacyService.likeGame(user, id);
+        return await this.legacyService.likeGame(user, gameId);
       case 'dislike':
-        return await this.legacyService.dislikeGame(user, id);
+        return await this.legacyService.dislikeGame(user, gameId);
       case 'played':
-        return await this.legacyService.gamePlayed(user, id);
+        return await this.legacyService.gamePlayed(user, gameId);
     }
     // invalid operation
     throw new BadRequestException('invalid operation');
   }
 
-  @Delete(':id')
+  @Delete(':address')
   @UseGuards(new Web3AuthGuard(false))
   @UsePipes(new ValidationPipe({ transform: true }))
   @ApiOperation({ summary: 'Delete the game' })
   @ApiResponse({
     status: 200,
   })
-  async delete(@CurrentUser() user: string, @Param('id') id: string) {
-    if (!isMongoId(id)) {
-      throw new BadRequestException('invalid id');
+  async delete(@CurrentUser() user: string, @Param('address') address: string) {
+    if (!utils.isAddress(address) || address === constants.AddressZero) {
+      throw new BadRequestException('invalid game address');
     }
-    const game = await this.gamesService.findOneByIdAndOwner(id, user);
+    const game = await this.gamesService.findOneByAddressAndOwner(address, user);
     if (!game) {
       throw new NotFoundException();
     }

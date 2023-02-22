@@ -16,6 +16,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsValidAddress } from '../../utils/IsValidAddress';
 
 export class UpdateGameRequestGeneral {
   @IsString()
@@ -205,6 +206,8 @@ export class UpdateGameRequestContacts {
 }
 
 export class UpdateGameRequestDTO {
+  @IsValidAddress()
+  @IsNotEmpty()
   owner: string;
 
   @IsOptional()
