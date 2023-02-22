@@ -5,7 +5,7 @@
 replicaCount: 1
 
 image:
-  repository: 667950714614.dkr.ecr.us-east-1.amazonaws.com/web-explorer-backend
+  repository: 667950714614.dkr.ecr.us-east-2.amazonaws.com/web-explorer-backend
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
   tag: "prod"
