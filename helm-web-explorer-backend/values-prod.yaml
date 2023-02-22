@@ -30,7 +30,7 @@ ingress:
     alb.ingress.kubernetes.io/ssl-redirect: '443'
     alb.ingress.kubernetes.io/scheme: internet-facing
   hosts:
-    - host: test-api.totem-explorer.com
+    - host: api.totem-explorer.com
       paths:
         - path: /
           pathType: Prefix
@@ -62,30 +62,4 @@ tolerations:
     effect: "NoSchedule"
 
 env:
-  PORT: ""
-  REDIS_STORAGE_URI: ""
-  MONGODB_DATABASE: ""
-  AWS_REGION: ""
-  AWS_S3_ENDPOINT: ""
-  AWS_S3_BUCKET: ""
-  PROVIDER_RPC: ""
-  GAME_DIRECTORY_ENDPOINT: ""
-  AWS_CORE_S3_ENDPOINT: ""
-  AWS_CORE_S3_BUCKET: ""
-  PAYMENT_METHOD: ""
-  GEM_DEFAULT_PRICE: ""
-  ITEM_DEFAULT_PRICE: ""
-  AVATAR_DEFAULT_PRICE: ""
-  PAYMENT_ENDPOINT: ""
-  STRIPE_PRIVATE_KEY: ""
-  STRIPE_PUB_KEY: ""
-  GAME_DIRECTORY_CONTRACT: ""
-  ASSETS_AVATAR_CONTRACT: ""
-  ASSETS_ITEM_CONTRACT: ""
-  ASSETS_GEM_CONTRACT: ""
-  AVATAR_LEGACY_CONTRACT: ""
-  ASSET_LEGACY_CONTRACT: ""
-  GEM_LEGACY_CONTRACT: ""
-  AWS_ACCESS_KEY_ID: ""
-  AWS_SECRET_ACCESS_KEY: ""
-  MONGODB_URI: ""
+  ENV: ""
