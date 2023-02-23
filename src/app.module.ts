@@ -15,6 +15,7 @@ import { BlocksModule } from './blocks/blocks.module';
 import { MessagesModule } from './messages/messages.module';
 import { PingModule } from './ping/ping.module';
 import { PaymentModule } from './payment/payment.module';
+import { PropertiesModule } from './properties/properties.module';
 
 @Module({
   imports: [
@@ -55,6 +56,7 @@ import { PaymentModule } from './payment/payment.module';
     AppRouterModule,
     PingModule,
     PaymentModule,
+    PropertiesModule,
   ],
 })
 export class AppModule {}

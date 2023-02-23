@@ -304,15 +304,20 @@ export class GamesService {
     return response;
   }
 
-  async changeApprovance(id: string, approved: boolean): Promise<void> {
-    await this.gameModel.findByIdAndUpdate(id, { $set: { approved } }).exec();
+  async changeApprovance(address: string, approved: boolean): Promise<void> {
+    await this.gameModel.findOneAndUpdate({ gameAddress: address }, { $set: { approved } }).exec();
   }
 
-  async findOne(id: string, user = ''): Promise<GameRecord> {
-    await this.gameModel.findByIdAndUpdate(id, { $inc: { views: 1 } }).exec();
+  async getGameIdByAddress(address: string): Promise<string> {
+    const game = await this.gameModel.findOne({ gameAddress: address });
+    return game.toJSON()._id;
+  }
+
+  async findOne(address: string, user = ''): Promise<GameRecord> {
+    await this.gameModel.findOneAndUpdate({ gameAddress: address }, { $inc: { views: 1 } }).exec();
     const games = await this.gameModel
       .aggregate<GameAggregationDocument>([
-        { $match: { _id: new Types.ObjectId(id) } },
+        { $match: { gameAddress: address } },
         this.legacyLookupPipeline('isLiked', [{ $match: { type: LegacyEvents.GameLiked, user } }]),
         this.legacyLookupPipeline('players', [{ $match: { type: LegacyEvents.GamePlayed } }]),
         this.legacyLookupPipeline('likes', [{ $match: { type: LegacyEvents.GameLiked } }]),
@@ -337,15 +342,15 @@ export class GamesService {
     return await this.toGameRecord(games[0]);
   }
 
-  async findOneByIdAndOwner(id: string, owner: string) {
-    // return await this.gameModel.findOne({ _id: new Types.ObjectId(id), owner }).exec();
-    return await this.gameModel.findOne({ _id: new Types.ObjectId(id) }).exec();
+  async findOneByAddressAndOwner(address: string, owner: string) {
+    // return await this.gameModel.findOne({ gameAddress: address, owner }).exec();
+    return await this.gameModel.findOne({ gameAddress: address }).exec();
   }
 
   async random(user: string): Promise<GameResponse> {
     const games: GameRecord[] = [];
     const query = this.gameModel.aggregate<GameAggregationDocument>([
-      { $match: { approved: true, hidden: false } },
+      { $match: { approved: true, hidden: false, gameAddress: { $ne: null } } },
       { $sample: { size: 5 } },
       this.legacyLookupPipeline('isLiked', [{ $match: { type: LegacyEvents.GameLiked, user } }]),
       this.legacyLookupPipeline('players', [{ $match: { type: LegacyEvents.GamePlayed } }]),
@@ -367,7 +372,7 @@ export class GamesService {
     for (const game of await query.exec()) {
       games.push(await this.toGameRecord(game));
     }
-    const total = await this.gameModel.countDocuments({ approved: true, hidden: false });
+    const total = await this.gameModel.countDocuments({ approved: true, hidden: false, gameAddress: { $ne: null } });
     return { data: games, meta: { total, page: 1, perPage: 10 } };
   }
 
@@ -534,7 +539,7 @@ export class GamesService {
   ): Promise<GameResponse> {
     const games: Array<GameRecord> = [];
     const aggregation = this.gameModel.aggregate<GameAggregationDocument>([
-      { $match: { ...matchParams } },
+      { $match: { ...matchParams, gameAddress: { $ne: null } } },
       { $sort: { ...sortParams } },
       { $skip: (page - 1) * this.perPage },
       { $limit: this.perPage },
@@ -555,7 +560,7 @@ export class GamesService {
         },
       },
     ]);
-    const total = await this.gameModel.countDocuments({ approved: true, ...matchParams });
+    const total = await this.gameModel.countDocuments({ gameAddress: { $ne: null }, ...matchParams });
     for (const game of await aggregation.exec()) {
       games.push(await this.toGameRecord(game));
     }
@@ -609,7 +614,7 @@ export class GamesService {
     const gameId = game._id.toString();
 
     return {
-      id: gameId,
+      id: game.gameAddress,
       gameAddress: game.gameAddress,
       owner: game.owner,
       views: game.views,
