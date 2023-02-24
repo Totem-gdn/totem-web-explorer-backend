@@ -93,4 +93,8 @@ export class LegacyService {
 
     return { count, ids };
   }
+
+  async listByGame(gameId: string) {
+    return await this.legacyRecordModel.find({ gameId });
+  }
 }

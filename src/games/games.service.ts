@@ -315,31 +315,53 @@ export class GamesService {
 
   async findOne(address: string, user = ''): Promise<GameRecord> {
     await this.gameModel.findOneAndUpdate({ gameAddress: address }, { $inc: { views: 1 } }).exec();
-    const games = await this.gameModel
-      .aggregate<GameAggregationDocument>([
-        { $match: { gameAddress: address } },
-        this.legacyLookupPipeline('isLiked', [{ $match: { type: LegacyEvents.GameLiked, user } }]),
-        this.legacyLookupPipeline('players', [{ $match: { type: LegacyEvents.GamePlayed } }]),
-        this.legacyLookupPipeline('likes', [{ $match: { type: LegacyEvents.GameLiked } }]),
-        this.legacyLookupPipeline('itemsUsed', [{ $match: { type: LegacyEvents.ItemUsed } }]),
-        this.legacyLookupPipeline('avatarsUsed', [{ $match: { type: LegacyEvents.AvatarUsed } }]),
-        {
-          $addFields: {
-            isLiked: { $gt: [{ $size: '$isLiked' }, 0] },
-            players: { $size: '$players' },
-            likes: { $size: '$likes' },
-            assets: {
-              items: { $size: '$itemsUsed' },
-              avatars: { $size: '$avatarsUsed' },
-            },
-          },
-        },
-      ])
-      .exec();
-    if (!games?.[0]) {
+    // const games = await this.gameModel
+    //   .aggregate<GameAggregationDocument>([
+    //     { $match: { gameAddress: address } },
+    //     this.legacyLookupPipeline('isLiked', [{ $match: { type: LegacyEvents.GameLiked, user } }]),
+    //     this.legacyLookupPipeline('players', [{ $match: { type: LegacyEvents.GamePlayed } }]),
+    //     this.legacyLookupPipeline('likes', [{ $match: { type: LegacyEvents.GameLiked } }]),
+    //     this.legacyLookupPipeline('itemsUsed', [{ $match: { type: LegacyEvents.ItemUsed } }]),
+    //     this.legacyLookupPipeline('avatarsUsed', [{ $match: { type: LegacyEvents.AvatarUsed } }]),
+    //     {
+    //       $addFields: {
+    //         isLiked: { $gt: [{ $size: '$isLiked' }, 0] },
+    //         players: { $size: '$players' },
+    //         likes: { $size: '$likes' },
+    //         assets: {
+    //           items: { $size: '$itemsUsed' },
+    //           avatars: { $size: '$avatarsUsed' },
+    //         },
+    //       },
+    //     },
+    //   ])
+    //   .exec();
+    // if (!games?.[0]) {
+    //   return null;
+    // }
+    // return await this.toGameRecord(games[0]);
+    const game = await this.gameModel.findOne({ gameAddress: address });
+
+    if (game) {
+      const legacy = await this.legacyService.listByGame(game._id.toString());
+
+      const isLiked = legacy.filter((l) => l.type === LegacyEvents.GameLiked && l.user === user).length;
+      const players = legacy.filter((l) => l.type === LegacyEvents.GamePlayed).length;
+      const likes = legacy.filter((l) => l.type === LegacyEvents.GameLiked).length;
+      const itemsUsed = legacy.filter((l) => l.type === LegacyEvents.ItemUsed).length;
+      const avatarsUsed = legacy.filter((l) => l.type === LegacyEvents.AvatarUsed).length;
+
+      return await this.toGameRecord({
+        ...game.toJSON(),
+        isLiked,
+        players,
+        likes,
+        itemsUsed,
+        avatarsUsed,
+      });
+    } else {
       return null;
     }
-    return await this.toGameRecord(games[0]);
   }
 
   async findOneByAddressAndOwner(address: string, owner: string) {
@@ -349,27 +371,49 @@ export class GamesService {
 
   async random(user: string): Promise<GameResponse> {
     const games: GameRecord[] = [];
-    const query = this.gameModel.aggregate<GameAggregationDocument>([
-      { $match: { approved: true, hidden: false, gameAddress: { $ne: null } } },
-      { $sample: { size: 5 } },
-      this.legacyLookupPipeline('isLiked', [{ $match: { type: LegacyEvents.GameLiked, user } }]),
-      this.legacyLookupPipeline('players', [{ $match: { type: LegacyEvents.GamePlayed } }]),
-      this.legacyLookupPipeline('likes', [{ $match: { type: LegacyEvents.GameLiked } }]),
-      this.legacyLookupPipeline('itemsUsed', [{ $match: { type: LegacyEvents.ItemUsed } }]),
-      this.legacyLookupPipeline('avatarsUsed', [{ $match: { type: LegacyEvents.AvatarUsed } }]),
-      {
-        $addFields: {
-          isLiked: { $gt: [{ $size: '$isLiked' }, 0] },
-          players: { $size: '$players' },
-          likes: { $size: '$likes' },
-          assets: {
-            items: { $size: '$itemsUsed' },
-            avatars: { $size: '$avatarsUsed' },
-          },
-        },
-      },
-    ]);
-    for (const game of await query.exec()) {
+    const gamesResults = await this.gameModel
+      .find({ approved: true, hidden: false, gameAddress: { $ne: null } })
+      .size(5);
+    // const query = this.gameModel.aggregate<GameAggregationDocument>([
+    //   { $match: { approved: true, hidden: false, gameAddress: { $ne: null } } },
+    //   { $sample: { size: 5 } },
+    //   this.legacyLookupPipeline('isLiked', [{ $match: { type: LegacyEvents.GameLiked, user } }]),
+    //   this.legacyLookupPipeline('players', [{ $match: { type: LegacyEvents.GamePlayed } }]),
+    //   this.legacyLookupPipeline('likes', [{ $match: { type: LegacyEvents.GameLiked } }]),
+    //   this.legacyLookupPipeline('itemsUsed', [{ $match: { type: LegacyEvents.ItemUsed } }]),
+    //   this.legacyLookupPipeline('avatarsUsed', [{ $match: { type: LegacyEvents.AvatarUsed } }]),
+    //   {
+    //     $addFields: {
+    //       isLiked: { $gt: [{ $size: '$isLiked' }, 0] },
+    //       players: { $size: '$players' },
+    //       likes: { $size: '$likes' },
+    //       assets: {
+    //         items: { $size: '$itemsUsed' },
+    //         avatars: { $size: '$avatarsUsed' },
+    //       },
+    //     },
+    //   },
+    // ]);
+    // for (const game of await query.exec()) {
+    //   games.push(await this.toGameRecord(game));
+    // }
+    for (const res of gamesResults) {
+      const legacy = await this.legacyService.listByGame(res._id.toString());
+
+      const isLiked = legacy.filter((l) => l.type === LegacyEvents.GameLiked && l.user === user).length;
+      const players = legacy.filter((l) => l.type === LegacyEvents.GamePlayed).length;
+      const likes = legacy.filter((l) => l.type === LegacyEvents.GameLiked).length;
+      const itemsUsed = legacy.filter((l) => l.type === LegacyEvents.ItemUsed).length;
+      const avatarsUsed = legacy.filter((l) => l.type === LegacyEvents.AvatarUsed).length;
+
+      const game = {
+        ...res.toJSON(),
+        isLiked,
+        players,
+        likes,
+        itemsUsed,
+        avatarsUsed,
+      };
       games.push(await this.toGameRecord(game));
     }
     const total = await this.gameModel.countDocuments({ approved: true, hidden: false, gameAddress: { $ne: null } });
@@ -538,32 +582,60 @@ export class GamesService {
     user = '',
   ): Promise<GameResponse> {
     const games: Array<GameRecord> = [];
-    const aggregation = this.gameModel.aggregate<GameAggregationDocument>([
-      { $match: { ...matchParams, gameAddress: { $ne: null } } },
-      { $sort: { ...sortParams } },
-      { $skip: (page - 1) * this.perPage },
-      { $limit: this.perPage },
-      this.legacyLookupPipeline('isLiked', [{ $match: { type: LegacyEvents.GameLiked, user } }]),
-      this.legacyLookupPipeline('players', [{ $match: { type: LegacyEvents.GamePlayed } }]),
-      this.legacyLookupPipeline('likes', [{ $match: { type: LegacyEvents.GameLiked } }]),
-      this.legacyLookupPipeline('itemsUsed', [{ $match: { type: LegacyEvents.ItemUsed } }]),
-      this.legacyLookupPipeline('avatarsUsed', [{ $match: { type: LegacyEvents.AvatarUsed } }]),
-      {
-        $addFields: {
-          isLiked: { $gt: [{ $size: '$isLiked' }, 0] },
-          players: { $size: '$players' },
-          likes: { $size: '$likes' },
-          assets: {
-            items: { $size: '$itemsUsed' },
-            avatars: { $size: '$avatarsUsed' },
-          },
-        },
-      },
-    ]);
-    const total = await this.gameModel.countDocuments({ gameAddress: { $ne: null }, ...matchParams });
-    for (const game of await aggregation.exec()) {
+    // const aggregation = this.gameModel.aggregate<GameAggregationDocument>([
+    //   { $match: { ...matchParams, gameAddress: { $ne: null } } },
+    //   { $sort: { ...sortParams } },
+    //   { $skip: (page - 1) * this.perPage },
+    //   { $limit: this.perPage },
+    //   this.legacyLookupPipeline('isLiked', [{ $match: { type: LegacyEvents.GameLiked, user } }]),
+    //   this.legacyLookupPipeline('players', [{ $match: { type: LegacyEvents.GamePlayed } }]),
+    //   this.legacyLookupPipeline('likes', [{ $match: { type: LegacyEvents.GameLiked } }]),
+    //   this.legacyLookupPipeline('itemsUsed', [{ $match: { type: LegacyEvents.ItemUsed } }]),
+    //   this.legacyLookupPipeline('avatarsUsed', [{ $match: { type: LegacyEvents.AvatarUsed } }]),
+    //   {
+    //     $addFields: {
+    //       isLiked: { $gt: [{ $size: '$isLiked' }, 0] },
+    //       players: { $size: '$players' },
+    //       likes: { $size: '$likes' },
+    //       assets: {
+    //         items: { $size: '$itemsUsed' },
+    //         avatars: { $size: '$avatarsUsed' },
+    //       },
+    //     },
+    //   },
+    // ]);
+    const aggregations = await this.gameModel
+      .find({ ...matchParams, gameAddress: { $ne: null } })
+      .sort({ ...sortParams })
+      .skip((page - 1) * this.perPage)
+      .limit(this.perPage);
+
+    // console.log(aggregations);
+
+    for (const aggregation of aggregations) {
+      // console.log(aggregation._id.toString());
+      const legacy = await this.legacyService.listByGame(aggregation._id.toString());
+
+      const isLiked = legacy.filter((l) => l.type === LegacyEvents.GameLiked && l.user === user).length;
+      const players = legacy.filter((l) => l.type === LegacyEvents.GamePlayed).length;
+      const likes = legacy.filter((l) => l.type === LegacyEvents.GameLiked).length;
+      const itemsUsed = legacy.filter((l) => l.type === LegacyEvents.ItemUsed).length;
+      const avatarsUsed = legacy.filter((l) => l.type === LegacyEvents.AvatarUsed).length;
+
+      const game = {
+        ...aggregation.toJSON(),
+        isLiked,
+        players,
+        likes,
+        itemsUsed,
+        avatarsUsed,
+      };
       games.push(await this.toGameRecord(game));
     }
+    const total = await this.gameModel.countDocuments({ gameAddress: { $ne: null }, ...matchParams });
+    // for (const game of await aggregation.exec()) {
+    //   games.push(await this.toGameRecord(game));
+    // }
     return { data: games, meta: { total, perPage: this.perPage, page: page } };
   }
 
@@ -610,7 +682,7 @@ export class GamesService {
     };
   }
 
-  private async toGameRecord(game: GameAggregationDocument): Promise<GameRecord> {
+  private async toGameRecord(game): Promise<GameRecord> {
     const gameId = game._id.toString();
 
     return {
