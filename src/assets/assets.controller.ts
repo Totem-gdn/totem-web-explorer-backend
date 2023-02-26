@@ -78,6 +78,29 @@ export class AssetsController {
     return await this.service.find(assetType, filters);
   }
 
+  @Get('user/:address/:assetType')
+  @UseGuards(new Web3AuthGuard(false))
+  @ApiResponse({
+    status: 200,
+    description: 'Favorites assets records list',
+    type: AssetEntity,
+    isArray: true,
+  })
+  @ApiQuery({
+    name: 'assetType',
+    required: true,
+    enum: AssetsTypes,
+  })
+  @ApiOperation({ summary: 'Favorites assets list' })
+  async getAssetsByUserAddress(
+    @CurrentUser() user: string,
+    @Param('assetType') assetType: AssetType,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+  ) {
+    console.log(user, assetType, page);
+    return await this.service.getAssetsByUserAddress(assetType, user, page);
+  }
+
   @Get('favorites/:assetType')
   @UseGuards(new Web3AuthGuard(false))
   @ApiResponse({
