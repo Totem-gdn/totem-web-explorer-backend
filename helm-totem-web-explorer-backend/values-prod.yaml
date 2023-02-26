@@ -1,0 +1,70 @@
+# Default values for kor-base.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: 667950714614.dkr.ecr.us-east-2.amazonaws.com/totem-web-explorer-backend
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "prod"
+
+fullnameOverride: "totem-web-explorer-backend"
+
+containerPort: 3000
+
+service:
+  type: NodePort
+  port: 80
+  targetPort: 3000
+
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/success-codes: '404'
+    alb.ingress.kubernetes.io/group.name: main
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-2:667950714614:certificate/6d735c92-03f8-444f-b083-fba169ef5e82
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80},{"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
+    alb.ingress.kubernetes.io/scheme: internet-facing
+  hosts:
+    - host: prod-api.totem-explorer.com
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            serviceName: NAME
+            servicePort: 80
+
+
+            
+  tls: []
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+  scaleDownSeconds: 3
+
+tolerations:
+  - key: "dedicated"
+    operator: "Equal"
+    value: "third"
+    effect: "NoSchedule"
+
+env:
+  ENV: ""
+
+
