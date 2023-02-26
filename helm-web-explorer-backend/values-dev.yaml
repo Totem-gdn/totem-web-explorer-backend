@@ -5,12 +5,12 @@
 replicaCount: 1
 
 image:
-  repository: 667950714614.dkr.ecr.us-east-2.amazonaws.com/totem-web-explorer-backend
+  repository: 667950714614.dkr.ecr.us-east-2.amazonaws.com/web-explorer-backend
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "prod"
+  tag: "dev"
 
-fullnameOverride: "totem-web-explorer-backend"
+fullnameOverride: "dev-web-explorer-backend"
 
 containerPort: 3000
 
@@ -29,17 +29,15 @@ ingress:
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80},{"HTTPS": 443}]'
     alb.ingress.kubernetes.io/ssl-redirect: '443'
     alb.ingress.kubernetes.io/scheme: internet-facing
+
   hosts:
-    - host: prod-api.totem-explorer.com
+    - host: dev-api.totem-explorer.com
       paths:
         - path: /
           pathType: Prefix
           backend:
-            serviceName: NAME
+            serviceName: dev-web-explorer-backend
             servicePort: 80
-
-
-            
   tls: []
 
 resources:
@@ -66,5 +64,4 @@ tolerations:
 
 env:
   ENV: ""
-
-
+  
