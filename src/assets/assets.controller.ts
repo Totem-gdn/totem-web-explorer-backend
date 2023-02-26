@@ -82,7 +82,7 @@ export class AssetsController {
   @UseGuards(new Web3AuthGuard(false))
   @ApiResponse({
     status: 200,
-    description: 'Favorites assets records list',
+    description: 'Assets list for User',
     type: AssetEntity,
     isArray: true,
   })
@@ -91,7 +91,12 @@ export class AssetsController {
     required: true,
     enum: AssetsTypes,
   })
-  @ApiOperation({ summary: 'Favorites assets list' })
+  @ApiQuery({
+    name: 'user address',
+    required: true,
+    type: String,
+  })
+  @ApiOperation({ summary: 'Assets list by user address' })
   async getAssetsByUserAddress(
     @CurrentUser() user: string,
     @Param('assetType') assetType: AssetType,
