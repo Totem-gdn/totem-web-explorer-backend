@@ -19,26 +19,26 @@ export class MessagesService {
   async list(page: number, user: string): Promise<MessageRecord[]> {
     const now = new Date().getTime();
 
-    const result = await this.messageModel.find({ date: { $lte: now.toString() } });
-    // const result = await this.messageModel
-    //   .aggregate<MessageAggregationDocument>([
-    //     { $match: { date: { $lte: now.toString() } } },
-    //     { $skip: (page - 1) * this.perPage },
-    //     { $limit: this.perPage },
-    //     this.legacyLookupPipeline('isRead', [{ $match: { type: MessagesEvents.Read, user } }]),
-    //     {
-    //       $addFields: {
-    //         isRead: { $gt: [{ $size: '$isRead' }, 0] },
-    //       },
-    //     },
-    //   ])
-    //   .exec();
+    // const result = await this.messageModel.find({ date: { $lte: now.toString() } });
+    const result = await this.messageModel
+      .aggregate<MessageAggregationDocument>([
+        { $match: { date: { $lte: now.toString() } } },
+        { $skip: (page - 1) * this.perPage },
+        { $limit: this.perPage },
+        this.legacyLookupPipeline('isRead', [{ $match: { type: MessagesEvents.Read, user } }]),
+        {
+          $addFields: {
+            isRead: { $gt: [{ $size: '$isRead' }, 0] },
+          },
+        },
+      ])
+      .exec();
 
     const blocks: MessageRecord[] = [];
 
     for (const item of result) {
-      const isReadQuery = await this.messageLegacyModel.findOne({ type: MessagesEvents.Read, user });
-      blocks.push(await this.toMessageRecord({ ...item, isRead: isReadQuery ? true : false }));
+      // const isReadQuery = await this.messageLegacyModel.findOne({ type: MessagesEvents.Read, user });
+      blocks.push(await this.toMessageRecord(item));
     }
 
     return blocks;
