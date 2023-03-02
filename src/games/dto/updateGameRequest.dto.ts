@@ -206,8 +206,6 @@ export class UpdateGameRequestContacts {
 }
 
 export class UpdateGameRequestDTO {
-  @IsValidAddress()
-  @IsNotEmpty()
   owner: string;
 
   @IsOptional()
