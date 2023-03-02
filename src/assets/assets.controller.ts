@@ -79,7 +79,7 @@ export class AssetsController {
   }
 
   @Get('user/:address/:assetType')
-  @UseGuards(new Web3AuthGuard(false))
+  @UseGuards(new Web3AuthGuard(true))
   @ApiResponse({
     status: 200,
     description: 'Assets list for User',
