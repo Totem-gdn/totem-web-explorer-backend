@@ -207,7 +207,6 @@ export class CreateGameRequestContacts {
 
 export class CreateGameRequestDTO {
   @IsValidAddress()
-  @IsNotEmpty()
   owner: string;
 
   @IsNotEmptyObject()

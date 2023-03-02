@@ -4,7 +4,7 @@ import { DNAFilters } from './dnaFilters';
 
 export interface CreateGameRequest {
   hidden?: boolean;
-  owner: string;
+  owner?: string;
   general: {
     name: string;
     author: string;
