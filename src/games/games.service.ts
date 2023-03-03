@@ -699,7 +699,7 @@ export class GamesService {
 
   private async getStaticUrl(gameId: string, { filename }: GameImage, endpoint: URL): Promise<string> {
     const url = new URL(endpoint);
-    url.pathname = join(this.prefix, gameId, filename);
+    url.pathname = join(gameId, filename);
     return url.toString();
   }
 

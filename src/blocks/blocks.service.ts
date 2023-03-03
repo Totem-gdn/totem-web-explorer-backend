@@ -49,7 +49,7 @@ export class BlocksService {
 
   private async getStaticUrl(blockId: string, { filename, mimeType, contentLength }): Promise<string> {
     const url = new URL(this.staticEndpoint);
-    url.pathname = join(this.prefix, blockId, filename);
+    url.pathname = join(blockId, filename);
     return url.toString();
   }
 }
