@@ -35,7 +35,7 @@ ingress:
         - path: /
           pathType: Prefix
           backend:
-            serviceName: NAME
+            serviceName: web-explorer-backend
             servicePort: 80
 
 
@@ -48,7 +48,7 @@ resources:
     memory: 256Mi
   requests:
     cpu: 150m
-    memory: 128Mi
+    memory: 150Mi
 
 autoscaling:
   enabled: true
