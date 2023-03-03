@@ -9,12 +9,14 @@ import { ConfigService } from '@nestjs/config';
 @Injectable()
 export class BlocksService {
   private readonly staticEndpoint: URL;
+  private readonly prefix: string;
   constructor(
     private readonly configService: ConfigService,
     @InjectModel(PageBlocks.name)
     private readonly pageBlocksModel: Model<PageBlocksDocument>,
   ) {
     this.staticEndpoint = new URL(this.configService.get<string>('aws.s3.endpoint'));
+    this.prefix = this.configService.get<string>('aws.s3.prefix');
   }
 
   async list(page: number): Promise<PageBlockRecord[]> {
@@ -47,7 +49,7 @@ export class BlocksService {
 
   private async getStaticUrl(blockId: string, { filename, mimeType, contentLength }): Promise<string> {
     const url = new URL(this.staticEndpoint);
-    url.pathname = join(blockId, filename);
+    url.pathname = join(this.prefix, blockId, filename);
     return url.toString();
   }
 }

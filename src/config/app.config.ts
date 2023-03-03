@@ -15,6 +15,7 @@ export default () => ({
       bucket: process.env.AWS_S3_BUCKET,
       endpointCore: process.env.AWS_CORE_S3_ENDPOINT,
       bucketCore: process.env.AWS_CORE_S3_BUCKET,
+      prefix: process.env.AWS_S3_PREFIX,
     },
   },
   provider: {
