@@ -20,7 +20,10 @@ export class BlocksService {
   }
 
   async list(page: number): Promise<PageBlockRecord[]> {
-    const result = await this.pageBlocksModel.find();
+    const result = await this.pageBlocksModel
+      .find()
+      .skip((page - 1) * 10)
+      .limit(10);
 
     const blocks: PageBlockRecord[] = [];
 
