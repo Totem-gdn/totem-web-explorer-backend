@@ -30,12 +30,25 @@ import { CreateGameRequestDTO } from './dto/games.dto';
 import { UpdateGameRequestDTO } from './dto/updateGameRequest.dto';
 import { GamesService } from './games.service';
 import { LegacyService } from '../legacy/legacy.service';
-import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiExtraModels,
+  ApiForbiddenResponse,
+  ApiHeader,
+  ApiNotFoundResponse,
+  ApiOperation,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { GameCreateEntity } from './entities/gameCreate.entity';
 import { GameRecordDTO, SmallGameRecordDTO } from './entities/game.entity';
 import { OperationsENUM } from './enums/operations.enum';
+import { ApiPaginatedResponse, PaginatedDto } from 'src/utils/dto/paginated.dto';
 
 @ApiTags('Games')
+@ApiExtraModels(PaginatedDto)
+@ApiExtraModels(GameRecordDTO)
 @Controller()
 export class GamesController {
   constructor(private readonly gamesService: GamesService, private readonly legacyService: LegacyService) {}
@@ -47,7 +60,9 @@ export class GamesController {
     status: 200,
     type: GameCreateEntity,
   })
+  @ApiBadRequestResponse({ description: 'Game already exist in contract' })
   @ApiOperation({ summary: 'Create Game' })
+  @ApiHeader({ name: 'Authorization', required: true, description: 'Authorization token' })
   async create(@CurrentUser() user: string, @Body() createGameDto: CreateGameRequestDTO): Promise<CreateGameResponse> {
     createGameDto.owner = user;
     return await this.gamesService.create(createGameDto);
@@ -61,6 +76,8 @@ export class GamesController {
     type: GameCreateEntity,
   })
   @ApiOperation({ summary: 'Update Game' })
+  @ApiHeader({ name: 'Authorization', required: true, description: 'Authorization token' })
+  @ApiNotFoundResponse({ description: 'Game not found ' })
   async updateGame(
     @CurrentUser() user: string,
     @Body() updateGameDTO: UpdateGameRequestDTO,
@@ -76,10 +93,9 @@ export class GamesController {
   @Get()
   @UseGuards(new Web3AuthGuard(true))
   @ApiOperation({ summary: 'List of Game' })
-  @ApiResponse({
-    status: 200,
-    type: GameRecordDTO,
-    isArray: true,
+  @ApiHeader({ name: 'Authorization', required: false, description: 'Authorization token' })
+  @ApiPaginatedResponse(GameRecordDTO, {
+    description: 'Paginated list of the game records with query filters',
   })
   async find(
     @CurrentUser() user: string,
@@ -118,6 +134,7 @@ export class GamesController {
     type: GameRecordDTO,
     isArray: true,
   })
+  @ApiHeader({ name: 'Authorization', required: true, description: 'Authorization token' })
   async favorites(
     @CurrentUser() user: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
@@ -137,6 +154,7 @@ export class GamesController {
     type: SmallGameRecordDTO,
     isArray: true,
   })
+  @ApiHeader({ name: 'Authorization', required: false, description: 'Authorization token' })
   async search(
     @CurrentUser() user: string,
     @Query('name', new DefaultValuePipe('')) name: string,
@@ -151,6 +169,7 @@ export class GamesController {
     status: 200,
     type: GameRecordDTO,
   })
+  @ApiHeader({ name: 'Authorization', required: false, description: 'Authorization token' })
   async findOne(@CurrentUser() user: string, @Param('address') address: string): Promise<GameRecord> {
     if (!utils.isAddress(address) || address === constants.AddressZero) {
       throw new BadRequestException('invalid game address');
@@ -167,12 +186,17 @@ export class GamesController {
   @ApiOperation({ summary: 'API for update approve/reject/like/dislike/played statuses' })
   @ApiResponse({
     status: 200,
+    description: 'Successfully updated',
   })
   @ApiQuery({
     name: 'operation',
     required: true,
     enum: OperationsENUM,
   })
+  @ApiHeader({ name: 'Authorization', required: false, description: 'Authorization token' })
+  @ApiNotFoundResponse({ description: 'Game not found ' })
+  @ApiForbiddenResponse({ description: 'JWT token expired or not found' })
+  @ApiBadRequestResponse({ description: 'Invalid operation' })
   async update(
     @CurrentUser() user: string,
     @Param('address') address: string,
@@ -215,6 +239,9 @@ export class GamesController {
   @ApiResponse({
     status: 200,
   })
+  @ApiHeader({ name: 'Authorization', required: true, description: 'Authorization token' })
+  @ApiBadRequestResponse({ description: 'Invalid game address' })
+  @ApiNotFoundResponse({ description: 'Game not found' })
   async delete(@CurrentUser() user: string, @Param('address') address: string) {
     if (!utils.isAddress(address) || address === constants.AddressZero) {
       throw new BadRequestException('invalid game address');
