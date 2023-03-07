@@ -22,29 +22,38 @@ import { AssetRecord, AssetResponse } from './common/interfaces/assetRecord';
 import { AssetsService } from './assets.service';
 import { LegacyService } from '../legacy/legacy.service';
 import { AssetType } from './types/assets';
-import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiExtraModels,
+  ApiNotFoundResponse,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 import { AssetEntity } from './entities/asset.entity';
 import { AssetsTypes } from './enums/assetsTypes.enum';
 import { OwnerShip } from './enums/ownershipTypes.enum';
 import { AssetOperationTypes } from './enums/operationsTypes.enum';
+import { ApiPaginatedResponse, PaginatedDto } from '../utils/dto/paginated.dto';
 
 @ApiTags('Assets')
+@ApiExtraModels(PaginatedDto)
 @Controller()
 export class AssetsController {
   constructor(private readonly service: AssetsService, private readonly legacyService: LegacyService) {}
 
   @Get(':assetType')
   @UseGuards(new Web3AuthGuard(true))
-  @ApiResponse({
-    status: 200,
-    description: 'Assets records list',
-    type: AssetEntity,
-    isArray: true,
-  })
   @ApiQuery({
     name: 'assetType',
     required: true,
     enum: AssetsTypes,
+  })
+  @ApiPaginatedResponse(AssetEntity, {
+    description: 'Paginated list of the asset legacy records with query filters',
   })
   @ApiOperation({ summary: 'Assets records list' })
   async find(
@@ -80,11 +89,8 @@ export class AssetsController {
 
   @Get('user/:address/:assetType')
   @UseGuards(new Web3AuthGuard(true))
-  @ApiResponse({
-    status: 200,
-    description: 'Assets list for User',
-    type: AssetEntity,
-    isArray: true,
+  @ApiPaginatedResponse(AssetEntity, {
+    description: 'Paginated list of the asset legacy records with query filters for specific user',
   })
   @ApiQuery({
     name: 'assetType',
@@ -108,17 +114,15 @@ export class AssetsController {
 
   @Get('favorites/:assetType')
   @UseGuards(new Web3AuthGuard(false))
-  @ApiResponse({
-    status: 200,
-    description: 'Favorites assets records list',
-    type: AssetEntity,
-    isArray: true,
+  @ApiPaginatedResponse(AssetEntity, {
+    description: 'Paginated list of the favorites asset legacy records with query filters',
   })
   @ApiQuery({
     name: 'assetType',
     required: true,
     enum: AssetsTypes,
   })
+  @ApiBadRequestResponse({ description: 'Invalid page number' })
   @ApiOperation({ summary: 'Favorites assets list' })
   async getFavorites(
     @CurrentUser() user: string,
@@ -147,6 +151,8 @@ export class AssetsController {
     enum: AssetsTypes,
   })
   @ApiOperation({ summary: 'Get asset entity by id' })
+  @ApiNotFoundResponse({ description: 'Asset not found' })
+  @ApiBadRequestResponse({ description: 'Invalid ID' })
   async findOne(
     @CurrentUser() user: string,
     @Param('assetType') assetType: AssetType,
@@ -197,6 +203,7 @@ export class AssetsController {
   @UseGuards(new Web3AuthGuard(false))
   @ApiResponse({
     status: 200,
+    description: 'Updated successfully',
   })
   @ApiQuery({
     name: 'assetType',
@@ -209,6 +216,8 @@ export class AssetsController {
     enum: AssetOperationTypes,
   })
   @ApiOperation({ summary: 'update asset' })
+  @ApiBadRequestResponse({ description: 'Invalid ID' })
+  @ApiUnauthorizedResponse({ description: 'JWT token expired' })
   async update(
     @CurrentUser() user: string,
     @Param('assetType') assetType: AssetType,
