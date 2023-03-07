@@ -37,9 +37,6 @@ ingress:
           backend:
             serviceName: web-explorer-backend
             servicePort: 80
-
-
-            
   tls: []
 
 resources:

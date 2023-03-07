@@ -30,6 +30,7 @@ export class GamesService {
   private readonly staticEndpointCore: URL;
   private readonly perPage: number = 50;
   private readonly gameDirectoryEndpoint: URL;
+  private readonly prefix: string;
 
   constructor(
     private readonly configService: ConfigService,
@@ -45,6 +46,7 @@ export class GamesService {
     this.gameDirectoryEndpoint = new URL(this.configService.get<string>('provider.gameDirectory.endpoint'));
     this.s3Client = new S3Client({});
     this.s3GDNClient = new S3Client({ endpoint: this.staticEndpointCore.toString() });
+    this.prefix = this.configService.get<string>('aws.s3.prefix');
   }
 
   async create(game: CreateGameRequest): Promise<CreateGameResponse> {
@@ -610,7 +612,7 @@ export class GamesService {
     };
   }
 
-  private async toGameRecord(game: GameAggregationDocument): Promise<GameRecord> {
+  private async toGameRecord(game): Promise<GameRecord> {
     const gameId = game._id.toString();
 
     return {
@@ -679,7 +681,7 @@ export class GamesService {
       this.s3Client,
       new PutObjectCommand({
         Bucket: this.bucket,
-        Key: join(gameId, filename),
+        Key: join(this.prefix, gameId, filename),
         ContentType: mimeType,
         ContentLength: contentLength,
       }),

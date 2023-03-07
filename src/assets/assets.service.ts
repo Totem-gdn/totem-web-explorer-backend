@@ -93,6 +93,35 @@ export class AssetsService {
     return this.toRecord(asset);
   }
 
+  async getAssetsByUserAddress(assetType: AssetType, user: string, page: number) {
+    const assets: AssetRecord[] = [];
+    let itemsCount = 0;
+    if (this.assetsModels[assetType]) {
+      itemsCount = await this.assetsModels[assetType].countDocuments({ owner: user });
+    }
+    const aggregation = this.assetsModels[assetType].aggregate<AssetAggregationDocument>([
+      { $match: { owner: user } },
+      { $limit: this.perPage },
+      this.isLikedLookupPipeline(assetType, user),
+      this.likesLookupPipeline(assetType),
+      this.gamesLookupPipeline(assetType),
+      this.lastUsedLookupPipeline(assetType),
+      {
+        $addFields: {
+          isLiked: { $gt: [{ $size: '$isLiked' }, 0] },
+          likes: { $size: '$likes' },
+          games: { $size: '$games' },
+          lastUsed: '$lastUsed.createdAt',
+        },
+      },
+    ]);
+
+    for (const asset of await aggregation.exec()) {
+      assets.push(await this.toRecord(asset));
+    }
+    return { data: assets, meta: { total: itemsCount, page: page, perPage: this.perPage } };
+  }
+
   async find(assetType: AssetType, filters: ListAssetsFilter): Promise<AssetResponse> {
     const matchParams: Record<string, any> = {};
     if (filters.search) {
