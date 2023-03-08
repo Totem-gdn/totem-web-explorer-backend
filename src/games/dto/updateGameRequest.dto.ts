@@ -39,7 +39,7 @@ export class UpdateGameRequestGeneral {
   @IsString()
   @MaxLength(3000)
   @ApiProperty()
-  fullDescription = '';
+  fullDescription: string;
 
   @IsArray()
   @ArrayNotEmpty()
@@ -239,19 +239,11 @@ export class UpdateGameRequestDTO {
   contacts: UpdateGameRequestContacts;
 
   @IsOptional()
-  @ApiProperty({
-    example: [
-      'https://static-dev.totem-explorer.com/6364c51be261234ed44481df/afe5f0d9-e4b1-4187-88f0-6e8c66992692-SS_02.png',
-    ],
-  })
+  @ApiProperty()
   galleryImagesForDelete?: string[];
 
   @IsOptional()
   @Type(() => Array<UpdateGameRequestImage>)
-  @ApiProperty({
-    example: [
-      'https://static-dev.totem-explorer.com/6364c51be261234ed44481df/afe5f0d9-e4b1-4187-88f0-6e8c66992692-SS_02.png',
-    ],
-  })
+  @ApiProperty()
   galleryImagesForUpload?: UpdateGameRequestImage[];
 }

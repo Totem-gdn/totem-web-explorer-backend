@@ -20,7 +20,10 @@ export class BlocksService {
   }
 
   async list(page: number): Promise<PageBlockRecord[]> {
-    const result = await this.pageBlocksModel.find();
+    const result = await this.pageBlocksModel
+      .find()
+      .skip((page - 1) * 10)
+      .limit(10);
 
     const blocks: PageBlockRecord[] = [];
 
@@ -32,9 +35,10 @@ export class BlocksService {
   }
 
   private async toPageBlockRecord(payload): Promise<PageBlockRecord> {
+    const date = new Date(payload.updatedAt ? payload.updatedAt : payload.createdAt);
     const data = payload.data;
     if (data.image) {
-      data.image = await this.getStaticUrl(payload._id.toString(), data.image);
+      data.image = await this.getStaticUrl(payload._id.toString(), data.image, date.getTime());
     }
     return {
       id: payload._id,
@@ -44,9 +48,10 @@ export class BlocksService {
     };
   }
 
-  private async getStaticUrl(blockId: string, { filename, mimeType, contentLength }): Promise<string> {
+  private async getStaticUrl(blockId: string, { filename, mimeType, contentLength }, timestamp): Promise<string> {
     const url = new URL(this.staticEndpoint);
     url.pathname = join(blockId, filename);
+    url.searchParams.set('t', timestamp);
     return url.toString();
   }
 }

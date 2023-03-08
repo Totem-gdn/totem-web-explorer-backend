@@ -23,7 +23,7 @@ class GameRecordAssets {
   avatars: number;
 
   @ApiProperty()
-  genre: number;
+  items: number;
 }
 
 class GameRecordDetails {
