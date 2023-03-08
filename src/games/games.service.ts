@@ -98,19 +98,34 @@ export class GamesService {
         game.connections.dnaFilters &&
         game.connections.dnaFilters.avatarFilter &&
         game.connections.dnaFilters.avatarFilter.filename
-          ? await this.getStaticUrl(newGame.id, game.connections.dnaFilters.avatarFilter, this.staticEndpointCore)
+          ? await this.getStaticUrl(
+              newGame.id,
+              game.connections.dnaFilters.avatarFilter,
+              this.staticEndpointCore,
+              new Date().getTime(),
+            )
           : '',
       itemFilter:
         game.connections.dnaFilters &&
         game.connections.dnaFilters.assetFilter &&
         game.connections.dnaFilters.assetFilter.filename
-          ? await this.getStaticUrl(newGame.id, game.connections.dnaFilters.assetFilter, this.staticEndpointCore)
+          ? await this.getStaticUrl(
+              newGame.id,
+              game.connections.dnaFilters.assetFilter,
+              this.staticEndpointCore,
+              new Date().getTime(),
+            )
           : '',
       gemFilter:
         game.connections.dnaFilters &&
         game.connections.dnaFilters.gemFilter &&
         game.connections.dnaFilters.gemFilter.filename
-          ? await this.getStaticUrl(newGame.id, game.connections.dnaFilters.gemFilter, this.staticEndpointCore)
+          ? await this.getStaticUrl(
+              newGame.id,
+              game.connections.dnaFilters.gemFilter,
+              this.staticEndpointCore,
+              new Date().getTime(),
+            )
           : '',
       website: game.connections.webpage,
     };
@@ -270,19 +285,34 @@ export class GamesService {
         game.connections.dnaFilters &&
         game.connections.dnaFilters.avatarFilter &&
         game.connections.dnaFilters.avatarFilter.filename
-          ? await this.getStaticUrl(game.id, game.connections.dnaFilters.avatarFilter, this.staticEndpointCore)
+          ? await this.getStaticUrl(
+              game.id,
+              game.connections.dnaFilters.avatarFilter,
+              this.staticEndpointCore,
+              new Date(game.updatedAt).getTime(),
+            )
           : '',
       itemFilter:
         game.connections.dnaFilters &&
         game.connections.dnaFilters.assetFilter &&
         game.connections.dnaFilters.assetFilter.filename
-          ? await this.getStaticUrl(game.id, game.connections.dnaFilters.assetFilter, this.staticEndpointCore)
+          ? await this.getStaticUrl(
+              game.id,
+              game.connections.dnaFilters.assetFilter,
+              this.staticEndpointCore,
+              new Date(game.updatedAt).getTime(),
+            )
           : '',
       gemFilter:
         game.connections.dnaFilters &&
         game.connections.dnaFilters.gemFilter &&
         game.connections.dnaFilters.gemFilter.filename
-          ? await this.getStaticUrl(game.id, game.connections.dnaFilters.gemFilter, this.staticEndpointCore)
+          ? await this.getStaticUrl(
+              game.id,
+              game.connections.dnaFilters.gemFilter,
+              this.staticEndpointCore,
+              new Date(game.updatedAt).getTime(),
+            )
           : '',
       website: game.connections.webpage,
       status: 2,
@@ -578,22 +608,42 @@ export class GamesService {
         genre: game.general.genre,
       },
       images: {
-        smallThumbnail: await this.getStaticUrl(gameId, game.images.smallThumbnail, this.staticEndpoint),
+        smallThumbnail: await this.getStaticUrl(
+          gameId,
+          game.images.smallThumbnail,
+          this.staticEndpoint,
+          new Date(game.updatedAt).getTime(),
+        ),
       },
       connections: {
         assetRenderer: game.connections.assetRenderer,
         dnaFilters: {
           avatarFilter:
             game.connections.dnaFilters && game.connections.dnaFilters.avatarFilter
-              ? await this.getStaticUrl(gameId, game.connections.dnaFilters.avatarFilter, this.staticEndpointCore)
+              ? await this.getStaticUrl(
+                  gameId,
+                  game.connections.dnaFilters.avatarFilter,
+                  this.staticEndpointCore,
+                  new Date(game.updatedAt).getTime(),
+                )
               : '',
           assetFilter:
             game.connections.dnaFilters && game.connections.dnaFilters.assetFilter
-              ? await this.getStaticUrl(gameId, game.connections.dnaFilters.assetFilter, this.staticEndpointCore)
+              ? await this.getStaticUrl(
+                  gameId,
+                  game.connections.dnaFilters.assetFilter,
+                  this.staticEndpointCore,
+                  new Date(game.updatedAt).getTime(),
+                )
               : '',
           gemFilter:
             game.connections.dnaFilters && game.connections.dnaFilters.gemFilter
-              ? await this.getStaticUrl(gameId, game.connections.dnaFilters.gemFilter, this.staticEndpointCore)
+              ? await this.getStaticUrl(
+                  gameId,
+                  game.connections.dnaFilters.gemFilter,
+                  this.staticEndpointCore,
+                  new Date(game.updatedAt).getTime(),
+                )
               : '',
         },
       },
@@ -642,10 +692,30 @@ export class GamesService {
         inputs: game.details.inputs,
       },
       images: {
-        coverImage: await this.getStaticUrl(gameId, game.images.coverImage, this.staticEndpoint),
-        cardThumbnail: await this.getStaticUrl(gameId, game.images.cardThumbnail, this.staticEndpoint),
-        smallThumbnail: await this.getStaticUrl(gameId, game.images.smallThumbnail, this.staticEndpoint),
-        gallery: await this.getStaticUrls(gameId, game.images.gallery, this.staticEndpoint),
+        coverImage: await this.getStaticUrl(
+          gameId,
+          game.images.coverImage,
+          this.staticEndpoint,
+          new Date(game.updatedAt).getTime(),
+        ),
+        cardThumbnail: await this.getStaticUrl(
+          gameId,
+          game.images.cardThumbnail,
+          this.staticEndpoint,
+          new Date(game.updatedAt).getTime(),
+        ),
+        smallThumbnail: await this.getStaticUrl(
+          gameId,
+          game.images.smallThumbnail,
+          this.staticEndpoint,
+          new Date(game.updatedAt).getTime(),
+        ),
+        gallery: await this.getStaticUrls(
+          gameId,
+          game.images.gallery,
+          this.staticEndpoint,
+          new Date(game.updatedAt).getTime(),
+        ),
       },
       connections: {
         webpage: game.connections.webpage,
@@ -653,13 +723,28 @@ export class GamesService {
         dnaFilters: {
           avatarFilter:
             game.connections.dnaFilters?.avatarFilter &&
-            (await this.getStaticUrl(gameId, game.connections.dnaFilters.avatarFilter, this.staticEndpointCore)),
+            (await this.getStaticUrl(
+              gameId,
+              game.connections.dnaFilters.avatarFilter,
+              this.staticEndpointCore,
+              new Date(game.updatedAt).getTime(),
+            )),
           assetFilter:
             game.connections.dnaFilters?.assetFilter &&
-            (await this.getStaticUrl(gameId, game.connections.dnaFilters.assetFilter, this.staticEndpointCore)),
+            (await this.getStaticUrl(
+              gameId,
+              game.connections.dnaFilters.assetFilter,
+              this.staticEndpointCore,
+              new Date(game.updatedAt).getTime(),
+            )),
           gemFilter:
             game.connections.dnaFilters?.gemFilter &&
-            (await this.getStaticUrl(gameId, game.connections.dnaFilters.gemFilter, this.staticEndpointCore)),
+            (await this.getStaticUrl(
+              gameId,
+              game.connections.dnaFilters.gemFilter,
+              this.staticEndpointCore,
+              new Date(game.updatedAt).getTime(),
+            )),
         },
         promoVideo: game.connections.promoVideo,
         socialLinks: game.connections.socialLinks,
@@ -697,16 +782,17 @@ export class GamesService {
     return images;
   }
 
-  private async getStaticUrl(gameId: string, { filename }: GameImage, endpoint: URL): Promise<string> {
+  private async getStaticUrl(gameId: string, { filename }: GameImage, endpoint: URL, timestamp): Promise<string> {
     const url = new URL(endpoint);
     url.pathname = join(gameId, filename);
+    url.searchParams.set('t', timestamp);
     return url.toString();
   }
 
-  private async getStaticUrls(gameId: string, gameImages: GameImage[], endpoint: URL): Promise<string[]> {
+  private async getStaticUrls(gameId: string, gameImages: GameImage[], endpoint: URL, timestamp): Promise<string[]> {
     const images = [];
     for await (const image of gameImages) {
-      images.push(await this.getStaticUrl(gameId, image, endpoint));
+      images.push(await this.getStaticUrl(gameId, image, endpoint, timestamp));
     }
     return images;
   }

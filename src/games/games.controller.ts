@@ -129,10 +129,8 @@ export class GamesController {
   @Get('favorites')
   @UseGuards(new Web3AuthGuard(false))
   @ApiOperation({ summary: 'List of favorites games for user' })
-  @ApiResponse({
-    status: 200,
-    type: GameRecordDTO,
-    isArray: true,
+  @ApiPaginatedResponse(GameRecordDTO, {
+    description: 'Paginated list of the game records with query filters',
   })
   @ApiHeader({ name: 'Authorization', required: true, description: 'Authorization token' })
   async favorites(

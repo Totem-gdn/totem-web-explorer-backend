@@ -39,7 +39,7 @@ export class CreateGameRequestGeneral {
   @IsString()
   @MaxLength(3000)
   @ApiProperty()
-  fullDescription = '';
+  fullDescription: string;
 
   @IsArray()
   @ArrayNotEmpty()
