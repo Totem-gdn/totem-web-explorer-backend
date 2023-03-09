@@ -3,5 +3,5 @@ export interface PageBlockRecord {
   title: string;
   type: string;
   data: any;
-  createdAt?: string;
+  updatedAt?: string;
 }

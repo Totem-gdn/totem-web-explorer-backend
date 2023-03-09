@@ -35,7 +35,7 @@ export class BlocksService {
   }
 
   private async toPageBlockRecord(payload): Promise<PageBlockRecord> {
-    const date = new Date(payload.updatedAt ? payload.updatedAt : payload.createdAt);
+    const date = new Date(payload.updated_at ? payload.updated_at : payload.createdAt);
     const data = payload.data;
     if (data.image) {
       data.image = await this.getStaticUrl(payload._id.toString(), data.image, date.getTime());
@@ -45,6 +45,7 @@ export class BlocksService {
       title: payload.title,
       type: payload.type,
       data: payload.data,
+      updatedAt: payload.updated_at,
     };
   }
 
