@@ -426,6 +426,10 @@ export class GamesService {
       matchParams['owner'] = filters.owner;
     }
 
+    if (filters.released !== 2) {
+      matchParams['released'] = filters.released;
+    }
+
     const sortParams: Record<string, any> = {};
     if (filters.list === 'popular') {
       sortParams.views = -1;
