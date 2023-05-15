@@ -188,6 +188,9 @@ export class Game {
 
   @Prop({ type: SchemaTypes.String, unique: true })
   gameAddress: string;
+
+  @Prop({ type: SchemaTypes.Number, default: () => 0 })
+  released: number;
 }
 
 export type GameDocument = Game & Document & DocumentTimestamps;

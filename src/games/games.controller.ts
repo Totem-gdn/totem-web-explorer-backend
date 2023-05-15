@@ -105,6 +105,7 @@ export class GamesController {
     @Query('approved', new DefaultValuePipe(true), ParseBoolPipe) approved: boolean,
     @Query('hidden', new DefaultValuePipe('')) hidden: '' | 'true' | 'false',
     @Query('owner', new DefaultValuePipe('')) owner: string,
+    @Query('released', new DefaultValuePipe(2), ParseIntPipe) released: number,
   ): Promise<GameResponse> {
     if (page < 1) {
       throw new BadRequestException('invalid page number');
@@ -118,7 +119,7 @@ export class GamesController {
       }
 
       // approved = approved.toString() !== 'false';
-      const filters: ListGamesFilters = { list, page, search, approved, owner, hidden: isHidden };
+      const filters: ListGamesFilters = { list, page, search, approved, owner, hidden: isHidden, released };
       if (user) {
         filters.user = user;
       }

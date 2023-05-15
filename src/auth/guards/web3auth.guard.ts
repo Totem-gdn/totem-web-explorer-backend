@@ -37,7 +37,7 @@ export class Web3AuthGuard implements CanActivate {
       }
       const idToken = authHeader[1];
       const jwtPayload = jose.decodeJwt(idToken);
-      console.log(jwtPayload);
+
       let JWKS;
       if (jwtPayload.iss === 'metamask') {
         JWKS = jose.createRemoteJWKSet(new URL('https://authjs.web3auth.io/jwks'));

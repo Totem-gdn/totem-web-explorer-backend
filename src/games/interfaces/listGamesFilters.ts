@@ -7,4 +7,5 @@ export interface ListGamesFilters {
   hidden?: boolean;
   owner?: string;
   ids?: string[];
+  released?: number;
 }
