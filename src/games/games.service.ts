@@ -606,7 +606,7 @@ export class GamesService {
   private async toSearchGameRecord(game: GameDocument): Promise<SmallGameRecord> {
     const gameId = game._id.toString();
     return {
-      id: gameId,
+      id: game.gameAddress,
       general: {
         name: game.general.name,
         genre: game.general.genre,
