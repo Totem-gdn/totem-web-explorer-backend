@@ -176,7 +176,7 @@ export class ExplorerService {
       .get(this.storageKeys[assetType])
       .then((blockNumber: string | null) => parseInt(blockNumber || this.deployBlockNumber[assetType], 16));
     let currentBlock = await this.provider.getBlockNumber();
-    const perPage = 2000; // Alchemy recommended https://docs.alchemy.com/reference/eth-getlogs-polygon
+    const perPage = 1000; // Alchemy recommended https://docs.alchemy.com/reference/eth-getlogs-polygon
     while (currentBlock > block) {
       this.logger.log(`[${assetType}] fetching blocks from ${block} to ${block + perPage}`);
       // request events in blocks range
