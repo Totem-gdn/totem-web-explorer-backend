@@ -178,16 +178,25 @@ export class ExplorerService {
     let currentBlock = await this.provider.getBlockNumber();
     const perPage = 1000; // Alchemy recommended https://docs.alchemy.com/reference/eth-getlogs-polygon
     while (currentBlock > block) {
-      this.logger.log(`[${assetType}] fetching blocks from ${block} to ${block + perPage}`);
+      this.logger.log(
+        `[${assetType}] fetching blocks from ${block} to ${block + perPage}, current block: ${currentBlock}, ${
+          currentBlock - (block + perPage)
+        } blocks left`,
+      );
       // request events in blocks range
-      const events = await this.contracts[assetType].queryFilter('Transfer', block, block + perPage);
+      let lastBlock = block + perPage;
+      if (Number(lastBlock) > Number(currentBlock)) {
+        console.log('USE CURRENT BLOCK AS LATEST');
+        lastBlock = currentBlock;
+      }
+      const events = await this.contracts[assetType].queryFilter('Transfer', block, lastBlock);
       // process all events, update block number in redis on every processed event
       for (const event of events) {
         const [from, to, tokenId] = event.args;
         await this.addEventToQueue(assetType, from, to, tokenId, event);
       }
       // update currentBlock because we don't listen to events while processing previous events
-      block += perPage + 1;
+      block = lastBlock + 1;
       currentBlock = await this.provider.getBlockNumber();
       await this.redis.set(
         this.storageKeys[assetType],
