@@ -39,7 +39,7 @@ export class Web3AuthGuard implements CanActivate {
       const jwtPayload = jose.decodeJwt(idToken);
 
       let JWKS;
-      if (jwtPayload.iss === 'metamask') {
+      if (jwtPayload.iss === 'metamask' || jwtPayload.iss === 'wallet-connect-v2') {
         JWKS = jose.createRemoteJWKSet(new URL('https://authjs.web3auth.io/jwks'));
       } else {
         JWKS = jose.createRemoteJWKSet(jwtPayload.issuer ? this.Web3AuthJWKSetUrl : this.OpenLoginJWKSetUrl);
